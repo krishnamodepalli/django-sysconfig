@@ -87,7 +87,7 @@ class ConfigAppDetailView(View):
     def get(self, request, app_label):
         app_label, config_def = self._validate_app_label(request, app_label)
         if not config_def:
-            return redirect("config:app_list")
+            return redirect("django_sysconfig:app_list")
 
         sections_data = self._build_sections_data(app_label, config_def)
 
@@ -104,7 +104,7 @@ class ConfigAppDetailView(View):
     def post(self, request, app_label):
         app_label, config_def = self._validate_app_label(request, app_label)
         if not config_def:
-            return redirect("config:app_list")
+            return redirect("django_sysconfig:app_list")
 
         # Get the list of changed fields (optimization)
         changed_fields_str = request.POST.get("changed_fields", "").strip()
@@ -117,7 +117,7 @@ class ConfigAppDetailView(View):
         # If no fields were changed, skip saving entirely
         if not changed_fields:
             messages.info(request, "No changes to save.")
-            return redirect("config:app_detail", app_label=app_label)
+            return redirect("django_sysconfig:app_detail", app_label=app_label)
 
         # First pass: validate all changed fields using their validators
         validation_errors = []
@@ -153,7 +153,7 @@ class ConfigAppDetailView(View):
         if validation_errors:
             for error in validation_errors:
                 messages.error(request, error)
-            return redirect("config:app_detail", app_label=app_label)
+            return redirect("django_sysconfig:app_detail", app_label=app_label)
 
         # Process only changed fields
         saved_count = 0
@@ -182,7 +182,7 @@ class ConfigAppDetailView(View):
         else:
             messages.info(request, "No changes to save.")
 
-        return redirect("config:app_detail", app_label=app_label)
+        return redirect("django_sysconfig:app_detail", app_label=app_label)
 
     def _get_processed_value(self, request, field, input_name: str):
         """
