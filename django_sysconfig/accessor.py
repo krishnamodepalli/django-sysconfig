@@ -36,9 +36,6 @@ from .exceptions import (
 from .models import ConfigValue
 from .registry import Field, config_registry
 
-# Sentinel to distinguish between "no default provided" and an explicit default=None
-_MISSING = object()
-
 
 class ConfigAccessor:
     """
@@ -136,7 +133,7 @@ class ConfigAccessor:
         frontend_model = field.get_frontend_model_instance(value)
         return frontend_model.serialize_value(value)
 
-    def get(self, path: str, default: Any = _MISSING) -> Any:
+    def get(self, path: str, default: Any = None) -> Any:
         """
         Get a configuration value.
 
@@ -145,24 +142,21 @@ class ConfigAccessor:
 
         Args:
             path: Full path like 'todo.general.max_todos_per_user'
-            default: Fallback if field doesn't exist (overrides field default).
-                     Pass any value including None to suppress exceptions.
+            default: Fallback returned when the field is registered but has no
+                     value in the database and no field-level default defined.
+                     Invalid paths and unknown apps/fields always raise — they
+                     are never silently swallowed.
 
         Returns:
             The typed configuration value
 
         Raises:
-            InvalidPathError: If path format is invalid
-            AppNotFoundError: If app has no registered config (only if no default)
-            FieldNotFoundError: If field doesn't exist (only if no default)
+            InvalidPathError: If path format is invalid (always raised)
+            AppNotFoundError: If app has no registered config (always raised)
+            FieldNotFoundError: If field doesn't exist (always raised)
         """
-        try:
-            app_label, section, field_name = self._parse_path(path)
-            field = self._get_field(app_label, section, field_name)
-        except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
-            if default is not _MISSING:
-                return default
-            raise
+        app_label, section, field_name = self._parse_path(path)
+        field = self._get_field(app_label, section, field_name)
 
         # First check cache
         cached_value = config_cache.get(path)
@@ -182,14 +176,14 @@ class ConfigAccessor:
             config_cache.set(path, config_value.value)
             return self._deserialize(field, config_value.value)
         except ConfigValue.DoesNotExist:
-            # No DB value - use default and cache it
+            # No DB value - use field default if available
             if field.default is not None:
                 # Serialize and cache the default value
                 frontend_model = field.get_frontend_model_instance()
                 serialized_default = frontend_model.serialize_value(field.default)
                 config_cache.set(path, serialized_default)
                 return field.default
-            # No default - cache None to avoid repeated DB queries
+            # Field has no default - return caller's fallback (None by default)
             config_cache.set(path, None)
             return default
 
