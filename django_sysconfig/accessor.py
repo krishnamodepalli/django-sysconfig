@@ -36,6 +36,9 @@ from .exceptions import (
 from .models import ConfigValue
 from .registry import Field, config_registry
 
+# Sentinel to distinguish between "no default provided" and an explicit default=None
+_MISSING = object()
+
 
 class ConfigAccessor:
     """
@@ -133,7 +136,7 @@ class ConfigAccessor:
         frontend_model = field.get_frontend_model_instance(value)
         return frontend_model.serialize_value(value)
 
-    def get(self, path: str, default: Any = None) -> Any:
+    def get(self, path: str, default: Any = _MISSING) -> Any:
         """
         Get a configuration value.
 
@@ -142,7 +145,8 @@ class ConfigAccessor:
 
         Args:
             path: Full path like 'todo.general.max_todos_per_user'
-            default: Fallback if field doesn't exist (overrides field default)
+            default: Fallback if field doesn't exist (overrides field default).
+                     Pass any value including None to suppress exceptions.
 
         Returns:
             The typed configuration value
@@ -156,7 +160,7 @@ class ConfigAccessor:
             app_label, section, field_name = self._parse_path(path)
             field = self._get_field(app_label, section, field_name)
         except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
-            if default is not None:
+            if default is not _MISSING:
                 return default
             raise
 
