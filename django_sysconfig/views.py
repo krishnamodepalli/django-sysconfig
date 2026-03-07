@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from .accessor import config
+from .frontend_models import SecretFrontendModel
 from .models import ConfigValue
 from .registry import config_registry
 from .validators import validate_value
@@ -168,6 +169,14 @@ class ConfigAppDetailView(View):
 
                 # Get and process value
                 processed_value = self._get_processed_value(request, field, input_name)
+
+                # Skip blank secret fields — an empty submission means "no change";
+                # saving None would wipe the previously stored encrypted value.
+                if (
+                    issubclass(field.frontend_model, SecretFrontendModel)
+                    and (processed_value is None or processed_value == "")
+                ):
+                    continue
 
                 # Use the accessor to set the value (dot notation)
                 full_path = f"{app_label}.{section_key}.{field_name}"
