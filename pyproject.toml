@@ -39,6 +39,8 @@ dev = [
     "pytest-django>=4.8",
     "black>=24.0",
     "ruff>=0.4",
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.0",
 ]
 
 [project.urls]

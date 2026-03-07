@@ -17,6 +17,10 @@ build/
 venv/
 env/
 
+# Local development settings (never commit)
+settings_local.py
+local_settings.py
+
 # Testing
 .pytest_cache/
 .coverage
