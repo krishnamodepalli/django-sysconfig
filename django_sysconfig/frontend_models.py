@@ -25,7 +25,7 @@ class BaseFrontendModel(ABC):
     and extracting the submitted value from the request.
     """
 
-    template_name: str = "config/frontend_models/base.html"
+    template_name: str = "django_sysconfig/frontend_models/base.html"
 
     def __init__(self, field, current_value: Any = None):
         """
@@ -90,7 +90,7 @@ class BaseFrontendModel(ABC):
 class StringFrontendModel(BaseFrontendModel):
     """Frontend model for text/string inputs."""
 
-    template_name = "config/frontend_models/string.html"
+    template_name = "django_sysconfig/frontend_models/string.html"
 
     def get_value(self, raw_value: str | None) -> str | None:
         if raw_value is None or raw_value == "":
@@ -101,7 +101,7 @@ class StringFrontendModel(BaseFrontendModel):
 class TextareaFrontendModel(BaseFrontendModel):
     """Frontend model for multi-line text inputs."""
 
-    template_name = "config/frontend_models/textarea.html"
+    template_name = "django_sysconfig/frontend_models/textarea.html"
 
     def get_value(self, raw_value: str | None) -> str | None:
         if raw_value is None or raw_value == "":
@@ -112,7 +112,7 @@ class TextareaFrontendModel(BaseFrontendModel):
 class IntegerFrontendModel(BaseFrontendModel):
     """Frontend model for integer number inputs."""
 
-    template_name = "config/frontend_models/integer.html"
+    template_name = "django_sysconfig/frontend_models/integer.html"
 
     def get_value(self, raw_value: str | None) -> int | None:
         if raw_value is None or raw_value == "":
@@ -131,7 +131,7 @@ class IntegerFrontendModel(BaseFrontendModel):
 class DecimalFrontendModel(BaseFrontendModel):
     """Frontend model for decimal number inputs."""
 
-    template_name = "config/frontend_models/decimal.html"
+    template_name = "django_sysconfig/frontend_models/decimal.html"
 
     def get_context(self) -> dict:
         context = super().get_context()
@@ -156,7 +156,7 @@ class DecimalFrontendModel(BaseFrontendModel):
 class BooleanFrontendModel(BaseFrontendModel):
     """Frontend model for boolean checkbox inputs."""
 
-    template_name = "config/frontend_models/boolean.html"
+    template_name = "django_sysconfig/frontend_models/boolean.html"
 
     def get_context(self) -> dict:
         context = super().get_context()
@@ -198,7 +198,7 @@ class BooleanFrontendModel(BaseFrontendModel):
 class SelectFrontendModel(BaseFrontendModel):
     """Frontend model for dropdown select inputs."""
 
-    template_name = "config/frontend_models/select.html"
+    template_name = "django_sysconfig/frontend_models/select.html"
 
     def get_context(self) -> dict:
         context = super().get_context()
@@ -223,7 +223,7 @@ class SecretFrontendModel(BaseFrontendModel):
     - Shows placeholder when value exists, never displays actual value
     """
 
-    template_name = "config/frontend_models/secret.html"
+    template_name = "django_sysconfig/frontend_models/secret.html"
 
     # Placeholder shown when a secret value exists
     SECRET_PLACEHOLDER = "••••••••••••••••••••••••"
