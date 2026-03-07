@@ -440,4 +440,3 @@ Both views require the user to be a **staff member** (`is_staff=True`).
 ## License
 
 MIT
-
