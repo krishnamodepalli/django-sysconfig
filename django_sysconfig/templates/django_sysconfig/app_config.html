@@ -1,0 +1,530 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .config-form {
+        margin: 20px 0;
+    }
+    .config-section {
+        background: var(--body-bg, #fff);
+        border: 1px solid var(--hairline-color, #e8e8e8);
+        border-radius: 4px;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .config-section-header {
+        background: var(--darkened-bg, #f8f8f8);
+        border-bottom: 1px solid var(--hairline-color, #e8e8e8);
+        padding: 15px 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+    }
+    .config-section-header:hover {
+        background: var(--selected-bg, #e4e4e4);
+    }
+    .config-section-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--body-fg, #333);
+    }
+    .config-section-toggle {
+        font-size: 12px;
+        color: var(--body-quiet-color, #666);
+        transition: transform 0.2s ease;
+    }
+    .config-section.collapsed .config-section-toggle {
+        transform: rotate(-90deg);
+    }
+    .config-section.collapsed .config-section-body {
+        display: none;
+    }
+    .config-section-body {
+        padding: 0;
+    }
+
+    /* 2-Column Layout */
+    .config-field {
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+        gap: 50px;
+        padding: 20px;
+        border-bottom: 1px solid var(--hairline-color, #e8e8e8);
+        align-items: start;
+    }
+    .config-field:last-child {
+        border-bottom: none;
+    }
+    .config-field-label-col {
+        padding-top: 8px;
+        text-align: right;
+    }
+    .config-field-label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--body-fg, #333);
+        line-height: 1.4;
+    }
+    .config-field-required {
+        color: var(--error-fg, #c00);
+        margin-left: 3px;
+        font-weight: bold;
+    }
+    .config-field-input-col {
+        min-width: 0;
+    }
+    .config-input-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .config-field-input input[type="text"],
+    .config-field-input input[type="number"],
+    .config-field-input textarea,
+    .config-field-input select {
+        width: 100%;
+        max-width: 400px;
+        padding: 10px 12px;
+        border: 1px solid var(--hairline-color, #ccc);
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1.4;
+        box-sizing: border-box;
+        background: var(--body-bg, #fff);
+        color: var(--body-fg, #333);
+    }
+    .config-field-input select {
+        height: auto;
+        min-height: 42px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+    }
+    .config-field-input input:focus,
+    .config-field-input textarea:focus,
+    .config-field-input select:focus {
+        border-color: var(--primary, #79aec8);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(121, 174, 200, 0.25);
+    }
+    .config-field-comment {
+        font-size: 12px;
+        color: var(--body-quiet-color, #666);
+        line-height: 1.5;
+    }
+    .config-field-comment code {
+        background: var(--darkened-bg, #f5f5f5);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+    .config-field-comment a {
+        color: var(--link-fg, #417690);
+    }
+
+    /* Toggle Switch Styles */
+    .toggle-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        flex-shrink: 0;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .toggle-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--close-button-bg, #888);
+        border-radius: 26px;
+        transition: 0.3s;
+    }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        border-radius: 50%;
+        transition: 0.3s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--primary, #79aec8);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+    .toggle-switch input:focus + .toggle-slider {
+        box-shadow: 0 0 0 2px rgba(121, 174, 200, 0.25);
+    }
+    .toggle-label {
+        font-size: 14px;
+        color: var(--body-fg, #333);
+        min-width: 30px;
+    }
+    .toggle-wrapper:hover .toggle-slider {
+        background-color: var(--body-quiet-color, #777);
+    }
+    .toggle-wrapper:hover .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--link-hover-color, #609ab6);
+    }
+
+    /* Boolean field styles */
+    .config-field-boolean .config-field-input-col {
+        padding-top: 4px;
+    }
+
+    .config-submit {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        margin-bottom: 20px;
+        padding: 15px 20px;
+        background: var(--darkened-bg, #f8f8f8);
+        border: 1px solid var(--hairline-color, #e8e8e8);
+        border-radius: 4px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .config-submit input[type="submit"] {
+        background: var(--primary, #79aec8);
+        color: var(--primary-fg, #fff);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .config-submit input[type="submit"]:hover {
+        background: var(--link-hover-color, #609ab6);
+    }
+    .config-submit input[type="submit"]:disabled {
+        background: var(--close-button-bg, #888);
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    .breadcrumbs {
+        padding: 10px 40px;
+        background: var(--breadcrumbs-bg, #79aec8);
+        color: var(--breadcrumbs-fg, #c4dce8);
+    }
+    .breadcrumbs a {
+        color: var(--breadcrumbs-link-fg, #fff);
+    }
+
+    /* Changed field indicator */
+    .config-field.changed {
+        background: rgba(121, 174, 200, 0.05);
+    }
+    .config-field.changed .config-field-label:after {
+        content: " •";
+        color: var(--primary, #79aec8);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .config-field {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .config-field-label-col {
+            padding-top: 0;
+            text-align: left;
+        }
+    }
+
+    /* Actions styling */
+    .config-actions-left {
+        display: flex;
+        gap: 10px;
+    }
+    .config-btn-secondary {
+        background: var(--body-bg, #fff);
+        color: var(--body-fg, #333);
+        border: 1px solid var(--hairline-color, #ccc);
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .config-btn-secondary:hover {
+        background: var(--darkened-bg, #f0f0f0);
+        border-color: var(--hairline-color, #bbb);
+    }
+    @media (max-width: 500px) {
+        .config-submit {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .config-actions-left {
+            justify-content: space-between;
+        }
+        .config-btn-secondary {
+            flex: 1;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'config:app_list' %}">System Configuration</a>
+    &rsaquo; <span>{{ app_label|title }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<form method="post" class="config-form" id="configForm">
+    {% csrf_token %}
+    <input type="hidden" name="changed_fields" id="changedFields" value="">
+
+    {% if sections %}
+    <div class="config-submit">
+        <div class="config-actions-left">
+            <button type="button" class="config-btn-secondary" id="toggleAllBtn" onclick="toggleAll()">Collapse All</button>
+        </div>
+        <input type="submit" value="Save Changes" id="submitBtn">
+    </div>
+    {% endif %}
+
+    {% for section in sections %}
+    <div class="config-section" data-section="{{ section.name }}">
+        <div class="config-section-header" onclick="toggleSection(this)">
+            <h2>{{ section.label }}</h2>
+            <span class="config-section-toggle">&#9660;</span>
+        </div>
+        <div class="config-section-body">
+            {% for field_data in section.fields %}
+                {{ field_data.rendered_input|safe }}
+            {% empty %}
+                <p style="padding: 20px;">No fields in this section.</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+        <p>No configuration sections defined for this app.</p>
+    {% endfor %}
+</form>
+
+<script>
+const STORAGE_KEY = 'config_collapsed_sections';
+const APP_LABEL = '{{ app_label }}';
+
+// Get collapsed state from localStorage
+function getCollapsedState() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+// Save collapsed state to localStorage
+function saveCollapsedState(state) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        // localStorage might be full or disabled
+    }
+}
+
+// Toggle section and persist state
+function toggleSection(header) {
+    const section = header.closest('.config-section');
+    const sectionName = section.dataset.section;
+    const sectionId = `${APP_LABEL}.${sectionName}`;
+
+    section.classList.toggle('collapsed');
+
+    // Persist state
+    const state = getCollapsedState();
+    if (section.classList.contains('collapsed')) {
+        state[sectionId] = true;
+    } else {
+        delete state[sectionId];
+    }
+    saveCollapsedState(state);
+}
+
+// Restore collapsed state on page load
+(function restoreCollapsedState() {
+    const state = getCollapsedState();
+    document.querySelectorAll('.config-section').forEach(function(section) {
+        const sectionName = section.dataset.section;
+        const sectionId = `${APP_LABEL}.${sectionName}`;
+        if (state[sectionId] === true) {
+            section.classList.add('collapsed');
+        }
+    });
+})();
+
+// Expand/Collapse All Toggle
+function toggleAll() {
+    const btn = document.getElementById('toggleAllBtn');
+    const isExpand = btn.dataset.action === 'expand';
+
+    if (isExpand) {
+        expandAllInternal();
+    } else {
+        collapseAllInternal();
+    }
+    updateToggleButton();
+}
+
+function expandAllInternal() {
+    document.querySelectorAll('.config-section').forEach(section => {
+        section.classList.remove('collapsed');
+    });
+
+    const state = getCollapsedState();
+    document.querySelectorAll('.config-section').forEach(section => {
+        const sectionName = section.dataset.section;
+        const sectionId = `${APP_LABEL}.${sectionName}`;
+        delete state[sectionId];
+    });
+    saveCollapsedState(state);
+}
+
+function collapseAllInternal() {
+    document.querySelectorAll('.config-section').forEach(section => {
+        section.classList.add('collapsed');
+    });
+
+    const state = getCollapsedState();
+    document.querySelectorAll('.config-section').forEach(section => {
+        const sectionName = section.dataset.section;
+        const sectionId = `${APP_LABEL}.${sectionName}`;
+        state[sectionId] = true;
+    });
+    saveCollapsedState(state);
+}
+
+function updateToggleButton() {
+    const btn = document.getElementById('toggleAllBtn');
+    if (!btn) return;
+
+    const allSections = document.querySelectorAll('.config-section');
+    const collapsedSections = document.querySelectorAll('.config-section.collapsed');
+
+    // If all sections are collapsed, next action should be Expand
+    if (allSections.length > 0 && collapsedSections.length === allSections.length) {
+        btn.innerText = "Expand All";
+        btn.dataset.action = "expand";
+    } else {
+        btn.innerText = "Collapse All";
+        btn.dataset.action = "collapse";
+    }
+}
+
+// Initial check
+document.addEventListener('DOMContentLoaded', updateToggleButton);
+
+
+// Track changed fields for optimized saving
+(function() {
+    const form = document.getElementById('configForm');
+    const changedFieldsInput = document.getElementById('changedFields');
+    const submitBtn = document.getElementById('submitBtn');
+    const changedFields = new Set();
+    const initialValues = new Map();
+
+    // Store initial values
+    form.querySelectorAll('input, select, textarea').forEach(function(el) {
+        if (el.name && el.name.startsWith('config_')) {
+            if (el.type === 'checkbox') {
+                initialValues.set(el.name, el.checked);
+            } else {
+                initialValues.set(el.name, el.value);
+            }
+        }
+    });
+
+    // Listen for changes
+    form.addEventListener('change', function(e) {
+        const el = e.target;
+        if (!el.name || !el.name.startsWith('config_')) return;
+
+        const fieldWrapper = el.closest('.config-field');
+        let currentValue, initialValue;
+
+        if (el.type === 'checkbox') {
+            currentValue = el.checked;
+            initialValue = initialValues.get(el.name);
+        } else {
+            currentValue = el.value;
+            initialValue = initialValues.get(el.name);
+        }
+
+        if (currentValue !== initialValue) {
+            changedFields.add(el.name);
+            if (fieldWrapper) fieldWrapper.classList.add('changed');
+        } else {
+            changedFields.delete(el.name);
+            if (fieldWrapper) fieldWrapper.classList.remove('changed');
+        }
+
+        // Update hidden field
+        changedFieldsInput.value = Array.from(changedFields).join(',');
+    });
+
+    // Also track input events for text fields
+    form.addEventListener('input', function(e) {
+        const el = e.target;
+        if (!el.name || !el.name.startsWith('config_')) return;
+        if (el.type === 'checkbox') return;
+
+        const fieldWrapper = el.closest('.config-field');
+        const currentValue = el.value;
+        const initialValue = initialValues.get(el.name);
+
+        if (currentValue !== initialValue) {
+            changedFields.add(el.name);
+            if (fieldWrapper) fieldWrapper.classList.add('changed');
+        } else {
+            changedFields.delete(el.name);
+            if (fieldWrapper) fieldWrapper.classList.remove('changed');
+        }
+
+        changedFieldsInput.value = Array.from(changedFields).join(',');
+    });
+})();
+</script>
+{% endblock %}

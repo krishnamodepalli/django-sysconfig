@@ -1,0 +1,70 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div id="config-admin-banner">
+    <div class="config-banner-content">
+        <span class="config-banner-icon">🛠️</span>
+        <div class="config-banner-text">
+            <strong>System Configuration</strong>
+            <span>Manage application settings and preferences</span>
+        </div>
+        <a href="{% url 'django_sysconfig:app_list' %}" class="config-banner-btn">Manage System Configuration</a>
+    </div>
+</div>
+<style>
+    #config-admin-banner {
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, var(--primary, #417690) 0%, var(--secondary, #79aec8) 100%);
+        border-radius: 8px;
+        padding: 16px 20px;
+    }
+    .config-banner-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .config-banner-icon {
+        font-size: 28px;
+        line-height: 1;
+    }
+    .config-banner-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .config-banner-text strong {
+        color: #fff;
+        font-size: 16px;
+    }
+    .config-banner-text span {
+        color: rgba(255,255,255,0.85);
+        font-size: 13px;
+    }
+    .config-banner-btn {
+        background: rgba(255,255,255,0.2);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        transition: background 0.2s ease;
+        white-space: nowrap;
+    }
+    .config-banner-btn:hover {
+        background: rgba(255,255,255,0.3);
+        color: #fff;
+    }
+    @media (max-width: 600px) {
+        .config-banner-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        .config-banner-text {
+            align-items: center;
+        }
+    }
+</style>
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .config-app-list {
+        margin: 20px 0;
+    }
+    .config-app-card {
+        background: var(--body-bg, #fff);
+        border: 1px solid var(--hairline-color, #e8e8e8);
+        border-radius: 4px;
+        margin-bottom: 15px;
+        padding: 20px;
+        position: relative;
+        transition: box-shadow 0.2s ease;
+    }
+    .config-app-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .config-app-card h3 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+    }
+    .config-app-card h3 a {
+        color: var(--body-fg, #333);
+        text-decoration: none;
+    }
+    .config-app-card h3 a:hover {
+        color: var(--link-fg, #417690);
+    }
+    .config-app-card .config-card-link-span {
+        position: absolute;
+        inset: 0;
+    }
+    .config-app-meta {
+        color: var(--body-quiet-color, #666);
+        font-size: 13px;
+    }
+    .config-empty {
+        padding: 40px;
+        text-align: center;
+        color: var(--body-quiet-color, #666);
+    }
+    .breadcrumbs {
+        padding: 10px 40px;
+        background: var(--breadcrumbs-bg, #79aec8);
+        color: var(--breadcrumbs-fg, #c4dce8);
+    }
+    .breadcrumbs a {
+        color: var(--breadcrumbs-link-fg, #fff);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <span>System Configuration</span>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="config-app-list">
+    {% if apps %}
+        {% for app in apps %}
+        <div class="config-app-card">
+            <h3>
+                <a href="{% url 'config:app_detail' app.app_label %}">
+                    {{ app.app_label|title }}
+                    <span class="config-card-link-span" />
+                </a>
+            </h3>
+            <div class="config-app-meta">
+                {{ app.section_count }} section{{ app.section_count|pluralize }} &bull;
+                {{ app.field_count }} configuration{{ app.field_count|pluralize }}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="config-empty">
+            <p>No configurations have been registered yet.</p>
+            <p>Define configurations in <code>sysconfig.py</code> files within your apps.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+<div class="config-field">
+    <div class="config-field-label-col">
+        <label for="{{ input_id }}" class="config-field-label">
+            {{ field.label|default:field.name }}{% if field.required %}<span class="config-field-required">*</span>{% endif %}
+        </label>
+    </div>
+    <div class="config-field-input-col">
+        <div class="config-input-wrapper">
+            <div class="config-field-input">
+                <select name="{{ input_name }}" id="{{ input_id }}">
+                    <option value="">---------</option>
+                    {% for choice_value, choice_label in choices %}
+                    <option value="{{ choice_value }}" {% if value == choice_value %}selected{% endif %}>
+                        {{ choice_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if field.comment %}
+            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>

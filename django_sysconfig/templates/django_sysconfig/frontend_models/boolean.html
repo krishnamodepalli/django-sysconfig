@@ -1,0 +1,36 @@
+<div class="config-field config-field-boolean">
+    <div class="config-field-label-col">
+        <span class="config-field-label">
+            {{ field.label|default:field.name }}{% if field.required %}<span class="config-field-required">*</span>{% endif %}
+        </span>
+    </div>
+    <div class="config-field-input-col">
+        <div class="config-input-wrapper">
+            <label class="toggle-wrapper" for="{{ input_id }}">
+                <span class="toggle-switch">
+                    <input type="checkbox"
+                           name="{{ input_name }}"
+                           id="{{ input_id }}"
+                           value="1"
+                           {% if checked %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </span>
+                <span class="toggle-label" id="{{ input_id }}_label">{% if checked %}Yes{% else %}No{% endif %}</span>
+            </label>
+            {% if field.comment %}
+            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    const checkbox = document.getElementById('{{ input_id }}');
+    const label = document.getElementById('{{ input_id }}_label');
+    if (checkbox && label) {
+        checkbox.addEventListener('change', function() {
+            label.textContent = this.checked ? 'Yes' : 'No';
+        });
+    }
+})();
+</script>

@@ -1,0 +1,23 @@
+<div class="config-field">
+    <div class="config-field-label-col">
+        <label for="{{ input_id }}" class="config-field-label">
+            {{ field.label|default:field.name }}{% if field.required %}<span class="config-field-required">*</span>{% endif %}
+        </label>
+    </div>
+    <div class="config-field-input-col">
+        <div class="config-input-wrapper">
+            <div class="config-field-input">
+                <input type="number"
+                       name="{{ input_name }}"
+                       id="{{ input_id }}"
+                       value="{{ value|default:'' }}"
+                       step="1"
+                       {% if field.extra.min is not None %}min="{{ field.extra.min }}"{% endif %}
+                       {% if field.extra.max is not None %}max="{{ field.extra.max }}"{% endif %}>
+            </div>
+            {% if field.comment %}
+            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
