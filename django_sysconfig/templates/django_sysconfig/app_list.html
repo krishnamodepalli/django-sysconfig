@@ -70,7 +70,7 @@
         {% for app in apps %}
         <div class="config-app-card">
             <h3>
-                <a href="{% url 'config:app_detail' app.app_label %}">
+                <a href="{% url 'django_sysconfig:app_detail' app.app_label %}">
                     {{ app.app_label|title }}
                     <span class="config-card-link-span" />
                 </a>

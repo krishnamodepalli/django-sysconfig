@@ -304,7 +304,7 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
     <a href="{% url 'admin:index' %}">Home</a>
-    &rsaquo; <a href="{% url 'config:app_list' %}">System Configuration</a>
+    &rsaquo; <a href="{% url 'django_sysconfig:app_list' %}">System Configuration</a>
     &rsaquo; <span>{{ app_label|title }}</span>
 </div>
 {% endblock %}
