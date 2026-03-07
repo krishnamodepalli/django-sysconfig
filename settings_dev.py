@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # This library
     "django_sysconfig",
+    # Local demo app for manual dev testing (not packaged)
+    "demo",
 ]
 
 MIDDLEWARE = [
