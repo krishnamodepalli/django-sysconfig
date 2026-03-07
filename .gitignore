@@ -54,3 +54,6 @@ staticfiles/
 
 # Copilot AI context (session notes, discussions — not for version control)
 .copilot/
+
+# Agent instructions (local-only, not for version control)
+AGENTS.md
