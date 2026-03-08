@@ -111,7 +111,7 @@ class MinLengthValidator(BaseValidator):
 
     def __call__(self, value: Any) -> None:
         if value is None:
-            self._fail("This field is required.")
+            return
         if isinstance(value, str) and len(value) < self.min_length:
             self._fail()
 
@@ -128,7 +128,7 @@ class MaxLengthValidator(BaseValidator):
 
     def __call__(self, value: Any) -> None:
         if value is None:
-            self._fail("This field is required.")
+            return
         if isinstance(value, str) and len(value) > self.max_length:
             self._fail()
 
@@ -156,7 +156,7 @@ class RegexValidator(BaseValidator):
 
     def __call__(self, value: Any) -> None:
         if value is None:
-            self._fail("This field is required.")
+            return
         if not isinstance(value, str):
             self._fail("Value must be a string.")
             return

@@ -115,9 +115,9 @@ class MinLengthValidatorTestCase(TestCase):
         self.validator(1.0)
         self.validator(-10.0)
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        # None means "no value" — presence is NotEmptyValidator's job
+        self.validator(None)  # must not raise
 
     def test_string_length(self):
         self.validator("hello")
@@ -144,9 +144,9 @@ class MaxLengthValidatorTestCase(TestCase):
         self.validator(1.0)
         self.validator(-10.0)
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        # None means "no value" — presence is NotEmptyValidator's job
+        self.validator(None)  # must not raise
 
     def test_string_length(self):
         self.validator("hello")
@@ -160,9 +160,9 @@ class RegexValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = RegexValidator(r"^[a-z]+$")
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        # None means "no value" — presence is NotEmptyValidator's job
+        self.validator(None)  # must not raise
 
     def test_non_string_fails_validation(self):
         with self.assertRaises(ValidationError):
