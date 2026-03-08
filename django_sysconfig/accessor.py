@@ -208,8 +208,10 @@ class ConfigAccessor:
         app_label, section, field_name = self._parse_path(path)
         field = self._get_field(app_label, section, field_name)
 
-        # Run field validators before doing anything else
-        if field.validators and (field.required or (value is not None and value != "")):
+        # Run field validators before doing anything else.
+        # Each validator is responsible for deciding how to handle None/empty —
+        # e.g. NotEmptyValidator raises, while length/regex validators skip.
+        if field.validators:
             from .validators import validate_value
 
             field_label = field.label or field_name
