@@ -45,7 +45,7 @@ Tests use an in-memory SQLite database — no setup required. All 115+ tests sho
 
 ## Running the dev server
 
-The repo includes a `demo/` app that registers sample configuration fields across all field types. Use it to manually test the admin UI.
+You can run a local Django dev server using the provided `settings_dev.py` to manually test the admin UI and any configured apps.
 
 ```bash
 # Apply migrations (creates db.sqlite3 in the repo root)
