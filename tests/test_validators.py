@@ -522,6 +522,9 @@ class ChoiceValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = ChoiceValidator(["option1", "option2", "option3"])
 
+    def test_none_skips_validation(self):
+        self.validator(None)
+
     def test_valid_choices(self):
         self.validator("option1")
         self.validator("option2")
