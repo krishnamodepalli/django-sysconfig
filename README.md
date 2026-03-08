@@ -437,6 +437,12 @@ Both views require the user to be a **staff member** (`is_staff=True`).
 
 ---
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up your local development environment, run tests, and submit a pull request.
+
+---
+
 ## License
 
 MIT

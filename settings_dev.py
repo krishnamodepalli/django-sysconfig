@@ -6,32 +6,19 @@ This file is for spinning up a local Django project to manually explore
 and test the admin UI / views while developing the library.
 
 Setup:
-    1. Copy .env.example to .env and fill in values
-    2. Start Postgres:  docker compose up -d
-    3. Run migrations:  DJANGO_SETTINGS_MODULE=settings_dev .venv/bin/django-admin migrate
-    4. Create superuser: DJANGO_SETTINGS_MODULE=settings_dev .venv/bin/django-admin createsuperuser
-    5. Run dev server:  DJANGO_SETTINGS_MODULE=settings_dev .venv/bin/django-admin runserver
+    1. pip install -e ".[dev]"
+    2. DJANGO_SETTINGS_MODULE=settings_dev django-admin migrate
+    3. DJANGO_SETTINGS_MODULE=settings_dev django-admin createsuperuser
+    4. DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
 
     Then visit http://127.0.0.1:8000/admin/config/
 """
 
-import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# Load .env file if python-dotenv is available, otherwise rely on shell env vars
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv(BASE_DIR / ".env")
-except ImportError:
-    pass
-
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "dev-only-insecure-key-set-DJANGO_SECRET_KEY-in-env",
-)
+SECRET_KEY = "dev-only-insecure-key-do-not-use-in-production"
 
 DEBUG = True
 
@@ -46,6 +33,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # This library
     "django_sysconfig",
+    # Local demo app for manual dev testing (not packaged)
+    "demo",
 ]
 
 MIDDLEWARE = [
@@ -76,19 +65,13 @@ TEMPLATES = [
     }
 ]
 
-# Development database — Postgres via Docker (see docker-compose.yml and .env.example)
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "django_sysconfig"),
-        "USER": os.environ.get("POSTGRES_USER", "django"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "django"),
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
-# In-memory cache for development
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

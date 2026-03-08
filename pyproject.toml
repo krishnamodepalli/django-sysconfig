@@ -40,8 +40,6 @@ dev = [
     "black>=24.0",
     "ruff>=0.4",
     "pre-commit>=3.7",
-    "psycopg2-binary>=2.9",
-    "python-dotenv>=1.0",
 ]
 
 [project.urls]
