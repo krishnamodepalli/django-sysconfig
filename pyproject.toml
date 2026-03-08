@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A Magento-style system configuration app for Django"
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "Krishna Modepalli" }]
 keywords = ["django", "configuration", "settings", "admin"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -45,9 +45,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/django-sysconfig"
-Repository = "https://github.com/yourusername/django-sysconfig"
-Issues = "https://github.com/yourusername/django-sysconfig/issues"
+Homepage = "https://github.com/krishnamodepalli/django-sysconfig"
+Repository = "https://github.com/krishnamodepalli/django-sysconfig"
+Issues = "https://github.com/krishnamodepalli/django-sysconfig/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["django_sysconfig"]
