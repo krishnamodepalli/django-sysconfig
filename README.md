@@ -74,8 +74,9 @@ Optionally, wire up the admin UI:
 from django.urls import include, path
 
 urlpatterns = [
-    ...
+    # Must come BEFORE path("admin/", ...) so Django matches it first
     path("admin/config/", include("django_sysconfig.urls")),
+    path("admin/", admin.site.urls),
 ]
 ```
 
