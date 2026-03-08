@@ -7,9 +7,9 @@ and test the admin UI / views while developing the library.
 
 Setup:
     1. pip install -e ".[dev]"
-    2. DJANGO_SETTINGS_MODULE=settings_dev .venv/bin/django-admin migrate
-    3. DJANGO_SETTINGS_MODULE=settings_dev .venv/bin/django-admin createsuperuser
-    4. DJANGO_SETTINGS_MODULE=settings_dev .venv/bin/django-admin runserver
+    2. DJANGO_SETTINGS_MODULE=settings_dev django-admin migrate
+    3. DJANGO_SETTINGS_MODULE=settings_dev django-admin createsuperuser
+    4. DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
 
     Then visit http://127.0.0.1:8000/admin/config/
 """
