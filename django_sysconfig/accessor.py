@@ -29,6 +29,7 @@ from typing import Any
 from .cache import config_cache
 from .exceptions import (
     AppNotFoundError,
+    ConfigValidationError,
     ConfigValueError,
     FieldNotFoundError,
     InvalidPathError,
@@ -206,6 +207,17 @@ class ConfigAccessor:
         """
         app_label, section, field_name = self._parse_path(path)
         field = self._get_field(app_label, section, field_name)
+
+        # Run field validators before doing anything else.
+        # Each validator is responsible for deciding how to handle None/empty —
+        # e.g. NotEmptyValidator raises, while length/regex validators skip.
+        if field.validators:
+            from .validators import validate_value
+
+            field_label = field.label or field_name
+            errors = validate_value(value, field.validators, field_label)
+            if errors:
+                raise ConfigValidationError(path, errors)
 
         try:
             serialized = self._serialize(field, value)

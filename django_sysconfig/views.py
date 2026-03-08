@@ -12,9 +12,9 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from .accessor import config
+from .exceptions import ConfigValidationError
 from .models import ConfigValue
 from .registry import config_registry
-from .validators import validate_value
 
 
 @method_decorator(staff_member_required, name="dispatch")
@@ -119,43 +119,7 @@ class ConfigAppDetailView(View):
             messages.info(request, "No changes to save.")
             return redirect("django_sysconfig:app_detail", app_label=app_label)
 
-        # First pass: validate all changed fields using their validators
-        validation_errors = []
-        for section_name, section in config_def.get_sections():
-            section_key = section_name.lower()
-            for field_name, field in section.get_fields().items():
-                input_name = f"config_{section_key}_{field_name}"
-
-                # Only validate changed fields
-                if input_name not in changed_fields:
-                    continue
-
-                # Skip if field has no validators
-                if not field.validators:
-                    continue
-
-                # Get and process value
-                processed_value = self._get_processed_value(request, field, input_name)
-
-                # Skip validation for optional fields when value is None/empty
-                # Required fields should still validate None/empty (and fail)
-                if not field.required and (
-                    processed_value is None or processed_value == ""
-                ):
-                    continue
-
-                # Run all validators for this field
-                field_label = field.label or field_name
-                errors = validate_value(processed_value, field.validators, field_label)
-                validation_errors.extend(errors)
-
-        # If validation errors, show them and redirect back
-        if validation_errors:
-            for error in validation_errors:
-                messages.error(request, error)
-            return redirect("django_sysconfig:app_detail", app_label=app_label)
-
-        # Process only changed fields
+        # Process only changed fields; validation happens inside config.set()
         saved_count = 0
         for section_name, section in config_def.get_sections():
             section_key = section_name.lower()
@@ -171,7 +135,12 @@ class ConfigAppDetailView(View):
 
                 # Use the accessor to set the value (dot notation)
                 full_path = f"{app_label}.{section_key}.{field_name}"
-                config.set(full_path, processed_value)
+                try:
+                    config.set(full_path, processed_value)
+                except ConfigValidationError as e:
+                    for error in e.errors:
+                        messages.error(request, error)
+                    return redirect("django_sysconfig:app_detail", app_label=app_label)
                 saved_count += 1
 
         if saved_count > 0:

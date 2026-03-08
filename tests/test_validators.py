@@ -115,9 +115,8 @@ class MinLengthValidatorTestCase(TestCase):
         self.validator(1.0)
         self.validator(-10.0)
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
     def test_string_length(self):
         self.validator("hello")
@@ -144,9 +143,8 @@ class MaxLengthValidatorTestCase(TestCase):
         self.validator(1.0)
         self.validator(-10.0)
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
     def test_string_length(self):
         self.validator("hello")
@@ -160,9 +158,8 @@ class RegexValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = RegexValidator(r"^[a-z]+$")
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
     def test_non_string_fails_validation(self):
         with self.assertRaises(ValidationError):
@@ -193,9 +190,8 @@ class RangeValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = RangeValidator(min_value=1, max_value=10)
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
     def test_valid_range(self):
         self.validator(1)
@@ -255,9 +251,8 @@ class PositiveValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = PositiveValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
     def test_positive_numbers(self):
         self.validator(1)
@@ -292,9 +287,8 @@ class NonNegativeValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = NonNegativeValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
     def test_positive_numbers(self):
         self.validator(1)
@@ -326,13 +320,11 @@ class EmailValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = EmailValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_emails(self):
         self.validator("test@example.com")
@@ -359,13 +351,11 @@ class UrlValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = UrlValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_urls(self):
         self.validator("http://example.com")
@@ -398,13 +388,11 @@ class IPv4ValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = IPv4Validator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_ipv4(self):
         self.validator("192.168.1.1")
@@ -431,13 +419,11 @@ class IPv6ValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = IPv6Validator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_ipv6(self):
         self.validator("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
@@ -462,13 +448,11 @@ class IPAddressValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = IPAddressValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_ipv4(self):
         self.validator("192.168.1.1")
@@ -507,13 +491,11 @@ class HostnameValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = HostnameValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_hostnames(self):
         self.validator("example.com")
@@ -540,6 +522,9 @@ class ChoiceValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = ChoiceValidator(["option1", "option2", "option3"])
 
+    def test_none_skips_validation(self):
+        self.validator(None)
+
     def test_valid_choices(self):
         self.validator("option1")
         self.validator("option2")
@@ -550,8 +535,6 @@ class ChoiceValidatorTestCase(TestCase):
             self.validator("option4")
         with self.assertRaises(ValidationError):
             self.validator("invalid")
-        with self.assertRaises(ValidationError):
-            self.validator(None)
 
     def test_numeric_choices(self):
         numeric_validator = ChoiceValidator([1, 2, 3])
@@ -560,21 +543,17 @@ class ChoiceValidatorTestCase(TestCase):
 
         with self.assertRaises(ValidationError):
             numeric_validator(4)
-        with self.assertRaises(ValidationError):
-            numeric_validator(None)
 
 
 class SlugValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = SlugValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_slugs(self):
         self.validator("hello")
@@ -600,13 +579,11 @@ class JsonValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = JsonValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_json(self):
         self.validator("{}")
@@ -635,17 +612,13 @@ class PathValidatorTestCase(TestCase):
         self.relative_validator = PathValidator()
         self.absolute_validator = PathValidator(must_be_absolute=True)
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.relative_validator(None)
-        with self.assertRaises(ValidationError):
-            self.absolute_validator(None)
+    def test_none_skips_validation(self):
+        self.relative_validator(None)  # must not raise
+        self.absolute_validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.relative_validator("")
-        with self.assertRaises(ValidationError):
-            self.absolute_validator("")
+    def test_empty_string_skips_validation(self):
+        self.relative_validator("")  # must not raise
+        self.absolute_validator("")  # must not raise
 
     def test_valid_paths(self):
         self.relative_validator("/path/to/file")
@@ -673,13 +646,11 @@ class PortValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = PortValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_ports(self):
         self.validator(1)
@@ -709,13 +680,11 @@ class DomainValidatorTestCase(TestCase):
     def setUp(self):
         self.validator = DomainValidator()
 
-    def test_none_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator(None)
+    def test_none_skips_validation(self):
+        self.validator(None)  # must not raise
 
-    def test_empty_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
-            self.validator("")
+    def test_empty_string_skips_validation(self):
+        self.validator("")  # must not raise
 
     def test_valid_domains(self):
         self.validator("example.com")

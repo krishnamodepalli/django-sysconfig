@@ -20,7 +20,6 @@ from django_sysconfig.registry import Field, Section, register_config
 from django_sysconfig.validators import (
     EmailValidator,
     MaxLengthValidator,
-    MinLengthValidator,
     NotEmptyValidator,
     PortValidator,
     PositiveValidator,

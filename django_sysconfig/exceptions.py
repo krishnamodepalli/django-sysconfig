@@ -66,3 +66,13 @@ class ConfigValueError(ConfigError):
         self.value = value
         self.message = message or f"Invalid value for {path}: {value}"
         super().__init__(self.message)
+
+
+class ConfigValidationError(ConfigError):
+    """Raised when a configuration value fails field validator checks."""
+
+    def __init__(self, path: str, errors: list[str]):
+        self.path = path
+        self.errors = errors
+        self.message = f"Validation failed for {path}: " + "; ".join(errors)
+        super().__init__(self.message)
