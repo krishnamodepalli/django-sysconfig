@@ -12,15 +12,22 @@ jobs:
     steps:
       - name: Reload PythonAnywhere Web App
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-          -X POST \
-          -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
-          "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_DOMAIN }}/reload/")
+          body=$(mktemp)
 
-          echo "HTTP Response: $response"
+          http_status=$(curl -s \
+            --connect-timeout 10 \
+            --max-time 30 \
+            -o "$body" \
+            -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+            "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_DOMAIN }}/reload/") || true
 
-          if [ "$response" -ne 200 ]; then
-            echo "Reload failed with status $response"
+          echo "HTTP status: ${http_status:-<no response>}"
+          echo "Response body: $(cat "$body")"
+
+          if [ "${http_status}" != "200" ]; then
+            echo "Reload failed with status '${http_status}'"
             exit 1
           fi
 
