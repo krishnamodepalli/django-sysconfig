@@ -1,0 +1,27 @@
+name: Reload PythonAnywhere Web App
+
+on:
+  schedule:
+    - cron: '0 0 1,15 * *'
+  workflow_dispatch:
+
+jobs:
+  reload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Reload PythonAnywhere Web App
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+          -X POST \
+          -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+          "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_DOMAIN }}/reload/")
+
+          echo "HTTP Response: $response"
+
+          if [ "$response" -ne 200 ]; then
+            echo "Reload failed with status $response"
+            exit 1
+          fi
+
+          echo "Web app reloaded successfully"
