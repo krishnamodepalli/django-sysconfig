@@ -14,25 +14,27 @@ Setup:
     Then visit http://127.0.0.1:8000/admin/config/
 """
 
+from os import environ
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-SECRET_KEY = "dev-only-insecure-key-do-not-use-in-production"
-
-DEBUG = True
-
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+SECRET_KEY = environ.get(
+    "DJANGO_SECRET_KEY", "dev-only-insecure-key-do-not-use-in-production"
+)
+DEBUG = environ.get("DEBUG", "FALSE").lower() == "true"
+ALLOWED_HOSTS = [host for host in environ.get("ALLOWED_HOSTS", "").split(",") if host]
 
 INSTALLED_APPS = [
+    # This library
+    "django_sysconfig",
+    # Django Apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # This library
-    "django_sysconfig",
     # Local demo app for manual dev testing (not packaged)
     "demo",
 ]
