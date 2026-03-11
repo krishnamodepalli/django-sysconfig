@@ -1,5 +1,12 @@
 # django-sysconfig
 
+[![PyPI version](https://img.shields.io/pypi/v/django-sysconfig?label=PyPI&color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/django-sysconfig/)
+[![Python versions](https://img.shields.io/pypi/pyversions/django-sysconfig)](https://pypi.org/project/django-sysconfig/)
+[![CI](https://github.com/krishnamodepalli/django-sysconfig/actions/workflows/ci.yml/badge.svg)](https://github.com/krishnamodepalli/django-sysconfig/actions/workflows/ci.yml)
+[![Release](https://github.com/krishnamodepalli/django-sysconfig/actions/workflows/release.yml/badge.svg)](https://github.com/krishnamodepalli/django-sysconfig/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/krishnamodepalli/django-sysconfig)](https://github.com/krishnamodepalli/django-sysconfig/blob/master/LICENSE)
+[![Demo](https://img.shields.io/badge/demo-live-brightgreen?style=flat&logo=django&logoColor=white)](https://djangosysconfig.pythonanywhere.com)
+
 A **Magento-style system configuration app for Django**. Define typed, structured configuration fields in code, store their values in the database, and manage everything through a built-in admin UI — without touching `settings.py`.
 
 ---
@@ -440,7 +447,7 @@ Both views require the user to be a **staff member** (`is_staff=True`).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up your local development environment, run tests, and submit a pull request.
+See [CONTRIBUTING.md](https://github.com/krishnamodepalli/django-sysconfig/blob/master/CONTRIBUTING.md) for how to set up your local development environment, run tests, and submit a pull request.
 
 ---
 
