@@ -1,4 +1,7 @@
-from django.core.management.base import BaseCommand, CommandParser
+from django.core.management.base import BaseCommand, CommandError, CommandParser
+
+from django_sysconfig.accessor import config
+from django_sysconfig.exceptions import ConfigError, ConfigValidationError
 
 
 class Command(BaseCommand):
@@ -65,10 +68,27 @@ class Command(BaseCommand):
         handlers[options["subcommand"]](*args, **options)
 
     def handle_get(self, *args, **options):
-        raise NotImplementedError
+        path = options["path"]
+        try:
+            value = config.get(path)
+            self.stdout.write(str(value))
+        except ConfigError as e:
+            raise CommandError(str(e)) from e
 
     def handle_set(self, *args, **options):
-        raise NotImplementedError
+        path = options["path"]
+        raw_value = options["value"]
+        try:
+            app_label, section, field_name = path.split(".")
+            field = config._get_field(app_label, section, field_name)
+            parsed_value = field.get_frontend_model_instance().get_value(raw_value)
+            config.set(path, parsed_value)
+            self.stdout.write(self.style.SUCCESS(f"✔ {path} set to {parsed_value!r}"))
+        except ConfigValidationError as e:
+            errors = "\n".join(f"  • {err}" for err in e.errors)
+            raise CommandError(f"Validation failed for {path}:\n{errors}") from e
+        except ConfigError as e:
+            raise CommandError(str(e)) from e
 
     def handle_reset(self, *args, **options):
         raise NotImplementedError
