@@ -1,11 +1,33 @@
+import json
+import os
+from datetime import UTC, datetime
+from decimal import Decimal
+
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import transaction
 
 from django_sysconfig.accessor import config
+from django_sysconfig.encryption import safe_decrypt
 from django_sysconfig.exceptions import ConfigError, ConfigValidationError
+from django_sysconfig.frontend_models import SecretFrontendModel
+from django_sysconfig.models import ConfigValue
+from django_sysconfig.registry import config_registry
+
+
+class _JSONEncoder(json.JSONEncoder):
+    """Extends the default encoder to handle Decimal values."""
+
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return str(o)
+        return super().default(o)
 
 
 class Command(BaseCommand):
-    help = "Interact with django-sysconfig configuration values"
+    # Constants
+    MAX_EXPORT_BATCH_SIZE: int = 100
+
+    help: str = "Interact with django-sysconfig configuration values"
 
     def add_arguments(self, parser: CommandParser):
         subparsers = parser.add_subparsers(dest="subcommand", metavar="subcommand")
@@ -29,7 +51,7 @@ class Command(BaseCommand):
         )
 
         export_parser = subparsers.add_parser(
-            "export", help="Export configuration values to a JSON or YAML file"
+            "export", help="Export configuration values to a JSON file"
         )
         export_parser.add_argument(
             "app", nargs="?", help="App label to export (exports all apps if omitted)"
@@ -37,20 +59,20 @@ class Command(BaseCommand):
         export_parser.add_argument(
             "--output",
             "-o",
-            required=True,
-            help="Output file path (.json, .yml, .yaml)",
+            default="config_export.json",
+            help="Output file path (default: config_export.json)",
         )
         export_parser.add_argument(
             "--batch-size",
             type=int,
             default=50,
-            help="Fields to process per batch (default: 50)",
+            help="Number of config values to fetch per DB query (default: 50)",
         )
 
         import_parser = subparsers.add_parser(
-            "import", help="Import configuration values from a JSON or YAML file"
+            "import", help="Import configuration values from a JSON file"
         )
-        import_parser.add_argument("file", help="Input file path (.json, .yml, .yaml)")
+        import_parser.add_argument("file", help="Input file path (.json)")
         import_parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -109,7 +131,155 @@ class Command(BaseCommand):
             raise CommandError(str(e)) from e
 
     def handle_export(self, *args, **options):
-        raise NotImplementedError
+        output_path = os.path.abspath(options["output"])
+        target_app = options.get("app")
+        batch_size = options["batch_size"]
+
+        if not output_path.endswith(".json"):
+            raise CommandError("Output file must have a .json extension")
+
+        if not 1 <= batch_size <= self.MAX_EXPORT_BATCH_SIZE:
+            raise CommandError("Batch size must be between 1 and 100")
+
+        apps = [target_app] if target_app else config_registry.get_registered_apps()
+        if not apps:
+            raise CommandError("No registered app configurations found")
+
+        # Enumerate all fields from the registry — metadata only, no DB access
+        all_fields = []
+        for app_label in apps:
+            config_def = config_registry.get_config(app_label)
+            if not config_def:
+                raise CommandError(f"No config registered for app '{app_label}'")
+            for section_name, section_class in config_def.get_sections():
+                section_key = section_name.lower()
+                for field_name, field in section_class.get_fields().items():
+                    all_fields.append((app_label, section_key, field_name, field))
+
+        total = len(all_fields)
+        self.stdout.write(
+            f"Exporting {total} config value(s) across {len(apps)} app(s). "
+            "This may take a moment for large configs."
+        )
+        self.stdout.write(f"Output will be written to: {output_path}\n")
+
+        result = {
+            "version": 1,
+            "exported_at": datetime.now(UTC).isoformat(),
+            "config": {},
+        }
+
+        processed = 0
+        for i in range(0, total, batch_size):
+            batch = all_fields[i : i + batch_size]
+
+            # Group by app_label for one targeted DB query per app in this batch
+            batch_by_app: dict[str, list] = {}
+            for app_label, section_key, field_name, field in batch:
+                batch_by_app.setdefault(app_label, []).append(
+                    (section_key, field_name, field)
+                )
+
+            # Fetch raw DB values — one query per app_label
+            db_values: dict[tuple, str | None] = {}
+            for app_label, fields in batch_by_app.items():
+                db_paths = [f"{sk}.{fn}" for sk, fn, _ in fields]
+                for row in ConfigValue.objects.filter(
+                    app_label=app_label, path__in=db_paths
+                ):
+                    db_values[(app_label, row.path)] = row.value
+
+            # Deserialize and accumulate
+            for app_label, section_key, field_name, field in batch:
+                db_path = f"{section_key}.{field_name}"
+                raw = db_values.get((app_label, db_path))
+
+                if field.frontend_model is SecretFrontendModel:
+                    value = safe_decrypt(raw) if raw else None
+                else:
+                    value = field.get_frontend_model_instance().get_value(raw)
+
+                result["config"].setdefault(app_label, {}).setdefault(section_key, {})[
+                    field_name
+                ] = value
+
+                processed += 1
+
+            self.stdout.write(f"  {processed}/{total} apps processed...")
+
+        with open(output_path, "w") as f:
+            json.dump(result, f, indent=2, cls=_JSONEncoder)
+
+        self.stdout.write(self.style.SUCCESS(f"\n✔ Export complete → {output_path}"))
+        self.stderr.write(
+            self.style.WARNING(
+                "⚠ This file contains plaintext secrets. Handle it with care."
+            )
+        )
 
     def handle_import(self, *args, **options):
-        raise NotImplementedError
+        file_path = os.path.abspath(options["file"])
+        dry_run = options["dry_run"]
+
+        if not file_path.endswith(".json"):
+            raise CommandError("Input file must have a .json extension")
+
+        try:
+            with open(file_path) as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            raise CommandError(f"File not found: {file_path}") from None
+        except json.JSONDecodeError as e:
+            raise CommandError(f"Invalid JSON: {e}") from e
+
+        config_data = data.get("config", {})
+        if not config_data:
+            raise CommandError("No config data found in file")
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING("Dry run — no values will be saved\n"))
+
+        paths = [
+            (f"{app}.{section}.{field}", value)
+            for app, sections in config_data.items()
+            for section, fields in sections.items()
+            for field, value in fields.items()
+        ]
+
+        if dry_run:
+            errors = [
+                f"{path}: unknown path" for path, _ in paths if not config.exists(path)
+            ]
+            if errors:
+                raise CommandError(
+                    "Validation failed:\n" + "\n".join(f"  • {err}" for err in errors)
+                )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"✔ Dry run passed — {len(paths)} value(s) look valid"
+                )
+            )
+            return
+
+        errors = []
+        try:
+            with transaction.atomic():
+                for path, value in paths:
+                    try:
+                        config.set(path, value)
+                    except ConfigValidationError as e:
+                        errors.append(f"{path}: " + ", ".join(e.errors))
+                    except ConfigError as e:
+                        errors.append(f"{path}: {e}")
+
+                if errors:
+                    raise CommandError(
+                        "Import aborted — all changes rolled back:\n"
+                        + "\n".join(f"  • {err}" for err in errors)
+                    )
+        except CommandError:
+            raise
+
+        self.stdout.write(
+            self.style.SUCCESS(f"✔ Import complete — {len(paths)} value(s) set")
+        )
