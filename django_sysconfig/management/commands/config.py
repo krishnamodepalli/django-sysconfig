@@ -91,7 +91,22 @@ class Command(BaseCommand):
             raise CommandError(str(e)) from e
 
     def handle_reset(self, *args, **options):
-        raise NotImplementedError
+        path = options["path"]
+
+        if not options["force"]:
+            confirm = input(
+                f"This will reset '{path}' to its field default. "
+                "This cannot be undone. Continue? [y/N] "
+            )
+            if confirm.strip().lower() != "y":
+                self.stdout.write("Aborted.")
+                return
+
+        try:
+            config.reset(path)
+            self.stdout.write(self.style.SUCCESS(f"✔ {path} reset to default"))
+        except ConfigError as e:
+            raise CommandError(str(e)) from e
 
     def handle_export(self, *args, **options):
         raise NotImplementedError
