@@ -17,7 +17,7 @@ class ConfigAppConfig(AppConfig):
         post_migrate.connect(self._sync_defaults, sender=self)
 
     def _sync_defaults(self, **kwargs):
-        from .registry import registry
+        from .registry import config_registry
 
-        for app_label, config_def in registry._configs.items():
-            registry._ensure_db_records(app_label, config_def)
+        for app_label, config_def in config_registry._configs.items():
+            config_registry._ensure_db_records(app_label, config_def)

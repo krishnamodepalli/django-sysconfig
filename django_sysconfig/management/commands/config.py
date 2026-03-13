@@ -101,7 +101,7 @@ class Command(BaseCommand):
         path = options["path"]
         raw_value = options["value"]
         try:
-            app_label, section, field_name = path.split(".")
+            app_label, section, field_name = config._parse_path(path)
             field = config._get_field(app_label, section, field_name)
             parsed_value = field.get_frontend_model_instance().get_value(raw_value)
             config.set(path, parsed_value)
@@ -262,11 +262,13 @@ class Command(BaseCommand):
             return
 
         errors = []
+        paths_written = []
         try:
             with transaction.atomic():
                 for path, value in paths:
                     try:
                         config.set(path, value)
+                        paths_written.append(path)
                     except ConfigValidationError as e:
                         errors.append(f"{path}: " + ", ".join(e.errors))
                     except ConfigError as e:
@@ -278,6 +280,12 @@ class Command(BaseCommand):
                         + "\n".join(f"  • {err}" for err in errors)
                     )
         except CommandError:
+            # DB transaction was rolled back; purge cache keys that were set
+            # so the cache doesn't serve stale values.
+            from django_sysconfig.cache import config_cache
+
+            for p in paths_written:
+                config_cache.invalidate(p)
             raise
 
         self.stdout.write(
