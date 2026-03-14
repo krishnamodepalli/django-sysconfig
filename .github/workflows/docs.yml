@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - docs/docs-site # Allow testing from this branch
 
 permissions:
   contents: read
