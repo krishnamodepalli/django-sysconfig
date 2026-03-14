@@ -3,6 +3,7 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import chokidar from 'chokidar';
 import { WebSocketServer, WebSocket } from 'ws';
+import { minify as minifyHtml } from 'html-minifier-terser';
 import { ConfigLoader } from './config.js';
 import { MarkdownRenderer } from './renderer/markdown.js';
 import { renderPage } from './renderer/template.js';
@@ -30,8 +31,9 @@ export class DocsiteEngine {
 
   async build(isWatch = false) {
     this.isWatch = isWatch;
+    const shouldMinify = !isWatch;
     const t0 = Date.now();
-    console.log('\n📖  Building docs...');
+    console.log(`\n📖  Building docs${shouldMinify ? ' (minified)' : ''}...`);
 
     this.config = await this.configLoader.load();
     const { docsDir, outDir } = this.configLoader.getAbsolutePaths(this.config);
@@ -47,9 +49,9 @@ export class DocsiteEngine {
       g.pages.map(p => ({ ...p, group: g.label }))
     );
 
-    // Copy assets
+    // Copy and minify assets
     const assetManager = new AssetManager(this.root, outDir);
-    assetManager.copyAssets();
+    await assetManager.copyAssets(shouldMinify);
 
     const searchIndex: SearchEntry[] = [];
 
@@ -74,7 +76,7 @@ export class DocsiteEngine {
           + `\n</ul>`
         : '';
 
-      const html = renderPage({
+      let html = renderPage({
         slug: page.slug,
         title,
         description,
@@ -84,6 +86,15 @@ export class DocsiteEngine {
         allPages: this.allPages,
         isWatch: this.isWatch
       });
+
+      if (shouldMinify) {
+        html = await minifyHtml(html, {
+          collapseWhitespace: true,
+          removeComments: true,
+          minifyCSS: true,
+          minifyJS: true
+        });
+      }
 
       const pageOutDir = path.join(outDir, page.slug);
       if (!fs.existsSync(pageOutDir)) {
@@ -101,10 +112,14 @@ export class DocsiteEngine {
     const first = this.allPages[0];
     if (first) {
       const rootHref = `${pathPrefix}/${first.slug}/`;
-      const redirectHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">` +
+      let redirectHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">` +
         `<meta http-equiv="refresh" content="0;url=${rootHref}">` +
         `<link rel="canonical" href="${rootHref}"></head>` +
         `<body><a href="${rootHref}">Redirecting...</a></body></html>`;
+
+      if (shouldMinify) {
+        redirectHtml = await minifyHtml(redirectHtml, { collapseWhitespace: true });
+      }
       fs.writeFileSync(path.join(outDir, 'index.html'), redirectHtml);
     }
 
