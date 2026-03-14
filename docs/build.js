@@ -325,6 +325,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.
 .md tbody tr:hover td{background:hsl(200 40% 99%)}
 .md :not(pre)>code{font-family:var(--mono);font-size:.8em;background:var(--p-light);
   color:hsl(200,68%,26%);padding:.12em .36em;border-radius:4px;border:1px solid var(--p-mid)}
+
+/* ── highlight.js theme ── */
+.hljs{display:block;overflow-x:auto;padding:1em;color:#24292e;background:#fff}
+.hljs-comment,.hljs-punctuation{color:#6a737d}
+.hljs-keyword,.hljs-selector-tag,.hljs-subst{color:#d73a49}
+.hljs-operator,.hljs-variable{color:#d73a49}
+.hljs-string,.hljs-regexp,.hljs-addition{color:#032f62}
+.hljs-title,.hljs-section,.hljs-selector-id,.hljs-type,.hljs-built_in{color:#6f42c1}
+.hljs-number,.hljs-literal,.hljs-symbol,.hljs-bullet,.hljs-attribute{color:#005cc5}
+.hljs-params,.hljs-attr{color:#24292e}
+.hljs-link{color:#032f62;text-decoration:underline}
+.hljs-string{color:#032f62}
+.hljs-keyword,.hljs-storage,.hljs-header{font-weight:600}
+.hljs-deletion{color:#b31d28;background-color:#ffeef0}
+.hljs-addition{color:#22863a;background-color:#f0fff4}
+
 .code-block{margin:1.15rem 0;border-radius:var(--r-lg);
   border:1px solid var(--bdr);box-shadow:var(--sh-sm);position:relative}
 .code-header{display:flex;align-items:center;justify-content:space-between;
