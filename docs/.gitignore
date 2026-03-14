@@ -1,0 +1,6 @@
+# Vendors
+node_modules/
+
+# Artifacts
+dist/
+build/
