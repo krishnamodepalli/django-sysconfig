@@ -445,21 +445,29 @@ function closeSb(){sb.classList.remove('open');mob.classList.remove('open');}
 ham&&ham.addEventListener('click',function(){sb.classList.toggle('open');mob.classList.toggle('open');});
 mob&&mob.addEventListener('click',closeSb);
 /* toc scroll-spy */
-var tocItems=Array.from(document.querySelectorAll('.toc-item[data-id]'));
-if(tocItems.length){
-  var spy=new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      var el=document.querySelector('.toc-item[data-id="'+e.target.id+'"]');
-      if(el)el.classList.toggle('active',e.isIntersecting);
-    });
-  },{rootMargin:'-8% 0px -80% 0px'});
-  tocItems.forEach(function(li){
-    var h=document.getElementById(li.dataset.id);
-    if(h)spy.observe(h);
-    // Close search on TOC click
-    li.addEventListener('click', closeSearch);
-  });
-}
+(function() {
+  var links = Array.from(document.querySelectorAll('.toc-item[data-id]'));
+  if (!links.length) return;
+  var headers = links.map(function(l) { return document.getElementById(l.dataset.id); }).filter(Boolean);
+  var activeIdx = -1;
+
+  function spy() {
+    var top = window.scrollY + 100; // Offset for header
+    var newIdx = -1;
+    for (var i = 0; i < headers.length; i++) {
+      if (headers[i].offsetTop <= top) newIdx = i;
+      else break;
+    }
+    if (newIdx === -1 && headers.length > 0) newIdx = 0;
+    if (newIdx !== activeIdx) {
+      links.forEach(function(l, i) { l.classList.toggle('active', i === newIdx); });
+      activeIdx = newIdx;
+    }
+  }
+  window.addEventListener('scroll', spy);
+  spy();
+  links.forEach(function(l) { l.addEventListener('click', closeSearch); });
+})();
 /* copy buttons */
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.copy-btn');
