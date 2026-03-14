@@ -326,21 +326,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.
 .md :not(pre)>code{font-family:var(--mono);font-size:.8em;background:var(--p-light);
   color:hsl(200,68%,26%);padding:.12em .36em;border-radius:4px;border:1px solid var(--p-mid)}
 
-/* ── highlight.js theme ── */
-.hljs{display:block;overflow-x:auto;padding:1em;color:#24292e;background:#fff}
-.hljs-comment,.hljs-punctuation{color:#6a737d}
-.hljs-keyword,.hljs-selector-tag,.hljs-subst{color:#d73a49}
-.hljs-operator,.hljs-variable{color:#d73a49}
-.hljs-string,.hljs-regexp,.hljs-addition{color:#032f62}
-.hljs-title,.hljs-section,.hljs-selector-id,.hljs-type,.hljs-built_in{color:#6f42c1}
-.hljs-number,.hljs-literal,.hljs-symbol,.hljs-bullet,.hljs-attribute{color:#005cc5}
-.hljs-params,.hljs-attr{color:#24292e}
-.hljs-link{color:#032f62;text-decoration:underline}
-.hljs-string{color:#032f62}
-.hljs-keyword,.hljs-storage,.hljs-header{font-weight:600}
-.hljs-deletion{color:#b31d28;background-color:#ffeef0}
-.hljs-addition{color:#22863a;background-color:#f0fff4}
-
 .code-block{margin:1.15rem 0;border-radius:var(--r-lg);
   border:1px solid var(--bdr);box-shadow:var(--sh-sm);position:relative}
 .code-header{display:flex;align-items:center;justify-content:space-between;
@@ -582,32 +567,95 @@ input.addEventListener('input',function(){
   runSearch(q);
 });
 
-function score(str,q){
-  str=str.toLowerCase();q=q.toLowerCase();
-  if(str===q)return 5000;
-  if(str.startsWith(q))return 3000-str.length;
-  if(str.includes(q))return 2000-str.indexOf(q);
-  var s=0,qi=0,last=-1;
-  for(var i=0;i<str.length&&qi<q.length;i++){
-    if(str[i]===q[qi]){s+=last===-1?10:(i-last===1?6:2);last=i;qi++;}
+function lev(a, b) {
+  if (a.length < b.length) { var tmp = a; a = b; b = tmp; }
+  if (b.length === 0) return a.length;
+  var prev = Array.from({ length: b.length + 1 }, function(_, i) { return i; });
+  for (var i = 0; i < a.length; i++) {
+    var curr = [i + 1];
+    for (var j = 0; j < b.length; j++) {
+      curr.push(Math.min(prev[j + 1] + 1, curr[j] + 1, prev[j] + (a[i] === b[j] ? 0 : 1)));
+    }
+    prev = curr;
   }
-  return qi===q.length?s:0;
+  return prev[b.length];
 }
-function hl(text,q){
-  if(!q)return text;
-  var safe=q.replace(/[-\\[\\]{}()*+?.,\\\\^$|#\\s]/g,'\\\\$&');
-  try{return text.replace(new RegExp('('+safe+')','gi'),'<mark>$1</mark>');}catch(e){return text;}
+
+function score(target, query) {
+  if (!target || !query) return 0;
+  var t = target.toLowerCase(), q = query.toLowerCase();
+  if (t === q) return 10000;
+
+  // 1. Direct match / Prefix match
+  var idx = t.indexOf(q);
+  if (idx !== -1) {
+    var s = 5000;
+    if (idx === 0) s += 2000; // Prefix
+    else if (t[idx - 1] === ' ' || t[idx - 1] === '.') s += 1500; // Word start
+    return s + (q.length * 20) - idx;
+  }
+
+  // 2. Token-based fuzzy matching
+  var qTokens = q.split(/\s+/).filter(function(x) { return x.length > 1; });
+  if (!qTokens.length) return 0;
+  var tTokens = t.split(/[^a-z0-9]+/).filter(Boolean);
+
+  // 2. Acronym matching (e.g., "CC" -> "Core Concepts")
+  if (q.length >= 2 && q.length <= 4) {
+    var acronym = tTokens.map(function(tt) { return tt[0]; }).join('').slice(0, q.length);
+    if (acronym === q) return 8000;
+  }
+
+  // 3. Token-based fuzzy matching
+  var total = 0, matches = 0;
+  qTokens.forEach(function(qt) {
+    var best = 0;
+    tTokens.forEach(function(tt) {
+      if (tt === qt) { best = Math.max(best, 1000); }
+      else if (tt.indexOf(qt) === 0) { best = Math.max(best, 800); }
+      else if (tt.indexOf(qt) !== -1) { best = Math.max(best, 400); }
+      else if (qt.length > 2) {
+        var d = lev(tt, qt);
+        if (d === 1) best = Math.max(best, 300);
+      }
+    });
+    if (best > 0) { total += best; matches++; }
+  });
+
+  if (matches === 0) return 0;
+  return (total / qTokens.length) * (matches / qTokens.length);
 }
-function runSearch(q){
-  if(!q){hitsEl.innerHTML='';return;}
-  if(!idx){hitsEl.innerHTML='<div class="sh-empty">Loading…</div>';return;}
-  var scored=idx
-    .map(function(item){var s=score(item.title,q);if(item.excerpt)s=Math.max(s,score(item.excerpt,q)*0.4);return{item:item,s:s};})
-    .filter(function(x){return x.s>0;})
-    .sort(function(a,b){return b.s-a.s;})
-    .slice(0,10);
-  if(!scored.length){
-    hitsEl.innerHTML='<div class="sh-empty"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>No results for <strong>'+q+'</strong></div>';
+
+function hl(text, q) {
+  if (!q) return text;
+  var tokens = q.toLowerCase().split(/\s+/).filter(function(x) { return x.length > 1; });
+  if (!tokens.length) return text;
+  var out = text;
+  tokens.forEach(function(t) {
+    var safe = t.replace(/[-\\[\\]{}()*+?.,\\\\^$|#\\s]/g, '\\\\$&');
+    try { out = out.replace(new RegExp('(' + safe + ')', 'gi'), '<mark>$1</mark>'); } catch (e) {}
+  });
+  return out;
+}
+
+function runSearch(q) {
+  if (!q) { hitsEl.innerHTML = ''; return; }
+  if (!idx) { hitsEl.innerHTML = '<div class="sh-empty">Loading\u2026</div>'; return; }
+
+  var scored = idx
+    .map(function(item) {
+      var sTitle = score(item.title, q);
+      var sExcerpt = item.excerpt ? score(item.excerpt, q) : 0;
+      // Weights: Title match is worth more than excerpt match
+      var s = (sTitle * 2.0) + (sExcerpt * 0.5);
+      return { item: item, s: s };
+    })
+    .filter(function(x) { return x.s > 50; })
+    .sort(function(a, b) { return b.s - a.s; })
+    .slice(0, 12);
+
+  if (!scored.length) {
+    hitsEl.innerHTML = '<div class="sh-empty"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>No results for <strong>' + q + '</strong></div>';
     return;
   }
   var groups={};
@@ -686,6 +734,7 @@ function renderPage({ slug, title, description, bodyHtml, tocHtml }) {
 <meta property="og:type" content="article">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="${PATH_PREFIX}/assets/css/github.min.css">
 <style>${getCSS()}</style>
 </head>
 <body>
@@ -753,6 +802,21 @@ async function build() {
   const t0 = Date.now();
   console.log('\n📖  Building docs…');
   ensureDir(OUT_DIR);
+
+  // Copy assets
+  const ASSETS_SRC = path.resolve(ROOT, 'assets');
+  const ASSETS_DST = path.resolve(OUT_DIR, 'assets');
+  if (fs.existsSync(ASSETS_SRC)) {
+    const copyRecursive = (src, dst) => {
+      ensureDir(dst);
+      for (const f of fs.readdirSync(src)) {
+        const s = path.join(src, f), d = path.join(dst, f);
+        if (fs.statSync(s).isDirectory()) copyRecursive(s, d);
+        else fs.writeFileSync(d, fs.readFileSync(s));
+      }
+    };
+    copyRecursive(ASSETS_SRC, ASSETS_DST);
+  }
 
   const searchIndex = [];
 
