@@ -1,6 +1,48 @@
 # CHANGELOG
 
 
+## v0.0.2 (2026-03-14)
+
+### Bug Fixes
+
+- **registry**: Added Transaction and creates Configvalue records
+  ([`4569e97`](https://github.com/krishnamodepalli/django-sysconfig/commit/4569e97f1f5e04a763cfd07804e447d8f64975c9))
+
+### Chores
+
+- Remove unwanted docker-compose file
+  ([`8aa3098`](https://github.com/krishnamodepalli/django-sysconfig/commit/8aa309870514a648b3e171ac3477b84bea90c291))
+
+- **demo**: Setup the settings module for the demo app
+  ([`94c5482`](https://github.com/krishnamodepalli/django-sysconfig/commit/94c5482ced6f9d4fe91277e8e53e8fa652cd1ffa))
+
+### Continuous Integration
+
+- Setup Python Anywhere App reload with cron schedule on 1, 15 of each month
+  ([`5bf3a31`](https://github.com/krishnamodepalli/django-sysconfig/commit/5bf3a31be43362f014bc3ae9293f47dab448d824))
+
+- **demo**: Harden PA reload curl call with timeouts and error logging
+  ([`02b0311`](https://github.com/krishnamodepalli/django-sysconfig/commit/02b03112159aee184f693222f68c2565a9dfbf61))
+
+- Add --connect-timeout 10 and --max-time 30 to prevent hanging - Capture response body to a temp
+  file instead of discarding with -o /dev/null - Append || true so a curl failure does not leave
+  $http_status empty, avoiding 'integer expression expected' in the numeric comparison - Switch
+  comparison to string equality (!=) so an empty status is handled - Print both HTTP status and
+  response body on failure for easier debugging
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Documentation
+
+- **readme**: Add badges for PyPI, CI, release, license and demo
+  ([`25eeb6c`](https://github.com/krishnamodepalli/django-sysconfig/commit/25eeb6ca7e1ab29387559742401ec77da8632e83))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+- **README**: Use absolute links in the README
+  ([`9278487`](https://github.com/krishnamodepalli/django-sysconfig/commit/9278487d26e2e788ea3c7d591bdf58331ecac7cc))
+
+
 ## v0.0.1 (2026-03-10)
 
 ### Bug Fixes
