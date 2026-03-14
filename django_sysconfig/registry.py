@@ -235,25 +235,30 @@ class ConfigRegistry:
         a database entry yet.
         """
         try:
+            from django.db import transaction
+
             from .models import ConfigValue
 
-            for section_name, section in config_def.get_sections():
-                section_key = section_name.lower()
-                for field_name, field in section.get_fields().items():
-                    db_path = f"{section_key}.{field_name}"
+            with transaction.atomic():
+                for section_name, section in config_def.get_sections():
+                    section_key = section_name.lower()
+                    for field_name, field in section.get_fields().items():
+                        db_path = f"{section_key}.{field_name}"
 
-                    # Serialize the default value
-                    default_value = None
-                    if field.default is not None:
-                        frontend_model = field.get_frontend_model_instance()
-                        default_value = frontend_model.serialize_value(field.default)
+                        # Serialize the default value
+                        default_value = None
+                        if field.default is not None:
+                            frontend_model = field.get_frontend_model_instance()
+                            default_value = frontend_model.serialize_value(
+                                field.default
+                            )
 
-                    # Create only if doesn't exist (don't overwrite existing values)
-                    ConfigValue.objects.get_or_create(
-                        app_label=app_label,
-                        path=db_path,
-                        defaults={"value": default_value},
-                    )
+                        # Create only if doesn't exist (don't overwrite existing values)
+                        ConfigValue.objects.get_or_create(
+                            app_label=app_label,
+                            path=db_path,
+                            defaults={"value": default_value},
+                        )
         except (
             django.db.utils.OperationalError,
             django.db.utils.ProgrammingError,

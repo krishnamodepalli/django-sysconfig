@@ -626,7 +626,10 @@ class PathValidatorTestCase(TestCase):
         self.relative_validator("./relative/path")
 
     def test_absolute_path_required(self):
-        self.absolute_validator("/absolute/path")
+        import os
+
+        abs_path = os.path.abspath("/absolute/path")
+        self.absolute_validator(abs_path)
 
         with self.assertRaises(ValidationError):
             self.absolute_validator("relative/path")
