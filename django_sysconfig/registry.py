@@ -249,7 +249,9 @@ class ConfigRegistry:
                         default_value = None
                         if field.default is not None:
                             frontend_model = field.get_frontend_model_instance()
-                            default_value = frontend_model.serialize_value(field.default)
+                            default_value = frontend_model.serialize_value(
+                                field.default
+                            )
 
                         # Create only if doesn't exist (don't overwrite existing values)
                         ConfigValue.objects.get_or_create(
