@@ -44,4 +44,4 @@ Examples:
 
 ---
 
-Ready to get started? Head over to [Installation](../installation/) next.
+Ready to get started? Head over to [Installation](/installation/) next.

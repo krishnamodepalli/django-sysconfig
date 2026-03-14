@@ -30,8 +30,9 @@ function getConfig() {
 }
 
 let cfg = getConfig();
-const DOCS_DIR = path.resolve(ROOT, cfg.docsDir || 'docs');
-const OUT_DIR  = path.resolve(ROOT, cfg.outDir  || 'dist');
+const PATH_PREFIX = process.env.PATH_PREFIX || cfg.pathPrefix || '';
+const DOCS_DIR    = path.resolve(ROOT, cfg.docsDir || 'docs');
+const OUT_DIR     = path.resolve(ROOT, cfg.outDir  || 'dist');
 
 let allPages = [];
 function refreshPages() {
@@ -39,7 +40,7 @@ function refreshPages() {
 }
 refreshPages();
 
-const slugToHref = s => `../${s}/`;
+const slugToHref = s => `${PATH_PREFIX}/${s}/`;
 const slugToFile = s => path.join(OUT_DIR, s, 'index.html');
 const mdFile     = s => path.join(DOCS_DIR, `${s}.md`);
 const ensureDir  = p => { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); };
@@ -76,6 +77,13 @@ marked.use({
         `  <pre><code class="hljs language-${language}">${hl}</code></pre>\n` +
         `</div>\n`
       );
+    },
+    link({ href, title, text }) {
+      let outHref = href;
+      if (href.startsWith('/') && !href.startsWith('//')) {
+        outHref = `${PATH_PREFIX}${href}`;
+      }
+      return `<a href="${outHref}"${title ? ` title="${title}"` : ''}>${text}</a>`;
     },
   },
 });
@@ -542,7 +550,7 @@ function shiftKb(d){
 }
 function activateKb(){var el=hitsEl.querySelector('.sh-hit.kb-focus');if(el)el.click();}
 function loadIdx(){
-  fetch('../search-index.json')
+  fetch('${PATH_PREFIX}/search-index.json')
     .then(function(r){return r.json();})
     .then(function(data){
       idx=data;
@@ -684,7 +692,7 @@ function renderPage({ slug, title, description, bodyHtml, tocHtml }) {
   <button id="hamburger" aria-label="Open navigation">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
-  <a href="../${firstSlug}/" class="logo" aria-label="${name} docs home">
+  <a href="${PATH_PREFIX}/${firstSlug}/" class="logo" aria-label="${name} docs home">
     <div class="logo-mark" aria-hidden="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     </div>
@@ -761,7 +769,7 @@ async function build() {
 
   const first = allPages[0];
   if (first) {
-    const rootHref = `${first.slug}/`;
+    const rootHref = `${PATH_PREFIX}/${first.slug}/`;
     write(path.join(OUT_DIR, 'index.html'),
       `<!DOCTYPE html><html><head><meta charset="UTF-8">` +
       `<meta http-equiv="refresh" content="0;url=${rootHref}">` +

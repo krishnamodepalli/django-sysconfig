@@ -79,4 +79,4 @@ You should see the django-sysconfig App List view. 🎉
 
 ---
 
-Ready to configure your first app? Head over to [Configuration](../configuration/) next.
+Ready to configure your first app? Head over to [Configuration](/configuration/) next.
