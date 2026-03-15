@@ -13,7 +13,7 @@
                        value="{{ value|default:'' }}"
                        step="1"
                        {% if field.extra.min is not None %}min="{{ field.extra.min }}"{% endif %}
-                       {% if field.extra.max is not None %}max="{{ field.extra.max }}"{% endif %}>
+                       {% if field.extra.max is not None %}max="{{ field.extra.max }}"{% endif %} />
             </div>
             {% if field.comment %}
             <div class="config-field-comment">{{ field.comment|safe }}</div>
