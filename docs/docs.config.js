@@ -24,7 +24,8 @@ export default {
     repo: "https://github.com/krishnamodepalli/django-sysconfig",
     // Base URL for production (used in sitemap, canonical links)
     // e.g. "https://docs.sysconfig.dev" — no trailing slash
-    baseUrl: "",
+    baseUrl: "https://krishnamodepalli.github.io/django-sysconfig",
+    ogImage: "/django-sysconfig/assets/images/og-banner.svg",
   },
 
   // Output directory (relative to this config file)

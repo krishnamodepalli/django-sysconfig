@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-import { getRelativeRootPrefix, rewriteRootRelativeUrls } from '../paths.js';
+import { rewriteRootRelativeUrls, toAbsoluteSitePath } from '../paths.js';
 
 const CALLOUTS: Record<string, { icon: string; label: string }> = {
   note:    { icon: '💡', label: 'Note'    },
@@ -52,22 +52,21 @@ export class MarkdownRenderer {
     return renderer;
   }
 
-  render(md: string, slug: string): string {
+  render(md: string, _slug: string, pathPrefix: string = ''): string {
     const withCallouts = this.parseCallouts(md);
     this.renderer = this.createRenderer();
 
-    const relPrefix = getRelativeRootPrefix(slug);
     const originalLink = this.renderer.link.bind(this.renderer);
     this.renderer.link = (token) => {
       let href = token.href;
       if (href.startsWith('/') && !href.startsWith('//')) {
-        href = `${relPrefix}${href}`;
+        href = toAbsoluteSitePath(pathPrefix, href);
       }
       return originalLink({ ...token, href });
     };
 
     const html = marked.parse(withCallouts, { renderer: this.renderer, gfm: true, breaks: false }) as string;
-    return rewriteRootRelativeUrls(html, relPrefix);
+    return rewriteRootRelativeUrls(html, pathPrefix);
   }
 
   private parseCallouts(md: string): string {

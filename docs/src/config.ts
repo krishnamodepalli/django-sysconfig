@@ -19,9 +19,9 @@ export class ConfigLoader {
 
     const module = await import(`file://${configPath}?t=${Date.now()}`);
     const cfg: DocsConfig = module.default;
-    const baseUrl = trimTrailingSlash(cfg.site.baseUrl || '');
+    const baseUrl = trimTrailingSlash(cfg.site.baseUrl ?? '');
     const pathPrefix = normalizePathPrefix(
-      process.env.PATH_PREFIX || cfg.pathPrefix || this.inferPathPrefix(baseUrl)
+      process.env.PATH_PREFIX ?? cfg.pathPrefix ?? this.inferPathPrefix(baseUrl)
     );
 
     return {
@@ -30,8 +30,8 @@ export class ConfigLoader {
         ...cfg.site,
         baseUrl,
       },
-      outDir: cfg.outDir || 'dist',
-      docsDir: cfg.docsDir || 'docs',
+      outDir: cfg.outDir ?? 'dist',
+      docsDir: cfg.docsDir ?? 'docs',
       pathPrefix,
     };
   }

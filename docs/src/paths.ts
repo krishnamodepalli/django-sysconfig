@@ -36,6 +36,15 @@ export function toAbsoluteDocHref(pathPrefix: string, slug: string): string {
   return toAbsoluteSitePath(pathPrefix, `${slug}/`);
 }
 
+export function toAbsoluteUrl(baseUrl: string, sitePath: string): string {
+  try {
+    const origin = new URL(baseUrl).origin;
+    return new URL(sitePath, origin).toString();
+  } catch {
+    return sitePath;
+  }
+}
+
 export function buildCanonicalBaseUrl(baseUrl: string, pathPrefix: string): string {
   const trimmedBaseUrl = trimTrailingSlash(baseUrl);
 
@@ -57,6 +66,10 @@ export function buildCanonicalBaseUrl(baseUrl: string, pathPrefix: string): stri
   }
 }
 
-export function rewriteRootRelativeUrls(html: string, relPrefix: string): string {
-  return html.replace(/\b(href|src)=("|')\/(?!\/)/g, `$1=$2${relPrefix}/`);
+export function rewriteRootRelativeUrls(html: string, pathPrefix: string): string {
+  return html.replace(
+    /\b(href|src)=(["'])\/(?!\/)([^"']*)\2/g,
+    (_, attr: string, quote: string, target: string) =>
+      `${attr}=${quote}${toAbsoluteSitePath(pathPrefix, target)}${quote}`
+  );
 }

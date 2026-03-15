@@ -10,8 +10,14 @@ import { MarkdownRenderer } from './renderer/markdown.js';
 import { renderPage } from './renderer/template.js';
 import { Indexer } from './indexer/index.js';
 import { AssetManager } from './assets/index.js';
-import { DocsConfig, PageMetadata, SearchEntry } from './types.js';
-import { buildCanonicalBaseUrl, toRelativeDocHref } from './paths.js';
+import { DocsConfig, GeneratedPage, PageMetadata, SearchEntry } from './types.js';
+import {
+  buildCanonicalBaseUrl,
+  toAbsoluteDocHref,
+  toAbsoluteSitePath,
+  toAbsoluteUrl,
+  toRelativeDocHref,
+} from './paths.js';
 
 export class DocsiteEngine {
   private root: string;
@@ -40,6 +46,7 @@ export class DocsiteEngine {
     this.config = await this.configLoader.load();
     const { docsDir, outDir } = this.configLoader.getAbsolutePaths(this.config);
     const pathPrefix = this.config.pathPrefix || '';
+    const canonicalBaseUrl = buildCanonicalBaseUrl(this.config.site.baseUrl || '', pathPrefix);
 
     if (!fs.existsSync(outDir)) {
       fs.mkdirSync(outDir, { recursive: true });
@@ -53,6 +60,7 @@ export class DocsiteEngine {
     await assetManager.copyAssets(shouldMinify);
 
     const searchIndex: SearchEntry[] = [];
+    const generatedPages: GeneratedPage[] = [];
 
     for (const page of this.allPages) {
       const srcPath = path.join(docsDir, `${page.slug}.md`);
@@ -62,9 +70,13 @@ export class DocsiteEngine {
 
       const { data: fm, content: mdContent } = matter(rawMd);
       const title = fm.title || page.title;
-      const description = fm.description || '';
+      const description =
+        this.extractDescription(mdContent) ||
+        fm.description ||
+        this.config.site.tagline ||
+        `${title} — ${this.config.site.name} documentation`;
 
-      const bodyHtml = this.renderer.render(mdContent, page.slug);
+      const bodyHtml = this.renderer.render(mdContent, page.slug, pathPrefix);
       const tocItems = this.indexer.extractTOC(bodyHtml);
 
       const tocHtml = tocItems.length >= 2
@@ -102,16 +114,23 @@ export class DocsiteEngine {
       fs.writeFileSync(path.join(pageOutDir, 'index.html'), html);
 
       searchIndex.push(...this.indexer.buildPageIndex(page.slug, title, page.group, bodyHtml, pathPrefix));
+      generatedPages.push({
+        slug: page.slug,
+        title,
+        description,
+        url: this.buildPageUrl(page.slug, canonicalBaseUrl, pathPrefix),
+      });
     }
 
     fs.writeFileSync(path.join(outDir, 'search-index.json'), JSON.stringify(searchIndex));
+    this.writeSitemap(outDir, generatedPages, canonicalBaseUrl);
+    this.writeStructuredData(outDir, generatedPages, canonicalBaseUrl, pathPrefix);
 
     const first = this.allPages[0];
     if (first) {
       const rootHref = toRelativeDocHref('', first.slug);
-      const canonicalBaseUrl = buildCanonicalBaseUrl(this.config.site.baseUrl || '', pathPrefix);
       const canonicalHref = canonicalBaseUrl
-        ? `${canonicalBaseUrl}/${first.slug}/`
+        ? this.buildPageUrl(first.slug, canonicalBaseUrl, pathPrefix)
         : rootHref;
       let redirectHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">` +
         `<meta http-equiv="refresh" content="0;url=${rootHref}">` +
@@ -160,5 +179,84 @@ export class DocsiteEngine {
         client.send('reload');
       }
     }
+  }
+
+  private extractDescription(markdown: string): string {
+    const withoutCode = markdown.replace(/```[\s\S]*?```/g, '');
+    const withoutCallouts = withoutCode.replace(/^:::\w+[^\n]*\n[\s\S]*?^:::/gm, '');
+    const blocks = withoutCallouts.split(/\n\s*\n/).map(block => block.trim()).filter(Boolean);
+
+    for (const block of blocks) {
+      if (/^(#|>|[-*]\s|\d+\.\s|\|)/m.test(block)) {
+        continue;
+      }
+
+      const text = block
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_~]/g, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (text) {
+        return text.slice(0, 160);
+      }
+    }
+
+    return '';
+  }
+
+  private buildPageUrl(slug: string, canonicalBaseUrl: string, pathPrefix: string): string {
+    const pagePath = toAbsoluteDocHref(pathPrefix, slug);
+    return canonicalBaseUrl ? toAbsoluteUrl(canonicalBaseUrl, pagePath) : pagePath;
+  }
+
+  private writeSitemap(outDir: string, pages: GeneratedPage[], canonicalBaseUrl: string) {
+    if (!canonicalBaseUrl) {
+      return;
+    }
+
+    const urls = pages
+      .map(page => `<url><loc>${page.url}</loc></url>`)
+      .join('');
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`;
+    fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap);
+  }
+
+  private writeStructuredData(
+    outDir: string,
+    pages: GeneratedPage[],
+    canonicalBaseUrl: string,
+    pathPrefix: string
+  ) {
+    const siteUrl = canonicalBaseUrl || toAbsoluteSitePath(pathPrefix);
+    const ogImagePath = this.config.site.ogImage || toAbsoluteSitePath(pathPrefix, 'assets/images/og-banner.svg');
+    const ogImageUrl = canonicalBaseUrl ? toAbsoluteUrl(canonicalBaseUrl, ogImagePath) : ogImagePath;
+    const payload = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          name: this.config.site.name,
+          description: this.config.site.tagline,
+          url: siteUrl,
+          image: ogImageUrl,
+        },
+        ...pages.map(page => ({
+          '@type': 'TechArticle',
+          headline: page.title,
+          description: page.description,
+          url: page.url,
+          image: ogImageUrl,
+        })),
+      ],
+    };
+
+    fs.writeFileSync(
+      path.join(outDir, 'structured-data.jsonld'),
+      JSON.stringify(payload, null, 2)
+    );
   }
 }

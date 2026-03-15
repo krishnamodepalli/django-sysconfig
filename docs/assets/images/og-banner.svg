@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">django-sysconfig documentation banner</title>
+  <desc id="desc">Banner image for django-sysconfig documentation sharing previews.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#083344" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" rx="32" />
+  <g fill="none" stroke="#e0f2fe" stroke-opacity="0.18">
+    <circle cx="140" cy="120" r="72" />
+    <circle cx="1060" cy="490" r="96" />
+    <path d="M0 520C160 470 280 410 430 430s252 110 404 87c124-19 225-82 366-57" />
+  </g>
+  <g fill="#f8fafc">
+    <rect x="92" y="88" width="76" height="76" rx="18" fill="#0f172a" fill-opacity="0.28" />
+    <path d="M114 144.5A16.5 16.5 0 0 1 130.5 128H188" stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
+    <path d="M130.5 96H188v104h-57.5A16.5 16.5 0 0 1 114 183.5v-71A16.5 16.5 0 0 1 130.5 96Z" stroke="#ffffff" stroke-width="10" stroke-linejoin="round" />
+    <text x="92" y="256" font-family="Inter, Arial, sans-serif" font-size="70" font-weight="700">django-sysconfig</text>
+    <text x="92" y="334" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="500" fill="#dbeafe">Magento-style system configuration for Django</text>
+    <text x="92" y="438" font-family="Inter, Arial, sans-serif" font-size="28" fill="#e0f2fe">Typed config fields • Admin UI • Caching • Encrypted secrets</text>
+    <text x="92" y="494" font-family="Inter, Arial, sans-serif" font-size="28" fill="#e0f2fe">Documentation • Guides • API reference</text>
+  </g>
+</svg>

@@ -2,8 +2,9 @@ import { DocsConfig, PageMetadata } from '../types.js';
 import {
   buildCanonicalBaseUrl,
   getRelativeRootPrefix,
+  toAbsoluteDocHref,
   toAbsoluteSitePath,
-  toRelativeDocHref,
+  toAbsoluteUrl,
 } from '../paths.js';
 
 export function renderPage({
@@ -27,7 +28,7 @@ export function renderPage({
   const { name = 'Docs', version = '', repo = '', baseUrl = '' } = cfg.site;
   const pathPrefix = cfg.pathPrefix || '';
   const relPrefix = getRelativeRootPrefix(slug);
-  const slugToHref = (targetSlug: string) => toRelativeDocHref(slug, targetSlug);
+  const slugToHref = (targetSlug: string) => toAbsoluteDocHref(pathPrefix, targetSlug);
 
   const sidebarHtml = cfg.nav.map(g => {
     const links = g.pages.map(p =>
@@ -56,7 +57,25 @@ export function renderPage({
     : '<div></div>';
 
   const canonicalBaseUrl = buildCanonicalBaseUrl(baseUrl, pathPrefix);
-  const canon = canonicalBaseUrl ? `\n<link rel="canonical" href="${canonicalBaseUrl}/${slug}/">` : '';
+  const pagePath = toAbsoluteDocHref(pathPrefix, slug);
+  const pageUrl = canonicalBaseUrl ? toAbsoluteUrl(canonicalBaseUrl, pagePath) : pagePath;
+  const ogImagePath = cfg.site.ogImage || toAbsoluteSitePath(pathPrefix, 'assets/images/og-banner.svg');
+  const ogImageUrl = canonicalBaseUrl ? toAbsoluteUrl(canonicalBaseUrl, ogImagePath) : ogImagePath;
+  const canon = `\n<link rel="canonical" href="${pageUrl}">`;
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: title,
+    description,
+    url: pageUrl,
+    image: [ogImageUrl],
+    mainEntityOfPage: pageUrl,
+    publisher: {
+      '@type': 'Organization',
+      name,
+      url: canonicalBaseUrl || toAbsoluteSitePath(pathPrefix),
+    },
+  });
   const ghLink = repo
     ? `<a href="${repo}" class="hdr-icon-link" aria-label="GitHub" target="_blank" rel="noopener">`
       + `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7C6.73 19.91 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z"/></svg></a>`
@@ -70,14 +89,17 @@ export function renderPage({
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} — ${name} Docs</title>
-<meta name="description" content="${description || `${title} — ${name} documentation`}">${canon}
+<meta name="description" content="${description}">${canon}
 <meta property="og:title" content="${title} — ${name} Docs">
-<meta property="og:description" content="${description || ''}">
+<meta property="og:description" content="${description}">
+<meta property="og:url" content="${pageUrl}">
 <meta property="og:type" content="article">
+<meta property="og:image" content="${ogImageUrl}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${relPrefix}/assets/css/github.min.css">
 <link rel="stylesheet" href="${relPrefix}/assets/css/main.css">
+<script type="application/ld+json">${jsonLd}</script>
 </head>
 <body>
 
