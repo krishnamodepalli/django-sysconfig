@@ -17,10 +17,12 @@ pip install django-sysconfig
 ```python
 # settings.py
 INSTALLED_APPS = [
+    "django_sysconfig",     # Add it at the top
     ...
-    "django_sysconfig",
 ]
 ```
+
+***Why at the top? Check [here →](#why-django_sysconfig-at-the-top)***
 
 ---
 
@@ -49,6 +51,7 @@ urlpatterns = [
 ```
 
 > **Why before `admin/`?**
+>
 > Django matches URL patterns in order. Placing the config URL first ensures `/admin/config/` is handled by `django-sysconfig` rather than being caught by the admin's catch-all.
 
 ---
@@ -117,10 +120,19 @@ Values are **typed** — `max_items` is an `int`, not the string `"100"`. Cachin
 
 Start your dev server, log in with a staff account, and visit `/admin/config/`. You'll see your app listed with all its sections and fields.
 
+![Django system configuration page showing the myapp entry and its General Settings section in the admin UI](/assets/images/general-settings.png)
 <!-- SCREENSHOT: Admin config list showing "myapp" with "General Settings" section -->
 <!-- GIF: Editing the "Site Name" field and saving -->
 
 ---
+
+## Why's?
+
+### Why `django_sysconfig` at the top?
+
+> If not given at the top, Django picks up other Django app's admin templates before other this app, which means the admin index layout is modified and the **System Configuration** button/link will not appear at the top of the page.
+>
+> ![Django admin index page with the System Configuration button visible near the top of the page](/assets/images/sysconfig-button.png)
 
 ## You're done!
 

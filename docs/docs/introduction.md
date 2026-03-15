@@ -48,13 +48,13 @@ A **section** is a logical grouping of related fields within an app. Sections ha
 
 A **field** defines a single configurable value. It has a type (the `frontend_model`), a label, an optional comment, a default value, optional validators, and an optional `on_save` callback.
 
-### Frontend model
-
-The **frontend model** is the type system. It controls how a value is serialized to the database, deserialized back to Python, and rendered in the admin UI. `django-sysconfig` ships with seven built-in types; you can write your own.
-
 ### Accessor
 
 The **accessor** (`config`) is the object you import in your application code to read and write configuration values. It handles caching, type conversion, and path validation transparently.
+
+### Frontend model
+
+The **frontend model** is the type system. It specifies how a value is serialized to the database, deserialized back to Python, and rendered in the admin UI. `django-sysconfig` ships with seven built-in types; you can write your own.
 
 ---
 
@@ -80,6 +80,6 @@ This means:
 
 ## Next steps
 
-- [Quick Start](quickstart.md) — get up and running in five minutes
-- [Getting Started](getting-started.md) — a thorough walkthrough of a real-world setup
-- [How It Works](how-it-works.md) — a deeper look at the internals
+- [Quick Start](/quickstart) — get up and running in five minutes
+- [Getting Started](/getting-started) — a thorough walkthrough of a real-world setup
+- [How It Works](/how-it-works) — a deeper look at the internals

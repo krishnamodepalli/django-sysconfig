@@ -44,7 +44,7 @@ from django_sysconfig.validators import NotEmptyValidator
 
 @register_config("myapp")
 class MyAppConfig:
-    class General(Section):
+    class General(Section):         # becomes `general` in the database reference
         label = "General Settings"
 
         site_name = Field(
@@ -59,6 +59,15 @@ class MyAppConfig:
             label="Maintenance Mode",
             default=False,
         )
+
+    class AdminUser(Section):       # becomes `admin_user`
+        label = "Admin User Settings"
+
+        allow_beta_features_access = Field(
+            BooleanFrontendModel,
+            label="Allow Beta Features Access",
+            default=False,
+        )
 ```
 
 Read values anywhere in your project:
@@ -68,6 +77,7 @@ from django_sysconfig.accessor import config
 
 name = config.get("myapp.general.site_name")       # "My App"
 down = config.get("myapp.general.maintenance_mode") # False
+beta_access = config.get("myapp.admin_user.allow_beta_features_access") # False
 ```
 
 That's it. No migrations to write, no admin classes to register, no serialization to handle yourself.
@@ -103,6 +113,15 @@ pip install django-sysconfig
 INSTALLED_APPS = [
     ...
     "django_sysconfig",
+]
+```
+
+```python
+# project/urls.py
+urlpatterns = [
+    # Must come BEFORE the default admin path
+    path("admin/config/", include("django_sysconfig.urls")),
+    path("admin/", admin.site.urls),
 ]
 ```
 
