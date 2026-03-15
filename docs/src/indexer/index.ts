@@ -1,4 +1,5 @@
 import { SearchEntry, TOCItem } from '../types.js';
+import { toAbsoluteDocHref } from '../paths.js';
 
 export class Indexer {
   extractTOC(html: string): TOCItem[] {
@@ -16,7 +17,7 @@ export class Indexer {
   }
 
   buildPageIndex(slug: string, title: string, group: string, html: string, pathPrefix: string): SearchEntry[] {
-    const url = `${pathPrefix}/${slug}/`;
+    const url = toAbsoluteDocHref(pathPrefix, slug);
     const entries: SearchEntry[] = [];
     const cleanText = this.stripHtml(html);
 

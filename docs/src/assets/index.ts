@@ -13,7 +13,7 @@ export class AssetManager {
     this.outDir = outDir;
     this.cleanCSS = new CleanCSS({
       level: 2,
-      inline: false
+      inline: false,
     });
   }
 
@@ -39,28 +39,49 @@ export class AssetManager {
 
       if (fs.statSync(srcPath).isDirectory()) {
         await this.processRecursive(srcPath, dstPath, shouldMinify);
-      } else {
-        const ext = path.extname(entry);
-        const content = fs.readFileSync(srcPath, 'utf8');
-
-        if (shouldMinify) {
-          if (ext === '.css') {
-            const minified = this.cleanCSS.minify(content);
-            fs.writeFileSync(dstPath, minified.styles);
-          } else if (ext === '.js') {
-            const minified = await minify(content, {
-              mangle: true,
-              compress: true
-            });
-            fs.writeFileSync(dstPath, minified.code || content);
-          } else {
-            // Non-CSS/JS assets (images, etc)
-            fs.writeFileSync(dstPath, fs.readFileSync(srcPath));
-          }
-        } else {
-          fs.writeFileSync(dstPath, fs.readFileSync(srcPath));
-        }
+        continue;
       }
+
+      const ext = path.extname(entry);
+
+      if (ext === '.css') {
+        this.copyCss(srcPath, dstPath, shouldMinify);
+        continue;
+      }
+
+      if (ext === '.js' && shouldMinify) {
+        const content = fs.readFileSync(srcPath, 'utf8');
+        const minified = await minify(content, {
+          module: true,
+          mangle: true,
+          compress: true,
+        });
+        fs.writeFileSync(dstPath, minified.code || content);
+        continue;
+      }
+
+      fs.copyFileSync(srcPath, dstPath);
     }
+  }
+
+  private copyCss(srcPath: string, dstPath: string, shouldMinify: boolean) {
+    const content = fs.readFileSync(srcPath, 'utf8');
+
+    if (!shouldMinify) {
+      fs.writeFileSync(dstPath, content);
+      return;
+    }
+
+    const minified = new CleanCSS({
+      level: 2,
+      inline: ['local'],
+      rebase: false,
+    }).minify({
+      [srcPath]: {
+        styles: content,
+      },
+    });
+
+    fs.writeFileSync(dstPath, minified.styles || content);
   }
 }

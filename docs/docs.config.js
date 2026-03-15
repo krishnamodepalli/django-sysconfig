@@ -24,7 +24,8 @@ export default {
     repo: "https://github.com/krishnamodepalli/django-sysconfig",
     // Base URL for production (used in sitemap, canonical links)
     // e.g. "https://docs.sysconfig.dev" — no trailing slash
-    baseUrl: "",
+    baseUrl: "https://krishnamodepalli.github.io/django-sysconfig",
+    ogImage: "/django-sysconfig/assets/images/og-banner.svg",
   },
 
   // Output directory (relative to this config file)
@@ -32,6 +33,11 @@ export default {
 
   // Docs source directory
   docsDir: "docs",
+
+  // Optional repository subpath for GitHub Pages deployments.
+  // Example: "/django-sysconfig" for https://<user>.github.io/django-sysconfig/
+  // You can also set PATH_PREFIX in CI instead of hard-coding this here.
+  pathPrefix: "",
 
   nav: [
     {

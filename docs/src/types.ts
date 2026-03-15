@@ -4,6 +4,7 @@ export interface SiteConfig {
   version: string;
   repo?: string;
   baseUrl?: string;
+  ogImage?: string;
 }
 
 export interface NavPage {
@@ -29,6 +30,13 @@ export interface PageMetadata {
   title: string;
   description?: string;
   group: string;
+}
+
+export interface GeneratedPage {
+  slug: string;
+  title: string;
+  description: string;
+  url: string;
 }
 
 export interface TOCItem {

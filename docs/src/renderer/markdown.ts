@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+import { rewriteRootRelativeUrls, toAbsoluteSitePath } from '../paths.js';
 
 const CALLOUTS: Record<string, { icon: string; label: string }> = {
   note:    { icon: '💡', label: 'Note'    },
@@ -51,20 +52,21 @@ export class MarkdownRenderer {
     return renderer;
   }
 
-  render(md: string, pathPrefix: string = ''): string {
+  render(md: string, _slug: string, pathPrefix: string = ''): string {
     const withCallouts = this.parseCallouts(md);
+    this.renderer = this.createRenderer();
 
-    // Inject pathPrefix handling into links at render time
     const originalLink = this.renderer.link.bind(this.renderer);
     this.renderer.link = (token) => {
       let href = token.href;
       if (href.startsWith('/') && !href.startsWith('//')) {
-        href = `${pathPrefix}${href}`;
+        href = toAbsoluteSitePath(pathPrefix, href);
       }
       return originalLink({ ...token, href });
     };
 
-    return marked.parse(withCallouts, { renderer: this.renderer, gfm: true, breaks: false }) as string;
+    const html = marked.parse(withCallouts, { renderer: this.renderer, gfm: true, breaks: false }) as string;
+    return rewriteRootRelativeUrls(html, pathPrefix);
   }
 
   private parseCallouts(md: string): string {
@@ -72,8 +74,6 @@ export class MarkdownRenderer {
       const t = type.toLowerCase();
       if (!CALLOUTS[t]) return _;
       const { icon, label } = CALLOUTS[t];
-      // Note: we use marked.parse here without the custom renderer for inner content
-      // to avoid recursive issues, or we could pass the renderer.
       const inner = marked.parse(body.trim()) as string;
       return (
         `\n<div class="callout callout-${t}" role="note">\n` +

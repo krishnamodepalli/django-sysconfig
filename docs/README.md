@@ -11,8 +11,8 @@ npm install
 ## Usage
 
 ```bash
-node build.js           # Build once
-node build.js --watch   # Build and watch for changes (with hot reload)
+npm run build           # Build once
+npm run dev             # Build and watch for changes (with hot reload)
 ```
 
 Reads `docs/*.md` + `docs.config.js` → writes to `dist/`.
@@ -23,6 +23,8 @@ Reads `docs/*.md` + `docs.config.js` → writes to `dist/`.
 dist/introduction/index.html
 dist/installation/index.html
 dist/search-index.json   ← fuzzy search index (auto-generated)
+dist/sitemap.xml         ← sitemap for crawlers
+dist/structured-data.jsonld
 dist/index.html          ← redirects to first page
 ```
 
@@ -40,6 +42,8 @@ title: My Page Title
 description: Used for <meta description> and OG tags.
 ---
 ```
+
+If `description` is omitted, the generator derives one automatically from the first paragraph on the page.
 
 ### Callout blocks
 
@@ -85,10 +89,12 @@ module.exports = {
     name: "MyApp",          // logo text
     version: "v2.4.0",      // shown in header
     repo: "https://...",    // GitHub icon link (optional)
-    baseUrl: "",            // for canonical URLs, e.g. "https://docs.myapp.dev"
+    baseUrl: "",            // full published docs URL, e.g. "https://user.github.io/repo"
+    ogImage: "/repo/assets/images/og-banner.svg", // social preview image
   },
   outDir:  "dist",          // output directory
   docsDir: "docs",          // markdown source directory
+  pathPrefix: "/repo",      // optional repo subpath for GitHub Pages
   nav: [
     {
       label: "Getting Started",
@@ -100,3 +106,23 @@ module.exports = {
   ],
 };
 ```
+
+### GitHub Pages
+
+If you publish to `https://<username>.github.io/<repo>/`, set either:
+
+- `pathPrefix: "/<repo>"` in `docs.config.js`, or
+- `PATH_PREFIX="/<repo>"` in your build environment
+
+Also set `site.baseUrl` to the full published URL if you want canonical tags:
+
+```js
+site: {
+  baseUrl: "https://<username>.github.io/<repo>",
+},
+pathPrefix: "/<repo>",
+```
+
+The generator will then keep page links and assets relative, while search and canonical URLs use the correct prefixed path.
+
+It also generates per-page canonical links, Open Graph tags, `sitemap.xml`, and `structured-data.jsonld`.
