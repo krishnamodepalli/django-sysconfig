@@ -1,0 +1,33 @@
+{
+  "name": "docsite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsx src/main.ts",
+    "dev": "tsx src/main.ts --watch",
+    "start": "tsx src/main.ts --watch",
+    "clean": "rm -rf dist dist-engine"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.4",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/clean-css": "^4.2.11",
+    "@types/html-minifier-terser": "^7.0.2",
+    "@types/node": "^20.11.0",
+    "clean-css": "^5.3.3",
+    "html-minifier-terser": "^7.2.0",
+    "terser": "^5.46.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
