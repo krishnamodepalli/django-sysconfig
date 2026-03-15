@@ -1,6 +1,58 @@
 # CHANGELOG
 
 
+## v0.1.0 (2026-03-15)
+
+### Bug Fixes
+
+- **docs**: Add missing highlight.js theme CSS
+  ([`e8c4e36`](https://github.com/krishnamodepalli/django-sysconfig/commit/e8c4e3629b10c63199d68183dde4a3df67cd2fac))
+
+### Chores
+
+- Remove accidental config_export.json
+  ([`50f4229`](https://github.com/krishnamodepalli/django-sysconfig/commit/50f4229f98e2809280624fc69208b5f81f964dbc))
+
+- **docs**: Automate version extraction from pyproject.toml
+  ([`767485b`](https://github.com/krishnamodepalli/django-sysconfig/commit/767485b3d1f654c9df4387bdaaad34f0f49ea3a8))
+
+### Continuous Integration
+
+- **docs**: Remove the test branch from docs workflow
+  ([`c36e9bb`](https://github.com/krishnamodepalli/django-sysconfig/commit/c36e9bbeb9b27dd6830a380e5f528302d544d096))
+
+### Features
+
+- **docs**: Add PATH_PREFIX for GitHub Pages and setup deployment workflow
+  ([`88b0422`](https://github.com/krishnamodepalli/django-sysconfig/commit/88b0422c31f870f2517666e3a26bd9ed84479ecd))
+
+- **docs**: Implement production minification for HTML, CSS, and JS
+  ([`d9cb3a2`](https://github.com/krishnamodepalli/django-sysconfig/commit/d9cb3a22cd77814bb24de8be3671c1352ed88684))
+
+- **docs**: Implement robust scroll-based TOC highlighting
+  ([`fe53673`](https://github.com/krishnamodepalli/django-sysconfig/commit/fe53673fe179686c4946b82c93e338b6cc659d58))
+
+- **docs**: Implement static docs generator and initial content for django-sysconfig
+  ([`8079623`](https://github.com/krishnamodepalli/django-sysconfig/commit/807962311370c9be07bd12c9ce9837c178b24576))
+
+- **docs**: Overhaul fuzzy search with tokenization, acronyms, and typo tolerance
+  ([`1979f43`](https://github.com/krishnamodepalli/django-sysconfig/commit/1979f4353a8151e3de530bccea4f92552697c3a4))
+
+- **docs**: Serve highlight.js theme locally
+  ([`890d5d9`](https://github.com/krishnamodepalli/django-sysconfig/commit/890d5d9348cfa241d8a416ae97d230531ea0825b))
+
+### Refactoring
+
+- **docs**: Extract fuzzy search algorithm and improve TOC visibility
+  ([`939e525`](https://github.com/krishnamodepalli/django-sysconfig/commit/939e525244b17e7b2168f0d392894e2d933ea56e))
+
+- **docs**: Modularize assets and cleanup legacy build files
+  ([`d2ea134`](https://github.com/krishnamodepalli/django-sysconfig/commit/d2ea13421da55f581735afc5adb6a2e7530011b3))
+
+- **docs**: Transform generator into modular TypeScript build engine with SPA navigation
+  ([`4f0f764`](https://github.com/krishnamodepalli/django-sysconfig/commit/4f0f764ed782d80ed2b24060cb3bedb6a0bb9576))
+
+
 ## v0.0.2 (2026-03-14)
 
 ### Bug Fixes
