@@ -4,6 +4,7 @@ import matter from 'gray-matter';
 import chokidar from 'chokidar';
 import { WebSocketServer, WebSocket } from 'ws';
 import { minify as minifyHtml } from 'html-minifier-terser';
+
 import { ConfigLoader } from './config.js';
 import { MarkdownRenderer } from './renderer/markdown.js';
 import { renderPage } from './renderer/template.js';
