@@ -33,6 +33,11 @@ export default {
   // Docs source directory
   docsDir: "docs",
 
+  // Optional repository subpath for GitHub Pages deployments.
+  // Example: "/django-sysconfig" for https://<user>.github.io/django-sysconfig/
+  // You can also set PATH_PREFIX in CI instead of hard-coding this here.
+  pathPrefix: "",
+
   nav: [
     {
       label: "Getting Started",

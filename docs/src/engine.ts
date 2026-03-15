@@ -11,6 +11,7 @@ import { renderPage } from './renderer/template.js';
 import { Indexer } from './indexer/index.js';
 import { AssetManager } from './assets/index.js';
 import { DocsConfig, PageMetadata, SearchEntry } from './types.js';
+import { buildCanonicalBaseUrl, toRelativeDocHref } from './paths.js';
 
 export class DocsiteEngine {
   private root: string;
@@ -40,17 +41,14 @@ export class DocsiteEngine {
     const { docsDir, outDir } = this.configLoader.getAbsolutePaths(this.config);
     const pathPrefix = this.config.pathPrefix || '';
 
-    // Initialize directories
     if (!fs.existsSync(outDir)) {
       fs.mkdirSync(outDir, { recursive: true });
     }
 
-    // Prepare pages
     this.allPages = this.config.nav.flatMap(g =>
       g.pages.map(p => ({ ...p, group: g.label }))
     );
 
-    // Copy and minify assets
     const assetManager = new AssetManager(this.root, outDir);
     await assetManager.copyAssets(shouldMinify);
 
@@ -66,7 +64,7 @@ export class DocsiteEngine {
       const title = fm.title || page.title;
       const description = fm.description || '';
 
-      const bodyHtml = this.renderer.render(mdContent, pathPrefix);
+      const bodyHtml = this.renderer.render(mdContent, page.slug);
       const tocItems = this.indexer.extractTOC(bodyHtml);
 
       const tocHtml = tocItems.length >= 2
@@ -106,16 +104,18 @@ export class DocsiteEngine {
       searchIndex.push(...this.indexer.buildPageIndex(page.slug, title, page.group, bodyHtml, pathPrefix));
     }
 
-    // Write search index
     fs.writeFileSync(path.join(outDir, 'search-index.json'), JSON.stringify(searchIndex));
 
-    // Write root redirect
     const first = this.allPages[0];
     if (first) {
-      const rootHref = `${pathPrefix}/${first.slug}/`;
+      const rootHref = toRelativeDocHref('', first.slug);
+      const canonicalBaseUrl = buildCanonicalBaseUrl(this.config.site.baseUrl || '', pathPrefix);
+      const canonicalHref = canonicalBaseUrl
+        ? `${canonicalBaseUrl}/${first.slug}/`
+        : rootHref;
       let redirectHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">` +
         `<meta http-equiv="refresh" content="0;url=${rootHref}">` +
-        `<link rel="canonical" href="${rootHref}"></head>` +
+        `<link rel="canonical" href="${canonicalHref}"></head>` +
         `<body><a href="${rootHref}">Redirecting...</a></body></html>`;
 
       if (shouldMinify) {

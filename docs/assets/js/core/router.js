@@ -37,6 +37,9 @@ export function initRouter(reinitCallback) {
     var link = e.target.closest('a');
     if (!link) return;
 
+    // Allow default browser behavior for modifier keys
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+
     var href = link.getAttribute('href');
     if (!href || href.startsWith('http') || href.startsWith('#')) return;
 

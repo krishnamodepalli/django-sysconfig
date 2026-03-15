@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { DocsConfig } from './types.js';
+import { normalizePathPrefix, trimTrailingSlash } from './paths.js';
 
 export class ConfigLoader {
   private root: string;
@@ -16,18 +17,35 @@ export class ConfigLoader {
       throw new Error(`Config file not found at ${configPath}`);
     }
 
-    // Use dynamic import for the JS config file
-    // We append a cache-buster if we were in a watch mode context,
-    // but for the engine we'll handle re-loading at a higher level if needed.
     const module = await import(`file://${configPath}?t=${Date.now()}`);
     const cfg: DocsConfig = module.default;
+    const baseUrl = trimTrailingSlash(cfg.site.baseUrl || '');
+    const pathPrefix = normalizePathPrefix(
+      process.env.PATH_PREFIX || cfg.pathPrefix || this.inferPathPrefix(baseUrl)
+    );
 
     return {
       ...cfg,
+      site: {
+        ...cfg.site,
+        baseUrl,
+      },
       outDir: cfg.outDir || 'dist',
       docsDir: cfg.docsDir || 'docs',
-      pathPrefix: process.env.PATH_PREFIX || cfg.pathPrefix || '',
+      pathPrefix,
     };
+  }
+
+  private inferPathPrefix(baseUrl: string): string {
+    if (!baseUrl) {
+      return '';
+    }
+
+    try {
+      return normalizePathPrefix(new URL(baseUrl).pathname);
+    } catch {
+      return '';
+    }
   }
 
   getAbsolutePaths(cfg: DocsConfig) {

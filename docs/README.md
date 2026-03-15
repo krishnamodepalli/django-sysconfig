@@ -11,8 +11,8 @@ npm install
 ## Usage
 
 ```bash
-node build.js           # Build once
-node build.js --watch   # Build and watch for changes (with hot reload)
+npm run build           # Build once
+npm run dev             # Build and watch for changes (with hot reload)
 ```
 
 Reads `docs/*.md` + `docs.config.js` → writes to `dist/`.
@@ -85,10 +85,11 @@ module.exports = {
     name: "MyApp",          // logo text
     version: "v2.4.0",      // shown in header
     repo: "https://...",    // GitHub icon link (optional)
-    baseUrl: "",            // for canonical URLs, e.g. "https://docs.myapp.dev"
+    baseUrl: "",            // full published docs URL, e.g. "https://user.github.io/repo"
   },
   outDir:  "dist",          // output directory
   docsDir: "docs",          // markdown source directory
+  pathPrefix: "/repo",      // optional repo subpath for GitHub Pages
   nav: [
     {
       label: "Getting Started",
@@ -100,3 +101,21 @@ module.exports = {
   ],
 };
 ```
+
+### GitHub Pages
+
+If you publish to `https://<username>.github.io/<repo>/`, set either:
+
+- `pathPrefix: "/<repo>"` in `docs.config.js`, or
+- `PATH_PREFIX="/<repo>"` in your build environment
+
+Also set `site.baseUrl` to the full published URL if you want canonical tags:
+
+```js
+site: {
+  baseUrl: "https://<username>.github.io/<repo>",
+},
+pathPrefix: "/<repo>",
+```
+
+The generator will then keep page links and assets relative, while search and canonical URLs use the correct prefixed path.

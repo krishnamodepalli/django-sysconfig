@@ -8,7 +8,7 @@ import { initRouter } from './core/router.js';
 (function () {
   'use strict';
 
-  const { isWatch, pathPrefix } = window.DOCS_CONFIG || { isWatch: false, pathPrefix: '' };
+  const { isWatch, searchIndexUrl } = window.DOCS_CONFIG || { isWatch: false, searchIndexUrl: '/search-index.json' };
 
   let searchController;
 
@@ -20,7 +20,7 @@ import { initRouter } from './core/router.js';
   function bootstrap() {
     initSidebar();
     initCopyButtons();
-    searchController = initSearch(pathPrefix);
+    searchController = initSearch(searchIndexUrl);
     initRouter(reinit);
 
     // Initial call

@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PATH_PREFIX: /django-sysconfig
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,8 +37,6 @@ jobs:
       - name: Build documentation
         run: npm run build
         working-directory: docs
-        env:
-          PATH_PREFIX: /django-sysconfig
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

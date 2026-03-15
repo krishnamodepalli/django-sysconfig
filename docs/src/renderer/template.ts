@@ -1,4 +1,10 @@
 import { DocsConfig, PageMetadata } from '../types.js';
+import {
+  buildCanonicalBaseUrl,
+  getRelativeRootPrefix,
+  toAbsoluteSitePath,
+  toRelativeDocHref,
+} from '../paths.js';
 
 export function renderPage({
   slug,
@@ -18,8 +24,10 @@ export function renderPage({
   allPages: PageMetadata[];
   isWatch: boolean;
 }) {
-  const { name = 'Docs', version = '', repo = '', baseUrl = '', pathPrefix = '' } = cfg.site;
-  const slugToHref = (s: string) => `${pathPrefix}/${s}/`;
+  const { name = 'Docs', version = '', repo = '', baseUrl = '' } = cfg.site;
+  const pathPrefix = cfg.pathPrefix || '';
+  const relPrefix = getRelativeRootPrefix(slug);
+  const slugToHref = (targetSlug: string) => toRelativeDocHref(slug, targetSlug);
 
   const sidebarHtml = cfg.nav.map(g => {
     const links = g.pages.map(p =>
@@ -47,7 +55,8 @@ export function renderPage({
     ? `<a class="pnav-btn right" href="${slugToHref(next.slug)}"><span class="pnav-dir">Next →</span><span class="pnav-title">${next.title}</span></a>`
     : '<div></div>';
 
-  const canon = baseUrl ? `\n<link rel="canonical" href="${baseUrl}/${slug}/">` : '';
+  const canonicalBaseUrl = buildCanonicalBaseUrl(baseUrl, pathPrefix);
+  const canon = canonicalBaseUrl ? `\n<link rel="canonical" href="${canonicalBaseUrl}/${slug}/">` : '';
   const ghLink = repo
     ? `<a href="${repo}" class="hdr-icon-link" aria-label="GitHub" target="_blank" rel="noopener">`
       + `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7C6.73 19.91 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z"/></svg></a>`
@@ -67,8 +76,8 @@ export function renderPage({
 <meta property="og:type" content="article">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="${pathPrefix}/assets/css/github.min.css">
-<link rel="stylesheet" href="${pathPrefix}/assets/css/main.css">
+<link rel="stylesheet" href="${relPrefix}/assets/css/github.min.css">
+<link rel="stylesheet" href="${relPrefix}/assets/css/main.css">
 </head>
 <body>
 
@@ -90,7 +99,7 @@ export function renderPage({
   <button id="hamburger" aria-label="Open navigation">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
-  <a href="${pathPrefix}/${firstSlug}/" class="logo" aria-label="${name} docs home">
+  <a href="${slugToHref(firstSlug)}" class="logo" aria-label="${name} docs home">
     <div class="logo-mark" aria-hidden="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     </div>
@@ -128,10 +137,11 @@ export function renderPage({
 <script>
   window.DOCS_CONFIG = {
     isWatch: ${isWatch},
-    pathPrefix: '${pathPrefix}'
+    pathPrefix: '${pathPrefix}',
+    searchIndexUrl: '${toAbsoluteSitePath(pathPrefix, 'search-index.json')}'
   };
 </script>
-<script src="${pathPrefix}/assets/js/main.js" type="module"></script>
+<script src="${relPrefix}/assets/js/main.js" type="module"></script>
 </body>
 </html>`;
 }

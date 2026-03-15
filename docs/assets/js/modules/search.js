@@ -1,6 +1,6 @@
 import { score, hl } from './fuzzy-search.js';
 
-export function initSearch(pathPrefix) {
+export function initSearch(searchIndexUrl) {
   var overlay = document.getElementById('search-overlay'),
     input = document.getElementById('search-input'),
     hitsEl = document.getElementById('search-hits'),
@@ -29,7 +29,7 @@ export function initSearch(pathPrefix) {
   };
 
   function loadIdx() {
-    fetch(pathPrefix + '/search-index.json')
+    fetch(searchIndexUrl)
       .then(function (r) { return r.json(); })
       .then(function (data) {
         idx = data;
