@@ -82,7 +82,7 @@ export class DocsiteEngine {
       const tocHtml = tocItems.length >= 2
         ? `<div class="toc-lbl">On this page</div>\n<ul class="toc-list">\n`
           + tocItems.map(h =>
-              `<li class="toc-item${h.level===3?' h3':''}" data-id="${h.id}"><a href="#${h.id}">${h.text}</a></li>`
+              `<li class="toc-item${h.level===3?' h3':''}" data-id="${h.id}" title="${h.text}"><a href="#${h.id}">${h.text}</a></li>`
             ).join('\n')
           + `\n</ul>`
         : '';

@@ -19,10 +19,11 @@ export class MarkdownRenderer {
   private createRenderer(): marked.Renderer {
     const renderer = new marked.Renderer();
 
-    renderer.heading = ({ text, depth }) => {
-      const raw = text.replace(/<[^>]*>/g, '');
+    renderer.heading = (token) => {
+      const text = this.renderer.parser.parseInline(token.tokens);
+      const raw = token.text.replace(/<[^>]*>/g, '');
       const id  = raw.toLowerCase().replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'-');
-      return `<h${depth} id="${id}">${text}<a class="heading-anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a></h${depth}>\n`;
+      return `<h${token.depth} id="${id}">${text}<a class="heading-anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a></h${token.depth}>\n`;
     };
 
     renderer.code = ({ text, lang }) => {
