@@ -131,7 +131,7 @@ export function renderPage({
     pathPrefix: '${pathPrefix}'
   };
 </script>
-<script src="${pathPrefix}/assets/js/main.js"></script>
+<script src="${pathPrefix}/assets/js/main.js" type="module"></script>
 </body>
 </html>`;
 }

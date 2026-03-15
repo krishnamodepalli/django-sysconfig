@@ -37,6 +37,7 @@ export default {
     {
       label: "Getting Started",
       pages: [
+        { slug: "quick-start",  title: "Quick Start"  },
         { slug: "introduction",  title: "Introduction"  },
         { slug: "installation",  title: "Installation"  },
         { slug: "configuration", title: "Configuration" },
