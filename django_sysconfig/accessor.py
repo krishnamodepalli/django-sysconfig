@@ -271,6 +271,7 @@ class ConfigAccessor:
             count += 1
         return count
 
+    # This method should be made private
     def all(self, app_label: str) -> dict[str, dict[str, Any]]:
         """
         Get all configuration values for an app.
@@ -307,6 +308,7 @@ class ConfigAccessor:
 
         return result
 
+    # This method should be made private
     def section(self, path: str) -> dict[str, Any]:
         """
         Get all configuration values for a specific section.
@@ -337,7 +339,10 @@ class ConfigAccessor:
         """
         try:
             app_label, section, field_name = self._parse_path(path)
+
+            # This ensures the config exists in the registry singleton object
             self._get_field(app_label, section, field_name)
+
             return True
         except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
             return False
@@ -350,18 +355,23 @@ class ConfigAccessor:
             path: Full path like 'todo.general.max_todos_per_user'
 
         Returns:
-            True if value exists in database, False if using default
+            True if value exists in database with a non-empty value, False if using default
         """
-        try:
-            app_label, section, field_name = self._parse_path(path)
-        except InvalidPathError:
+        if not self.exists(path):
             return False
 
+        app_label, section, field_name = self._parse_path(path)
         db_path = self._to_db_path(section, field_name)
-        return ConfigValue.objects.filter(
-            app_label=app_label,
-            path=db_path,
-        ).exists()
+
+        try:
+            config_value = ConfigValue.objects.get(
+                app_label=app_label,
+                path=db_path,
+            )
+            # Check if value is not None and not empty string
+            return config_value.value is not None and config_value.value != ""
+        except ConfigValue.DoesNotExist:
+            return False
 
 
 # Global config accessor instance
