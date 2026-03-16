@@ -27,7 +27,7 @@ urlpatterns = [
 
 Both views require `request.user.is_staff = True`. Non-staff users who visit `/admin/config/` are redirected to the login page, exactly like the Django admin.
 
-There is no finer-grained permission system built in — any staff member can read and edit any configuration value. If you need field-level or app-level restrictions, see [Extending: Custom Permissions](../extending/custom-field-types.md) (or open an issue to discuss your use case).
+There is no finer-grained permission system built in — any staff member can read and edit any configuration value. If you need field-level or app-level restrictions, see [Extending: Custom Permissions](../extending/custom-field-types) (or open an issue to discuss your use case).
 
 ---
 

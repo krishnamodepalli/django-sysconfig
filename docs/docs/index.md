@@ -86,9 +86,9 @@ That's it. No migrations to write, no admin classes to register, no serializatio
 
 ## Get started
 
-New here? Head to the [Quick Start](quickstart.md) to have `django-sysconfig` running in under five minutes.
+New here? Head to the [Quick Start](/quickstart) to have `django-sysconfig` running in under five minutes.
 
-Want the full picture first? Read the [Introduction](introduction.md) to understand the design philosophy and how everything fits together.
+Want the full picture first? Read the [Introduction](/introduction) to understand the design philosophy and how everything fits together.
 
 ---
 

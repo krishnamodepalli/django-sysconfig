@@ -12,7 +12,7 @@ pip install django-sysconfig
 
 ---
 
-## 2. Add to INSTALLED_APPS
+## 2. Add to `INSTALLED_APPS`
 
 ```python
 # settings.py

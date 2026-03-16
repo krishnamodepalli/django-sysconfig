@@ -80,9 +80,9 @@ class NotificationsConfig:
             default=False,
         )
 
-        api_key = Field(
+        twilio_api_key = Field(
             SecretFrontendModel,
-            label="SMS Provider API Key",
+            label="Twilio API Key",
             comment="Stored encrypted. Never displayed after saving.",
         )
 ```
@@ -220,8 +220,8 @@ config.set_many({
 
 You now have a fully working multi-app configuration setup. Explore deeper topics:
 
-- [Defining Configuration](guides/defining-config.md) — section options, field options, and design tips
-- [Admin UI Guide](guides/admin-ui.md) — walkthrough of the staff interface
-- [Encryption Guide](guides/encryption.md) — how secret fields work and how to handle key rotation
-- [Field Types Reference](reference/field-types.md) — all seven types in detail
-- [Validators Reference](reference/validators.md) — all 20 validators with usage examples
+- [Defining Configuration](/guides/defining-config) — section options, field options, and design tips
+- [Admin UI Guide](/guides/admin-ui) — walkthrough of the staff interface
+- [Encryption Guide](/guides/encryption) — how secret fields work and how to handle key rotation
+- [Field Types Reference](/reference/field-types) — all seven types in detail
+- [Validators Reference](/reference/validators) — all 20 validators with usage examples
