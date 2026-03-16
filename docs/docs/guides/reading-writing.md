@@ -33,41 +33,6 @@ Reads are served from the cache when available, so repeated calls in the same re
 
 ---
 
-### `config.all(app_label)`
-
-Returns all configuration values for an entire app, as a nested dictionary keyed by section, then field name.
-
-```python
-billing_config = config.all("billing")
-# {
-#   "general": {
-#     "live_mode": False,
-#   },
-#   "pricing": {
-#     "tax_rate": Decimal("0.20"),
-#     "free_tier_limit": 10,
-#     "trial_days": 14,
-#   }
-# }
-```
-
----
-
-### `config.section(path)`
-
-Returns all configuration values for a single section, as a flat dictionary keyed by field name.
-
-```python
-pricing = config.section("billing.pricing")
-# {
-#   "tax_rate": Decimal("0.20"),
-#   "free_tier_limit": 10,
-#   "trial_days": 14,
-# }
-```
-
----
-
 ### `config.exists(path)`
 
 Returns `True` if the path is registered in the schema (i.e., a field with that path exists in code). Does not check the database.
