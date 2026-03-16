@@ -87,7 +87,7 @@ Each `FrontendModel` class is responsible for two operations:
 
 For example, `IntegerFrontendModel` serializes `100` as `"100"` and deserializes `"100"` back to `100`. `BooleanFrontendModel` uses `"1"` and `"0"`. `DecimalFrontendModel` uses Python's `str(Decimal(...))` representation.
 
-`SecretFrontendModel` adds an encryption step on top of serialization. See [Encryption](guides/encryption.md) for details.
+`SecretFrontendModel` adds an encryption step on top of serialization. See [Encryption](/guides/encryption) for details.
 
 ---
 
@@ -99,7 +99,7 @@ Every `config.get(...)` call goes through the cache layer before hitting the dat
 - **On write**: after saving to the database, the cache entry for that path is deleted (invalidated). The next read will populate it from the database.
 - **Cache entries have no expiry.** They are only invalidated explicitly, on write. This means your configuration reads are very fast in steady state.
 
-The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process.
+The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. More info *[here](/guides/caching/#cache-backend-requirements)*.
 
 <!-- DIAGRAM: Cache read flow: config.get → cache hit → return vs cache miss → DB → cache → return -->
 
@@ -116,7 +116,7 @@ The accessor:
 4. Handles deserialization
 5. Fires `on_save` callbacks after writes
 
-See the [Accessor API reference](reference/accessor-api.md) for every available method.
+See the [Accessor API reference](/reference/accessor-api) for every available method.
 
 ---
 
