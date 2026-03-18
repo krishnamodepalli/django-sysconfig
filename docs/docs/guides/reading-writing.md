@@ -14,6 +14,8 @@ All paths use **dot notation** with exactly three parts: `app_label.section.fiel
 
 ### `config.get(path, default=...)`
 
+This **lazy loads** the value.
+
 Returns the value for the given path. If the field has no saved value in the database, the field's defined default is returned. You can also supply a fallback for unregistered paths.
 
 ```python
@@ -30,6 +32,48 @@ value = config.get("myapp.general.unknown_field", default=42)
 Values are **typed** — you get the correct Python type back without any casting. An `IntegerFrontendModel` field always returns an `int`. A `BooleanFrontendModel` field always returns a `bool`. A `DecimalFrontendModel` field always returns a `Decimal`.
 
 Reads are served from the cache when available, so repeated calls in the same request are fast.
+
+---
+### `config.all(app_label)`
+
+This **eager loads** all the sections and fields in the specified app. Returns all configuration values for an entire app, as a nested dictionary keyed by section, then field name.
+
+:::warning
+The returned dictionary includes **plaintext (decrypted) values for all secret fields**. Avoid logging, serializing, or exposing this output — treat it with the same care as raw credentials.
+:::
+
+```python
+billing_config = config.all("billing")
+# {
+#   "general": {
+#     "live_mode": False,
+#   },
+#   "pricing": {
+#     "tax_rate": Decimal("0.20"),
+#     "free_tier_limit": 10,
+#     "trial_days": 14,
+#   }
+# }
+```
+
+---
+
+### `config.section(path)`
+
+This **eager loads** all the fields in the specified section path. Returns all configuration values for a single section, as a flat dictionary keyed by field name.
+
+:::warning
+The returned dictionary includes **plaintext (decrypted) values for all secret fields**. Avoid logging, serializing, or exposing this output — treat it with the same care as raw credentials.
+:::
+
+```python
+pricing = config.section("billing.pricing")
+# {
+#   "tax_rate": Decimal("0.20"),
+#   "free_tier_limit": 10,
+#   "trial_days": 14,
+# }
+```
 
 ---
 
@@ -77,7 +121,7 @@ The value is validated against the field's validators before being saved. If val
 
 ### `config.set_many(values)`
 
-Saves multiple values atomically in a single database transaction. All cache invalidations happen after the transaction commits. All `on_save` callbacks fire after the write, one per changed field.
+Saves multiple values atomically in a single database transaction. All cache invalidations happen after the transaction commits. All `on_save` callbacks fire after the write was successful, one per changed field.
 
 ```python
 config.set_many({
@@ -157,7 +201,7 @@ class Command(BaseCommand):
         # ...
 ```
 
-### Using `config.all()` in a template context processor
+### Using `config.all()` or `config.section()` in a template context processor
 
 ```python
 def sysconfig_context(request):
