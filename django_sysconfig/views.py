@@ -6,9 +6,8 @@ They are integrated into Django's admin site and require admin permissions.
 """
 
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
-from django.utils.decorators import method_decorator
 from django.views import View
 
 from .accessor import config
@@ -17,8 +16,53 @@ from .models import ConfigValue
 from .registry import config_registry
 
 
-@method_decorator(staff_member_required, name="dispatch")
-class ConfigAppListView(View):
+class BaseConfigView(View):
+    """
+    Base view for all django_sysconfig views.
+
+    Enforces staff-only access by default. All views that require authentication
+    and staff privileges should extend this class.
+
+    Extensibility:
+        Override ``has_extra_permissions`` to layer additional access checks
+        on top of the default staff requirement, for example restricting access
+        to a specific group or permission:
+
+        .. code-block:: python
+
+            class MyConfigAppListView(ConfigAppListView):
+                def has_extra_permissions(self, request) -> bool:
+                    return request.user.groups.filter(name="sysadmins").exists()
+
+        Note: The staff requirement is always enforced and cannot be bypassed
+        by overriding this method.
+    """
+
+    def has_extra_permissions(self, _request) -> bool:
+        """
+        Override to add extra access checks on top of the staff requirement.
+
+        Called after the staff check passes. Return ``False`` to deny access.
+        Returns ``True`` by default, granting access to all staff members.
+
+        Args:
+            request: The incoming HTTP request.
+
+        Returns:
+            bool: ``True`` to allow access, ``False`` to deny with a 403.
+        """
+        return True
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or not request.user.is_staff:
+            raise PermissionDenied
+        if not self.has_extra_permissions(request):
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ConfigAppListView(BaseConfigView):
     """
     View to list all apps that have registered configurations.
     """
@@ -53,8 +97,7 @@ class ConfigAppListView(View):
         return render(request, self.template_name, context)
 
 
-@method_decorator(staff_member_required, name="dispatch")
-class ConfigAppDetailView(View):
+class ConfigAppDetailView(BaseConfigView):
     """
     View to display and edit configurations for a specific app.
 
@@ -95,7 +138,7 @@ class ConfigAppDetailView(View):
             "title": f"Configuration: {app_label}",
             "app_label": app_label,
             "sections": sections_data,
-            "has_permission": True,
+            "has_permission": True,  # TODO: This is for a to-be-implemented feature
             "site_header": "Django administration",
             "site_title": "Django site admin",
         }
