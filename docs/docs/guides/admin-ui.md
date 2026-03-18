@@ -27,7 +27,7 @@ urlpatterns = [
 
 Both views require `request.user.is_staff = True`. Non-staff users who visit `/admin/config/` are redirected to the login page, exactly like the Django admin.
 
-There is no finer-grained permission system built in — any staff member can read and edit any configuration value. If you need field-level or app-level restrictions, see [Extending: Custom Permissions](../extending/custom-field-types) (or open an issue to discuss your use case).
+There is no finer-grained permission system built in — any staff member can read and edit any configuration value. If you need field-level or app-level restrictions, you can extend the existing views and add more permissions to it (or open an issue to discuss your use case).
 
 ---
 
@@ -41,7 +41,9 @@ The app list view shows every Django app that has registered configuration (i.e.
 
 From here, click any app to navigate to its detail view.
 
+:::tip
 The Django admin index page is extended with a **"System Configuration"** banner that links directly to this page, so staff members don't need to know the URL.
+:::
 
 <!-- SCREENSHOT: Django admin index page showing the "System Configuration" banner at the top -->
 
@@ -59,7 +61,7 @@ This is where values are edited. The detail view renders all sections and fields
 
 - Sections appear as collapsible groups, ordered by their `sort_order`.
 - Each field is rendered with its `label`, its current value (or default), and its `comment` as help text below the input.
-- The form shows all sections at once. Submitting saves every field on the page.
+- The form shows all sections at once. Submitting saves the fields that are changed on the page.
 
 <!-- GIF: Opening an app detail view, changing a value, and saving -->
 
@@ -81,7 +83,7 @@ Each field type renders a different input:
 
 Secret fields (`SecretFrontendModel`) are always displayed as an empty password input, even if a value has been saved. The actual stored value is never sent to the browser.
 
-To update a secret field: type the new value and save. To leave it unchanged: leave the input blank and save — the existing value is preserved.
+To update a secret field: type the new value and save. To leave it unchanged: do not touch that input and save — the existing value is preserved. There will be a dot (beside the label) representing if a value is changed or not, so that no values are not changed accidentally.
 
 <!-- SCREENSHOT: A secret field showing a masked/empty password input with a "saved" indicator -->
 
@@ -102,5 +104,4 @@ The detail view includes a breadcrumb back to both the app list and the Django a
 ## Tips for staff users
 
 - **Changes take effect immediately.** There's no "publish" or "activate" step. As soon as you hit Save, the new values are live (the cache is invalidated and the database is updated).
-- **Secret fields are write-only.** If you need to verify what's stored, check your database or application logs — the UI will never show the decrypted value.
-- **Defaults are shown until overridden.** If a field shows a value but no one has explicitly saved it, it's showing the default from code. Use `config.is_set(...)` programmatically to distinguish defaults from saved values.
+- **Secret fields are write-only.** If you need to verify what's stored, use the management command — the UI will never show the decrypted value.
