@@ -2,8 +2,6 @@
 
 Every field can have an `on_save` callback — a Python callable that fires after a value has been successfully written to the database and the cache has been invalidated. Use callbacks to react to configuration changes: flush application-level caches, notify your team, trigger webhooks, or update downstream systems.
 
----
-
 ## Defining a callback
 
 Pass a callable to the `on_save` parameter of `Field`. The callable receives three arguments:
@@ -27,20 +25,16 @@ maintenance_mode = Field(
 )
 ```
 
----
-
 ## When the callback fires
 
-The callback fires **after** the database write and cache invalidation. The sequence is:
+The callback fires **after** the database and cache are written with the new value. The sequence is:
 
 1. Value is validated
 2. Value is written to the database
-3. Cache entry is invalidated
+3. Cache is written with new value
 4. `on_save` callback is called
 
 If the callback raises an exception, the exception propagates to the caller (e.g., the admin UI will show an error), but the database write has **already committed**. Design your callbacks to be idempotent and tolerant of failure, or wrap them in try/except if you want to suppress errors.
-
----
 
 ## Common patterns
 
@@ -61,18 +55,19 @@ homepage_product_count = Field(
 )
 ```
 
----
-
 ### Sending a Slack notification
 
 ```python
 import requests
-from django.conf import settings
+from django_sysconfig.accessor import cache
 
 def notify_slack(path, new_value, old_value):
-    if not hasattr(settings, "SLACK_WEBHOOK_URL"):
+    webhook_url = cache.get('core.slack.webhook_url')
+
+    if not webhook_url:
         return
-    requests.post(settings.SLACK_WEBHOOK_URL, json={
+
+    requests.post(webhook_url, json={
         "text": f"Config changed: `{path}` → `{new_value}` (was `{old_value}`)"
     }, timeout=5)
 
@@ -83,8 +78,6 @@ live_mode = Field(
     on_save=notify_slack,
 )
 ```
-
----
 
 ### Logging changes to an audit trail
 
@@ -122,8 +115,6 @@ class BillingConfig:
         )
 ```
 
----
-
 ### Refreshing a third-party SDK client
 
 Some SDKs are initialized with credentials at startup and need to be re-initialized when those credentials change:
@@ -141,13 +132,9 @@ stripe_secret_key = Field(
 )
 ```
 
----
-
 ## Callbacks and `set_many`
 
-When you call `config.set_many({...})`, each field's `on_save` callback fires individually after the transaction commits, once per changed path. The callbacks fire in the order the keys appear in the dictionary.
-
----
+When you call `config.set_many({...})`, each field's `on_save` callback fires after the transaction commits, once per changed path.
 
 ## Asynchronous callbacks
 
