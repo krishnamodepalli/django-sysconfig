@@ -7,15 +7,11 @@ description: The description of quick start
 
 Get `django-sysconfig` running in your project in under five minutes.
 
----
-
 ## 1. Install
 
 ```bash
 pip install django-sysconfig
 ```
-
----
 
 ## 2. Add to `INSTALLED_APPS`
 
@@ -29,8 +25,6 @@ INSTALLED_APPS = [
 
 ***Why at the top? Check [here →](#why-django_sysconfig-at-the-top)***
 
----
-
 ## 3. Run migrations
 
 `django-sysconfig` needs one database table to store configuration values.
@@ -38,8 +32,6 @@ INSTALLED_APPS = [
 ```bash
 python manage.py migrate
 ```
-
----
 
 ## 4. Wire up the admin UI (optional but recommended)
 
@@ -58,8 +50,6 @@ urlpatterns = [
 > **Why before `admin/`?**
 >
 > Django matches URL patterns in order. Placing the config URL first ensures `/admin/config/` is handled by `django-sysconfig` rather than being caught by the admin's catch-all.
-
----
 
 ## 5. Define your first config schema
 
@@ -105,8 +95,6 @@ class MyAppConfig:
 
 Django's auto-discovery picks this file up on startup — no further registration needed.
 
----
-
 ## 6. Read values in your application code
 
 ```python
@@ -119,8 +107,6 @@ maintenance = config.get("myapp.general.maintenance_mode") # bool → False
 
 Values are **typed** — `max_items` is an `int`, not the string `"100"`. Caching is handled automatically.
 
----
-
 ## 7. Edit values in the admin UI
 
 Start your dev server, log in with a staff account, and visit `/admin/config/`. You'll see your app listed with all its sections and fields.
@@ -128,8 +114,6 @@ Start your dev server, log in with a staff account, and visit `/admin/config/`. 
 ![Django system configuration page showing the myapp entry and its General Settings section in the admin UI](/assets/images/general-settings.png)
 <!-- SCREENSHOT: Admin config list showing "myapp" with "General Settings" section -->
 <!-- GIF: Editing the "Site Name" field and saving -->
-
----
 
 ## Why's?
 

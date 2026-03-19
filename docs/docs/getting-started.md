@@ -4,8 +4,6 @@ This guide walks through a realistic setup: two Django apps, each with their own
 
 If you want the shortest possible path to working code, start with [Quick Start](quickstart.md) instead.
 
----
-
 ## Project structure
 
 Suppose you have a Django project with two apps:
@@ -23,13 +21,9 @@ myproject/
 │   └── sysconfig.py     ← and this
 ```
 
----
-
 ## Step 1: Install and configure
 
 If you haven't done this yet, follow the [Quick Start](quickstart.md) steps 1–4 first. Come back here once migrations have run and the admin URL is wired up.
-
----
 
 ## Step 2: Define config for the `notifications` app
 
@@ -93,8 +87,6 @@ A few things to notice:
 - **`SelectFrontendModel`** requires a `choices` kwarg — a list of `(value, label)` tuples, same as Django's own choice fields.
 - **`SecretFrontendModel`** encrypts the value at rest. The admin UI will never display the stored value after it's been saved.
 
----
-
 ## Step 3: Define config for the `billing` app
 
 ```python
@@ -153,8 +145,6 @@ class BillingConfig:
         )
 ```
 
----
-
 ## Step 4: Restart and verify
 
 Restart your dev server. On startup, Django autodiscovers both `sysconfig.py` files and registers them. Visit `/admin/config/` — you should see both `notifications` and `billing` listed.
@@ -164,8 +154,6 @@ Restart your dev server. On startup, Django autodiscovers both `sysconfig.py` fi
 Click into `notifications`. You'll see the `Email Settings` and `SMS Settings` sections, with all their fields pre-populated with default values.
 
 <!-- SCREENSHOT: notifications app detail view with Email Settings section expanded -->
-
----
 
 ## Step 5: Read values in your application code
 
@@ -192,8 +180,6 @@ def checkout(request):
     # ... real charge logic
 ```
 
----
-
 ## Step 6: Write values programmatically
 
 You can also set values from code — useful for tests, management commands, or initial data setup:
@@ -213,8 +199,6 @@ config.set_many({
 ```
 
 `set_many` writes all values in a single database transaction and invalidates all affected cache entries.
-
----
 
 ## What's next?
 

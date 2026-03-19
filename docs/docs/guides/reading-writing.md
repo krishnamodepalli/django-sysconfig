@@ -8,8 +8,6 @@ from django_sysconfig.accessor import config
 
 All paths use **dot notation** with exactly three parts: `app_label.section.field`.
 
----
-
 ## Reading values
 
 ### `config.get(path, default=...)`
@@ -33,7 +31,6 @@ Values are **typed** — you get the correct Python type back without any castin
 
 Reads are served from the cache when available, so repeated calls in the same request are fast.
 
----
 ### `config.all(app_label)`
 
 This **eager loads** all the sections and fields in the specified app. Returns all configuration values for an entire app, as a nested dictionary keyed by section, then field name.
@@ -56,8 +53,6 @@ billing_config = config.all("billing")
 # }
 ```
 
----
-
 ### `config.section(path)`
 
 This **eager loads** all the fields in the specified section path. Returns all configuration values for a single section, as a flat dictionary keyed by field name.
@@ -75,8 +70,6 @@ pricing = config.section("billing.pricing")
 # }
 ```
 
----
-
 ### `config.exists(path)`
 
 Returns `True` if the path is registered in the schema (i.e., a field with that path exists in code). Does not check the database.
@@ -85,8 +78,6 @@ Returns `True` if the path is registered in the schema (i.e., a field with that 
 config.exists("myapp.general.site_name")   # True
 config.exists("myapp.general.no_such_key") # False
 ```
-
----
 
 ### `config.is_set(path)`
 
@@ -99,8 +90,6 @@ config.is_set("myapp.general.site_name")    # True
 ```
 
 This is useful for "onboarding" flows where you want to detect whether a required configuration step has been completed.
-
----
 
 ## Writing values
 
@@ -117,8 +106,6 @@ config.set("billing.pricing.tax_rate", Decimal("0.15"))
 
 The value is validated against the field's validators before being saved. If validation fails, a `ConfigValueError` is raised and nothing is written.
 
----
-
 ### `config.set_many(values)`
 
 Saves multiple values atomically in a single database transaction. All cache invalidations happen after the transaction commits. All `on_save` callbacks fire after the write was successful, one per changed field.
@@ -132,8 +119,6 @@ config.set_many({
 ```
 
 If any value fails validation, the entire transaction is rolled back and no values are saved.
-
----
 
 ## Exceptions
 
@@ -159,8 +144,6 @@ except ConfigError:
     # handle any other config error
     value = "fallback"
 ```
-
----
 
 ## Practical patterns
 

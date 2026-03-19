@@ -2,8 +2,6 @@
 
 `django-sysconfig` can store sensitive values — API keys, passwords, tokens — encrypted at rest using the `SecretFrontendModel`. This page explains how the encryption works, what it protects against, and what to do when you rotate your `SECRET_KEY`.
 
----
-
 ## How it works
 
 Secret fields are encrypted using [Fernet](https://cryptography.io/en/latest/fernet/) symmetric encryption, which is AES-128-CBC with a SHA-256 HMAC for integrity verification.
@@ -13,8 +11,6 @@ The encryption key is derived from Django's `SECRET_KEY` using SHA-256. This mea
 - You don't need to configure a separate encryption key.
 - Changing `SECRET_KEY` will make existing encrypted values unreadable (see [Key rotation](#key-rotation) below).
 - The encrypted value is stored as a Fernet token (a base64-encoded string) in the `raw_value` column of the `ConfigValue` table.
-
----
 
 ## Defining a secret field
 
@@ -40,8 +36,6 @@ class IntegrationsConfig:
         )
 ```
 
----
-
 ## Reading secret values
 
 Reading a secret field is identical to reading any other field. Decryption is transparent:
@@ -52,8 +46,6 @@ from django_sysconfig.accessor import config
 stripe_key = config.get("integrations.stripe.secret_key")
 # Returns the plaintext string, decrypted automatically
 ```
-
----
 
 ## What the admin UI shows
 
@@ -77,8 +69,6 @@ Once a secret is saved, it cannot be retrieved through the admin UI. To verify o
 Any modified field on the config page is marked with a dot indicator, so you can always tell what has changed before saving.
 :::
 
----
-
 ## What it protects against
 
 Encryption at rest protects secret values if your database is compromised. An attacker who gains read access to the `ConfigValue` table will see Fernet tokens, not plaintext secrets.
@@ -90,8 +80,6 @@ Encryption at rest protects secret values if your database is compromised. An at
 - Django's `SECRET_KEY` itself being exposed
 
 For most threat models, this is the right level of protection for operational secrets like third-party API keys.
-
----
 
 ## Key Rotation
 
@@ -135,8 +123,6 @@ The import runs inside a single transaction — it either fully succeeds or roll
 Once the import completes successfully, delete `config_backup.json`. It contains your secrets in plaintext.
 :::
 
----
-
 ### Coming in Phase 2: `SYSCONFIG_ENCRYPTION_KEY`
 
 This coupling between `SECRET_KEY` and config encryption is a known limitation being addressed in the next major release ([#32](https://github.com/krishnamodepalli/django-sysconfig/issues/32)).
@@ -151,8 +137,6 @@ Phase 2 will introduce:
   ```
 
 Until then, the export/import procedure above is required whenever `SECRET_KEY` is rotated.
-
----
 
 ## Security considerations
 

@@ -2,8 +2,6 @@
 
 Your configuration schema lives in `sysconfig.py` files — one per Django app that needs configurable settings. This guide covers everything about defining apps, sections, and fields, plus advice on designing a schema that stays clean as your project grows.
 
----
-
 ## The basic structure
 
 ```python
@@ -29,8 +27,6 @@ Three pieces:
 2. **Inner class extending `Section`** — a logical grouping of related fields. The class name (lowercased) becomes the second path segment (`myapp.general.*`).
 3. **`Field(...)` assignments** — individual configurable values. The attribute name (lowercased) becomes the third path segment (`myapp.general.site_name`).
 
----
-
 ## Section options
 
 | Attribute    | Type  | Default | Description                                                  |
@@ -44,8 +40,6 @@ class Advanced(Section):
     sort_order = 99  # shown last
 ```
 
----
-
 ## Field options
 
 | Parameter        | Type                     | Required | Description                                                         |
@@ -58,8 +52,6 @@ class Advanced(Section):
 | `validators`     | `list[BaseValidator]`    | No       | List of validators run before saving                                |
 | `on_save`        | `Callable`               | No       | Callback invoked after a value is written to the database           |
 | `**kwargs`       | —                        | No       | Extra arguments passed through to the frontend model (e.g. `choices`, `step`) |
-
----
 
 ## A complete example
 
@@ -149,8 +141,6 @@ class StoreConfig:
         )
 ```
 
----
-
 ## Designing your schema
 
 ### One `sysconfig.py` per app
@@ -186,8 +176,6 @@ HTML is allowed in `comment`, so you can use `<code>`, `<strong>`, and links.
 ### Sort order
 
 Both sections and fields accept a `sort_order` integer. Lower numbers appear first. If you don't specify `sort_order`, fields appear in the order Python sees them (which is definition order in Python 3.7+). Being explicit with `sort_order` makes your schema easier to reorganize later without changing the visual order in the admin UI.
-
----
 
 ## What happens on startup
 

@@ -2,8 +2,6 @@
 
 `django-sysconfig` ships with a built-in staff interface for browsing and editing all registered configuration. It's designed to feel like a natural extension of the Django admin.
 
----
-
 ## Setup
 
 If you haven't wired up the admin UI yet, add these two lines to your `urls.py`:
@@ -21,15 +19,11 @@ urlpatterns = [
 
 > **Important:** The config path must come *before* `path("admin/", ...)`. Django matches patterns in order, and the default admin would otherwise swallow the `/admin/config/` URL.
 
----
-
 ## Access control
 
 Both views require `request.user.is_staff = True`. Non-staff users who visit `/admin/config/` are redirected to the login page, exactly like the Django admin.
 
 There is no finer-grained permission system built in — any staff member can read and edit any configuration value. If you need field-level or app-level restrictions, you can extend the existing views and add more permissions to it (or open an issue to discuss your use case).
-
----
 
 ## The app list view
 
@@ -46,8 +40,6 @@ The Django admin index page is extended with a **"System Configuration"** banner
 :::
 
 <!-- SCREENSHOT: Django admin index page showing the "System Configuration" banner at the top -->
-
----
 
 ## The app detail view
 
@@ -93,13 +85,9 @@ If any field fails validation, the form is re-rendered with error messages inlin
 
 <!-- SCREENSHOT: A form with a validation error shown below an email field -->
 
----
-
 ## Navigating back to Django admin
 
 The detail view includes a breadcrumb back to both the app list and the Django admin index. The `Back to Admin` link in the top bar takes you to `/admin/`.
-
----
 
 ## Tips for staff users
 

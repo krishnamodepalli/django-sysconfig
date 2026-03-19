@@ -10,8 +10,6 @@ title: Introduction
 
 Think of it as a first-class home for all the settings in your app that need to be **editable at runtime** by non-developers: things like feature flags, email sender addresses, rate limits, third-party API keys, or a maintenance mode toggle.
 
----
-
 ## The problem it solves
 
 Every Django project has two kinds of settings:
@@ -24,8 +22,6 @@ The usual workaround is a freeform key-value model in the database — but that 
 
 `django-sysconfig` fixes all of that.
 
----
-
 ## The core idea: schema in code, values in the database
 
 This is the design philosophy the whole library is built on, borrowed from Magento's system configuration.
@@ -35,8 +31,6 @@ This is the design philosophy the whole library is built on, borrowed from Magen
 **Your values live in the database.** When a staff member changes a value through the admin UI (or when your code calls `config.set(...)`), only the value is written to the database. The schema never changes.
 
 **Your application reads values through a typed accessor.** `config.get("myapp.general.site_name")` returns a Python `str`. `config.get("myapp.general.max_items")` returns a Python `int`. No parsing, no casting, no surprises.
-
----
 
 ## Key concepts
 
@@ -60,15 +54,11 @@ The **accessor** (`config`) is the object you import in your application code to
 
 The **frontend model** is the type system. It specifies how a value is serialized to the database, deserialized back to Python, and rendered in the admin UI. `django-sysconfig` ships with seven built-in types; you can write your own.
 
----
-
 ## How autodiscovery works
 
 When Django starts up, `django-sysconfig`'s `AppConfig.ready()` method calls Django's `autodiscover_modules("sysconfig")`. This imports every `sysconfig.py` file from every installed app. Each `@register_config(...)` decorator runs, registering the config class with the global `ConfigRegistry`.
 
 You don't wire anything up manually. Drop a `sysconfig.py` in your app, and it's discovered automatically.
-
----
 
 ## A note on what goes in the database
 
@@ -79,8 +69,6 @@ This means:
 - Removing a field from code leaves an orphaned row in the database (which is harmless but can be cleaned up manually).
 - Adding a field with a default makes it immediately available without any data migration.
 - Renaming a field effectively creates a new field; the old database row is abandoned.
-
----
 
 ## Next steps
 

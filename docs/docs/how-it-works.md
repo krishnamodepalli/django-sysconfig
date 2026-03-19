@@ -2,8 +2,6 @@
 
 This page explains what `django-sysconfig` does under the hood — from the moment Django starts up to the moment your code reads a config value. You don't need this to use the library, but it's helpful when you're debugging, extending, or just curious.
 
----
-
 ## The lifecycle at a glance
 
 ```
@@ -30,8 +28,6 @@ config.set("myapp.general.site_name", "Acme")
 
 <!-- DIAGRAM: Flowchart of the above lifecycle — startup on the left, read/write on the right -->
 
----
-
 ## 1. Autodiscovery
 
 `django-sysconfig` uses Django's built-in `autodiscover_modules` utility (the same mechanism Django admin uses to find `admin.py` files). When `AppConfig.ready()` fires, it calls:
@@ -45,8 +41,6 @@ This imports `sysconfig.py` from every app in `INSTALLED_APPS`. The import side-
 
 **Nothing is wired up manually.** You don't call `include()` or `register()` anywhere. Dropping a `sysconfig.py` file in an installed app is enough.
 
----
-
 ## 2. The ConfigRegistry
 
 The `ConfigRegistry` is a global singleton that holds the entire configuration schema in memory. It's a dictionary keyed by app label, where each value contains the sections and fields discovered during startup.
@@ -54,8 +48,6 @@ The `ConfigRegistry` is a global singleton that holds the entire configuration s
 When you call `config.get("myapp.general.site_name")`, the accessor validates the path against the registry first — making sure the app, section, and field all exist — before touching the database or cache.
 
 The registry is read-only at runtime. Nothing modifies it after startup.
-
----
 
 ## 3. Database storage
 
@@ -76,8 +68,6 @@ Every value — integer, boolean, decimal, encrypted secret — is stored as a s
 - New fields added to code: they get rows on the next startup.
 - Fields removed from code: their rows remain in the database (orphaned but harmless).
 
----
-
 ## 4. Serialization
 
 Each `FrontendModel` class is responsible for two operations:
@@ -88,8 +78,6 @@ Each `FrontendModel` class is responsible for two operations:
 For example, `IntegerFrontendModel` serializes `100` as `"100"` and deserializes `"100"` back to `100`. `BooleanFrontendModel` uses `"1"` and `"0"`. `DecimalFrontendModel` uses Python's `str(Decimal(...))` representation.
 
 `SecretFrontendModel` adds an encryption step on top of serialization. See [Encryption](/guides/encryption) for details.
-
----
 
 ## 5. Caching
 
@@ -102,8 +90,6 @@ Every `config.get(...)` call goes through the cache layer before hitting the dat
 The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. More info *[here](/guides/caching/#cache-backend-requirements)*.
 
 <!-- DIAGRAM: Cache read flow: config.get → cache hit → return vs cache miss → DB → cache → return -->
-
----
 
 ## 6. The accessor
 
@@ -118,8 +104,6 @@ The accessor:
 
 See the [Accessor API reference](/reference/accessor-api) for every available method.
 
----
-
 ## 7. The admin UI
 
 The admin UI is two class-based views:
@@ -130,8 +114,6 @@ The admin UI is two class-based views:
 Both views require `request.user.is_staff`. The detail view reads field definitions from the registry to build the form, and calls `config.set(...)` (not direct DB writes) when a form is submitted — so validation, caching, and `on_save` callbacks all fire normally.
 
 The admin index page is patched with a small banner that links to `/admin/config/`, so staff members can discover the config UI without needing to know the URL.
-
----
 
 ## Summary
 
