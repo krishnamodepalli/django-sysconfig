@@ -57,12 +57,25 @@ stripe_key = config.get("integrations.stripe.secret_key")
 
 ## What the admin UI shows
 
-The admin UI **never displays** the stored value of a secret field. The input is always rendered as an empty password field, regardless of whether a value exists.
+The admin UI **never exposes** the stored value of a secret field. Secret fields always render as `<input type="password" />`:
 
-- To **set or update** a secret: type the new value and save.
-- To **leave it unchanged**: leave the input empty and save. The existing encrypted value is preserved.
+- **A value is already stored** — the field shows a dummy placeholder, not the real value.
+- **No value has been stored** — the field renders empty.
 
-This means there's no way to retrieve a secret value through the admin UI once it's been saved. If you need to verify or audit a stored secret, query the database directly (the value will be encrypted) or check your original source.
+### Editing secrets
+
+| Intent | Action |
+|---|---|
+| Set or update a secret | Type the new value and save |
+| Keep the existing value | Leave the field as-is and save — the encrypted value is preserved |
+
+:::warning
+Once a secret is saved, it cannot be retrieved through the admin UI. To verify or audit a stored secret, query the database directly (values are stored encrypted) or refer to your original source.
+:::
+
+:::tip
+Any modified field on the config page is marked with a dot indicator, so you can always tell what has changed before saving.
+:::
 
 ---
 
@@ -80,35 +93,64 @@ For most threat models, this is the right level of protection for operational se
 
 ---
 
-## Key rotation
+## Key Rotation
 
-If you rotate Django's `SECRET_KEY` — which you should do if it's ever been exposed — all encrypted `ConfigValue` rows become unreadable. There is no automatic migration.
+:::warning
+Rotating Django's `SECRET_KEY` **will make all encrypted `ConfigValue` rows permanently unreadable.** There is no automatic migration in the current version.
+:::
 
-**The procedure for rotating `SECRET_KEY` with encrypted config values:**
+By default, secret fields are encrypted using a key derived from Django's `SECRET_KEY`. This means rotating `SECRET_KEY` — which you should do if it's ever been exposed — also invalidates all stored secrets.
 
-1. **Before rotating**, read all secret field values while the old key is still active:
+### Before rotating `SECRET_KEY`
 
-    ```python
-    from django_sysconfig.accessor import config
+You must export all config values before the rotation, then re-import them after.
 
-    secrets = {
-        "integrations.stripe.secret_key": config.get("integrations.stripe.secret_key"),
-        "integrations.stripe.webhook_secret": config.get("integrations.stripe.webhook_secret"),
-        # ... all other SecretFrontendModel fields
-    }
-    ```
+**Step 1 — Export all config while the old key is still active:**
 
-2. **Rotate `SECRET_KEY`** in your settings / environment.
+```bash
+python manage.py config export --output config_backup.json
+```
 
-3. **Re-save all secret values** using the new key:
+:::warning
+The export file contains **plaintext secrets**. Treat it like a credentials file — restrict its permissions and delete it once the rotation is complete.
+:::
 
-    ```python
-    config.set_many(secrets)
-    ```
+**Step 2 — Rotate `SECRET_KEY`** in your settings or environment.
 
-    This re-encrypts each value with the new key derived from the new `SECRET_KEY`.
+**Step 3 — Re-import to re-encrypt everything under the new key:**
 
-> **Tip:** Write this as a management command and test it in a staging environment before running in production.
+```bash
+python manage.py config import config_backup.json
+```
+
+You can validate the file first without writing anything using `--dry-run`:
+
+```bash
+python manage.py config import config_backup.json --dry-run
+```
+
+The import runs inside a single transaction — it either fully succeeds or rolls back entirely, leaving your config unchanged.
+
+:::tip
+Once the import completes successfully, delete `config_backup.json`. It contains your secrets in plaintext.
+:::
+
+---
+
+### Coming in Phase 2: `SYSCONFIG_ENCRYPTION_KEY`
+
+This coupling between `SECRET_KEY` and config encryption is a known limitation being addressed in the next major release ([#32](https://github.com/krishnamodepalli/django-sysconfig/issues/32)).
+
+Phase 2 will introduce:
+
+- **`SYSCONFIG_ENCRYPTION_KEY`** — a dedicated setting to decouple config encryption from `SECRET_KEY`. Once set, rotating `SECRET_KEY` will no longer affect your stored secrets.
+- **`rotate_encryption_key` management command** — a safe, atomic key rotation:
+
+  ```bash
+  python manage.py rotate_encryption_key --old-key=<old> --new-key=<new>
+  ```
+
+Until then, the export/import procedure above is required whenever `SECRET_KEY` is rotated.
 
 ---
 
