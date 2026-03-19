@@ -271,7 +271,6 @@ class ConfigAccessor:
             count += 1
         return count
 
-    # TODO: This method should be made private
     def all(self, app_label: str) -> dict[str, dict[str, Any]]:
         """
         Get all configuration values for an app.
@@ -308,7 +307,6 @@ class ConfigAccessor:
 
         return result
 
-    # TODO: This method should be made private
     def section(self, path: str) -> dict[str, Any]:
         """
         Get all configuration values for a specific section.
