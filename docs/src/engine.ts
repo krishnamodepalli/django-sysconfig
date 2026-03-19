@@ -53,7 +53,7 @@ export class DocsiteEngine {
     }
 
     this.allPages = this.config.nav.flatMap(g =>
-      g.pages.map(p => ({ ...p, group: g.label }))
+      g.pages.map(p => ({ ...p, group: g.label ?? '' }))
     );
 
     const assetManager = new AssetManager(this.root, outDir);

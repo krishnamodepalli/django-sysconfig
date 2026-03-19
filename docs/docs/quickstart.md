@@ -1,3 +1,8 @@
+---
+title: Quick Start
+description: The description of quick start
+---
+
 # Quick Start
 
 Get `django-sysconfig` running in your project in under five minutes.
