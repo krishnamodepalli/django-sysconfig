@@ -7,10 +7,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from django_sysconfig.accessor import config
-from django_sysconfig.encryption import safe_decrypt
 from django_sysconfig.exceptions import ConfigError, ConfigValidationError
-from django_sysconfig.frontend_models import SecretFrontendModel
-from django_sysconfig.models import ConfigValue
 from django_sysconfig.registry import config_registry
 
 # ---------------------------------------------------------------------------
@@ -33,9 +30,6 @@ class _JSONEncoder(json.JSONEncoder):
 
 
 class Command(BaseCommand):
-
-    # Constants
-    MAX_EXPORT_BATCH_SIZE: int = 100
 
     help: str = "Interact with django-sysconfig configuration values"
 
@@ -80,12 +74,6 @@ class Command(BaseCommand):
             default="config_export.json",
             help="Output file path (default: config_export.json)",
         )
-        export_parser.add_argument(
-            "--batch-size",
-            type=int,
-            default=50,
-            help="Number of config values to fetch per DB query (default: 50)",
-        )
 
         # --- import ---
         import_parser = subparsers.add_parser(
@@ -104,7 +92,7 @@ class Command(BaseCommand):
         import_parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Validate the file without saving any values",
+            help="Validate the input config data without saving any values",
         )
         import_parser.add_argument(
             "-S",
@@ -137,7 +125,7 @@ class Command(BaseCommand):
     # Subcommand handlers
     # -----------------------------------------------------------------------
 
-    def handle_get(self, *args, **options):
+    def handle_get(self, *_args, **options):
         """Print the current value of a single config path."""
         path = options["path"]
 
@@ -147,7 +135,7 @@ class Command(BaseCommand):
         except ConfigError as e:
             raise CommandError(str(e)) from e
 
-    def handle_set(self, *args, **options):
+    def handle_set(self, *_args, **options):
         """Parse and persist a single config value."""
         path = options["path"]
         raw = options["value"]
@@ -167,7 +155,7 @@ class Command(BaseCommand):
         except ConfigError as e:
             raise CommandError(str(e)) from e
 
-    def handle_reset(self, *args, **options):
+    def handle_reset(self, *_args, **options):
         """Reset a config path to its field default, with optional confirmation."""
         path = options["path"]
 
@@ -183,77 +171,40 @@ class Command(BaseCommand):
         except ConfigError as e:
             raise CommandError(str(e)) from e
 
-    def handle_export(self, *args, **options):
+    def handle_export(self, *_args, **options):
         """Serialise all registered config values to a JSON file."""
         # 1. Validate
         output_path = os.path.abspath(options["output"])
         target_app = options.get("app")
-        batch_size = options["batch_size"]
 
         if not output_path.endswith(".json"):
             raise CommandError("Output file must have a .json extension")
 
-        if not 1 <= batch_size <= self.MAX_EXPORT_BATCH_SIZE:
-            raise CommandError("Batch size must be between 1 and 100")
-
-        # 2. Enumerate fields from the registry (metadata only, no DB access yet)
+        # 2. Enumerate apps
         apps = [target_app] if target_app else config_registry.get_registered_apps()
         if not apps:
             raise CommandError("No registered app configurations found")
 
-        all_fields = self._collect_all_fields(apps)
-        total = len(all_fields)
+        for app_label in apps:
+            if not config_registry.get_config(app_label):
+                raise CommandError(f"No config registered for app '{app_label}'")
 
         self.stdout.write(
-            f"Exporting {total} config value(s) across {len(apps)} app(s). "
+            f"Exporting config for {len(apps)} app(s). "
             "This may take a moment for large configs."
         )
         self.stdout.write(f"Output will be written to: {output_path}\n")
 
-        # 3. Fetch & serialise in batches
+        # 3. Fetch & serialise via accessor
         result = {
             "version": 1,
             "exported_at": datetime.now(UTC).isoformat(),
             "config": {},
         }
 
-        processed = 0
-
-        for i in range(0, total, batch_size):
-            batch = all_fields[i : i + batch_size]
-
-            # Group fields by app so we can do one DB query per app per batch
-            apps_in_batch: dict[str, list] = {}
-            for app_label, section_key, field_name, field in batch:
-                apps_in_batch.setdefault(app_label, []).append(
-                    (section_key, field_name, field)
-                )
-
-            # One targeted SELECT per app_label in this batch
-            stored_values: dict[tuple, str | None] = {}
-            for app_label, fields in apps_in_batch.items():
-                db_paths = [f"{sk}.{fn}" for sk, fn, _ in fields]
-                for row in ConfigValue.objects.filter(
-                    app_label=app_label, path__in=db_paths
-                ):
-                    stored_values[(app_label, row.path)] = row.value
-
-            for app_label, section_key, field_name, field in batch:
-                db_path = f"{section_key}.{field_name}"
-                raw = stored_values.get((app_label, db_path))
-
-                if field.frontend_model is SecretFrontendModel:
-                    value = safe_decrypt(raw) if raw else None
-                else:
-                    value = field.get_frontend_model_instance().get_value(raw)
-
-                result["config"].setdefault(app_label, {}).setdefault(section_key, {})[
-                    field_name
-                ] = value
-
-                processed += 1
-
-            self.stdout.write(f"  {processed}/{total} values processed...")
+        for app_label in apps:
+            result["config"][app_label] = config.all(app_label)
+            self.stdout.write(f"  {app_label} exported...")
 
         # 4. Write
         with open(output_path, "w") as f:
@@ -266,7 +217,7 @@ class Command(BaseCommand):
             )
         )
 
-    def handle_import(self, *args, **options):
+    def handle_import(self, *_args, **options):
         """Load a JSON export and persist all contained config values."""
         dry_run = options["dry_run"]
         use_stdin = options["stdin"]
@@ -359,20 +310,3 @@ class Command(BaseCommand):
             raise CommandError(f"File not found: {file_path}") from None
         except json.JSONDecodeError as e:
             raise CommandError(f"Invalid JSON: {e}") from e
-
-    def _collect_all_fields(self, apps: list[str]) -> list[tuple]:
-        """Return a flat list of (app_label, section_key, field_name, field) tuples
-        for every registered field across the given app labels."""
-        all_fields = []
-
-        for app_label in apps:
-            config_def = config_registry.get_config(app_label)
-            if not config_def:
-                raise CommandError(f"No config registered for app '{app_label}'")
-
-            for section_name, section_class in config_def.get_sections():
-                section_key = section_name.lower()
-                for field_name, field in section_class.get_fields().items():
-                    all_fields.append((app_label, section_key, field_name, field))
-
-        return all_fields
