@@ -158,7 +158,7 @@ class Command(BaseCommand):
             parsed = field.get_frontend_model_instance().get_value(raw)
 
             config.set(path, parsed)
-            self.stdout.write(self.style.SUCCESS(f"✔ {path} set to {parsed!r}"))
+            self.stdout.write(self.style.SUCCESS(f"✔ {path} updated successfully"))
 
         except ConfigValidationError as e:
             errors = "\n".join(f"  • {err}" for err in e.errors)
