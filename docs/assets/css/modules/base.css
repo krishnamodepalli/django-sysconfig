@@ -1,0 +1,52 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+:root {
+  --p: hsl(200, 98%, 39%);
+  --p-light: hsl(200, 98%, 95%);
+  --p-mid: hsl(200, 60%, 85%);
+  --p-dark: hsl(200, 98%, 28%);
+  --p-muted: hsl(200, 40%, 55%);
+  --bg: hsl(200, 18%, 97%);
+  --bg-sb: hsl(200, 14%, 96%);
+  --bg-card: #fff;
+  --bg-hov: hsl(200, 28%, 93%);
+  --bg-act: hsl(200, 55%, 91%);
+  --bdr: hsl(200, 14%, 88%);
+  --bdr-hi: hsl(200, 14%, 78%);
+  --tx: hsl(210, 18%, 15%);
+  --tx-2: hsl(210, 12%, 32%);
+  --tx-3: hsl(210, 10%, 48%);
+  --tx-4: hsl(210, 8%, 65%);
+  --sb-w: 260px;
+  --toc-w: 210px;
+  --hdr-h: 52px;
+  --r: 6px;
+  --r-lg: 10px;
+  --sh-sm: 0 1px 3px hsl(200 25% 55% / 0.12);
+  --sh-md: 0 4px 16px hsl(200 25% 45% / 0.11);
+  --sh-lg: 0 8px 32px hsl(200 25% 40% / 0.15);
+  --ease: 140ms ease;
+  --font: 'DM Sans', sans-serif;
+  --serif: 'Newsreader', serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--tx);
+  line-height: 1.65;
+  min-height: 100vh;
+}
