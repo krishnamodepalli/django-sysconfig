@@ -215,7 +215,12 @@ class TestSetManyOnSave:
         callback_a.assert_called_once()
         callback_b.assert_called_once()
 
-    def test_on_save_not_fired_on_rollback(self, config, registry):
+    def test_on_save_not_fired_on_rollback(
+        self, config, registry, django_capture_on_commit_callbacks
+    ):
+        # django_capture_on_commit_callbacks is required here — without it,
+        # callbacks never fire anyway under the db fixture, so the test would
+        # pass for the wrong reason regardless of rollback behaviour.
         callback = MagicMock()
 
         from django_sysconfig.frontend_models import StringFrontendModel
@@ -233,11 +238,84 @@ class TestSetManyOnSave:
         section._fields["site_name"] = new_field
 
         with pytest.raises(ConfigValidationError):
+            with django_capture_on_commit_callbacks(execute=True):
+                config.set_many(
+                    {
+                        "testapp.general.site_name": "Hello",
+                        "testapp.general.max_items": 99999,  # causes rollback
+                    }
+                )
+
+        callback.assert_not_called()
+
+    def test_skip_on_save_callbacks_suppresses_all_callbacks(
+        self, config, registry, django_capture_on_commit_callbacks
+    ):
+        callback_a = MagicMock()
+        callback_b = MagicMock()
+
+        from django_sysconfig.frontend_models import (
+            IntegerFrontendModel,
+            StringFrontendModel,
+        )
+        from django_sysconfig.registry import Field
+        from tests.conftest import TEST_APP
+
+        section = registry.get_config(TEST_APP).sections["General"]
+
+        field_a = Field(
+            StringFrontendModel,
+            label="Site Name",
+            default="Test Site",
+            on_save=callback_a,
+        )
+        field_a.name = "site_name"
+        section._fields["site_name"] = field_a
+
+        field_b = Field(
+            IntegerFrontendModel, label="Max Items", default=1098, on_save=callback_b
+        )
+        field_b.name = "max_items"
+        section._fields["max_items"] = field_b
+
+        with django_capture_on_commit_callbacks(execute=True):
             config.set_many(
                 {
                     "testapp.general.site_name": "Hello",
-                    "testapp.general.max_items": 99999,  # causes rollback
-                }
+                    "testapp.general.max_items": 50,
+                },
+                skip_on_save_callbacks=True,
             )
 
-        callback.assert_not_called()
+        # Values should be written to DB and cache as normal
+        assert config.get("testapp.general.site_name") == "Hello"
+        assert config.get("testapp.general.max_items") == 50
+
+        # But neither callback should have fired
+        callback_a.assert_not_called()
+        callback_b.assert_not_called()
+
+    def test_skip_on_save_callbacks_does_not_affect_cache(
+        self, config, django_capture_on_commit_callbacks
+    ):
+        # Suppressing callbacks must not suppress cache refresh —
+        # cache is always updated regardless of skip_on_save_callbacks
+        from django_sysconfig.cache import config_cache
+
+        with django_capture_on_commit_callbacks(execute=True):
+            config.set_many(
+                {
+                    "testapp.general.site_name": "Hello World",
+                    "testapp.general.max_items": 50,
+                },
+                skip_on_save_callbacks=True,
+            )
+
+        assert (
+            config_cache.get("testapp.general.site_name") is not config_cache.NOT_FOUND
+        )
+        assert (
+            config_cache.get("testapp.general.max_items") is not config_cache.NOT_FOUND
+        )
+        assert config.get("testapp.general.site_name") == "Hello World"
+        assert config.get("testapp.general.max_items") == 50
