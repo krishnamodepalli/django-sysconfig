@@ -24,6 +24,7 @@ Usage:
     general = config.section('todo.general')
 """
 
+from collections.abc import Callable
 from typing import Any
 
 from .cache import config_cache
@@ -205,12 +206,51 @@ class ConfigAccessor:
             FieldNotFoundError: If field doesn't exist
             ConfigValueError: If value cannot be serialized
         """
+        from django.db import transaction
+
+        with transaction.atomic():
+            on_commit_callback = self._set_value_internal(path, value)
+            transaction.on_commit(on_commit_callback)
+
+    def set_many(self, values: dict[str, Any]) -> int:
+        """
+        Set multiple configuration values at once.
+
+        All writes are performed within a single transaction. If any write
+        fails, the entire batch is rolled back. on_save callbacks are fired
+        sequentially only after the transaction commits successfully.
+
+        Args:
+            values: Dict mapping full paths to values
+
+        Returns:
+            Number of values set
+
+        Raises:
+            InvalidPathError, AppNotFoundError, FieldNotFoundError, ConfigValueError,
+            ConfigValidationError
+        """
+        from django.db import transaction
+
+        with transaction.atomic():
+            for path, value in values.items():
+                on_commit_callback = self._set_value_internal(path, value)
+                transaction.on_commit(on_commit_callback)
+
+        return len(values)
+
+    def _set_value_internal(self, path: str, value: Any) -> Callable[[], None]:
+        """
+        Internal implementation of setting a configuration value.
+
+        Performs validation, serialization, and database write. Returns a
+        callback function that should be executed after the database
+        transaction commits to handle cache invalidation and on_save dispatch.
+        """
         app_label, section, field_name = self._parse_path(path)
         field = self._get_field(app_label, section, field_name)
 
         # Run field validators before doing anything else.
-        # Each validator is responsible for deciding how to handle None/empty —
-        # e.g. NotEmptyValidator raises, while length/regex validators skip.
         if field.validators:
             from .validators import validate_value
 
@@ -242,34 +282,18 @@ class ConfigAccessor:
             defaults={"value": serialized},
         )
 
-        # Invalidate cache after successful DB save
-        config_cache.invalidate(path)
+        def on_commit():
+            # Invalidate cache after successful DB save
+            config_cache.invalidate(path)
 
-        # Cache the new value immediately to avoid cache miss on next read
-        config_cache.set(path, serialized)
+            # Cache the new value immediately to avoid cache miss on next read
+            config_cache.set(path, serialized)
 
-        # Call on_save callback if defined
-        if field.on_save:
-            field.on_save(path, value, old_value)
+            # Call on_save callback if defined
+            if field.on_save:
+                field.on_save(path, value, old_value)
 
-    def set_many(self, values: dict[str, Any]) -> int:
-        """
-        Set multiple configuration values at once.
-
-        Args:
-            values: Dict mapping full paths to values
-
-        Returns:
-            Number of values set
-
-        Raises:
-            InvalidPathError, AppNotFoundError, FieldNotFoundError, ConfigValueError
-        """
-        count = 0
-        for path, value in values.items():
-            self.set(path, value)
-            count += 1
-        return count
+        return on_commit
 
     def all(self, app_label: str) -> dict[str, dict[str, Any]]:
         """
