@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.db import transaction
 
 from django_sysconfig.accessor import config
 from django_sysconfig.encryption import safe_decrypt
@@ -106,6 +105,12 @@ class Command(BaseCommand):
             "--dry-run",
             action="store_true",
             help="Validate the file without saving any values",
+        )
+        import_parser.add_argument(
+            "-S",
+            "--skip-on-save-callbacks",
+            action="store_true",
+            help="Skip on_save callbacks for all fields in this import batch.",
         )
         import_parser.add_argument(
             "-f",
@@ -265,6 +270,7 @@ class Command(BaseCommand):
         """Load a JSON export and persist all contained config values."""
         dry_run = options["dry_run"]
         use_stdin = options["stdin"]
+        skip_callbacks = options["skip_on_save_callbacks"]
         force = options["force"]
         file_path = options.get("file")
 
@@ -316,35 +322,12 @@ class Command(BaseCommand):
             return
 
         # 4. Execute
-        errors = []
-        committed_paths = []
-
         try:
-            with transaction.atomic():
-                for path, value in paths:
-                    try:
-                        config.set(path, value)
-                        committed_paths.append(path)
-                    except ConfigValidationError as e:
-                        errors.append(f"{path}: " + ", ".join(e.errors))
-                    except ConfigError as e:
-                        errors.append(f"{path}: {e}")
-
-                if errors:
-                    raise CommandError(
-                        "Import aborted — all changes rolled back:\n"
-                        + "\n".join(f"  • {err}" for err in errors)
-                    )
-
-        except CommandError:
-            # Purge any cache keys written before the rollback so the cache
-            # doesn't serve stale values.
-            from django_sysconfig.cache import config_cache
-
-            for path in committed_paths:
-                config_cache.invalidate(path)
-
-            raise
+            config.set_many(dict(paths), skip_on_save_callbacks=skip_callbacks)
+        except (ConfigValidationError, ConfigError) as e:
+            raise CommandError(
+                f"Import aborted — all changes rolled back:\n  • {e}"
+            ) from e
 
         self.stdout.write(
             self.style.SUCCESS(f"✔ Import complete — {len(paths)} value(s) set")
