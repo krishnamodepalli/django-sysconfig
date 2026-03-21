@@ -26,7 +26,7 @@ config.set("myapp.general.site_name", "Acme")
     └─ Call on_save callback (if defined)
 ```
 
-<!-- DIAGRAM: Flowchart of the above lifecycle — startup on the left, read/write on the right -->
+![](/assets/images/django_sysconfig_lifecycle_flow.svg)
 
 ## 1. Autodiscovery
 
@@ -56,7 +56,7 @@ The registry is read-only at runtime. Nothing modifies it after startup.
 | Column      | Type   | Description                                           |
 | ----------- | ------ | ----------------------------------------------------- |
 | `path`      | string | The full dot-notation path: `myapp.general.site_name` |
-| `raw_value` | text   | The serialized value (always a string in the DB)      |
+| `value` | text   | The serialized value (always a string in the DB)      |
 | `app_label` | string | Denormalized app label, used to filter by app         |
 
 Every value — integer, boolean, decimal, encrypted secret — is stored as a string. Serialization and deserialization are handled by the field's `FrontendModel`.
@@ -90,6 +90,7 @@ Every `config.get(...)` call goes through the cache layer before hitting the dat
 The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. More info *[here](/guides/caching/#cache-backend-requirements)*.
 
 <!-- DIAGRAM: Cache read flow: config.get → cache hit → return vs cache miss → DB → cache → return -->
+![](/assets/images/django_sysconfig_cache_read_flow.svg)
 
 ## 6. The accessor
 

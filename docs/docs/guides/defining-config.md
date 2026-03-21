@@ -183,6 +183,6 @@ When your `sysconfig.py` is imported:
 
 1. The `@register_config(...)` decorator registers the class with the global `ConfigRegistry`.
 2. For every field that has a `default`, a `ConfigValue` database row is created using `get_or_create`. If a row already exists (from a previous run), it's left untouched.
-3. Fields without a `default` get no database row at startup.
+3. Every field will have a one-one mapping in the DB row and is created on the app start or restart.
 
 This means it's safe to add new fields with defaults between deployments — they'll be available immediately on the next startup, with no manual data migration needed.

@@ -59,10 +59,10 @@ homepage_product_count = Field(
 
 ```python
 import requests
-from django_sysconfig.accessor import cache
+from django_sysconfig.accessor import config
 
 def notify_slack(path, new_value, old_value):
-    webhook_url = cache.get('core.slack.webhook_url')
+    webhook_url = config.get('core.slack.webhook_url')
 
     if not webhook_url:
         return

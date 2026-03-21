@@ -81,10 +81,10 @@ config.exists("myapp.general.no_such_key") # False
 
 ### `config.is_set(path)`
 
-Returns `True` if the field has a value explicitly saved in the database — that is, the value has been changed from (or confirmed as) the default at some point.
+Returns `True` if the field has a value other than empty string or `NULL` in the database.
 
 ```python
-config.is_set("myapp.general.site_name")    # False on a fresh install
+config.is_set("myapp.general.site_name")    # False if a default is not set. True if set.
 # ... after saving a value via the admin UI or config.set(...) ...
 config.is_set("myapp.general.site_name")    # True
 ```
@@ -104,7 +104,7 @@ config.set("billing.general.live_mode", True)
 config.set("billing.pricing.tax_rate", Decimal("0.15"))
 ```
 
-The value is validated against the field's validators before being saved. If validation fails, a `ConfigValueError` is raised and nothing is written.
+The value is validated against the field's validators before being saved. If validation fails, a `ConfigValidationError` is raised and nothing is written.
 
 ### `config.set_many(values)`
 
