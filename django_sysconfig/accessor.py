@@ -406,8 +406,8 @@ class ConfigAccessor:
         """
         Reset a configuration value to its field default.
 
-        Removes the DB override so the field default takes effect again.
-        Also primes the cache with the default value.
+        Sets the DB row back to the field's default value using the standard
+        set() path — handles serialization, cache refresh, and on_save dispatch.
 
         Args:
             path: Full path like 'todo.general.max_todos_per_user'
@@ -419,16 +419,8 @@ class ConfigAccessor:
         """
         app_label, section, field_name = self._parse_path(path)
         field = self._get_field(app_label, section, field_name)
-        db_path = self._to_db_path(section, field_name)
 
-        ConfigValue.objects.filter(app_label=app_label, path=db_path).delete()
-        config_cache.invalidate(path)
-
-        if field.default is not None:
-            serialized_default = field.get_frontend_model_instance().serialize_value(
-                field.default
-            )
-            config_cache.set(path, serialized_default)
+        self.set(path, field.default)
 
 
 # Global config accessor instance
