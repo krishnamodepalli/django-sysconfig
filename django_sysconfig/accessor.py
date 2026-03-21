@@ -212,30 +212,40 @@ class ConfigAccessor:
             on_commit_callback = self._set_value_internal(path, value)
             transaction.on_commit(on_commit_callback)
 
-    def set_many(self, values: dict[str, Any]) -> int:
+    def set_many(
+        self, values: dict[str, Any], skip_on_save_callbacks: bool = False
+    ) -> int:
         """
         Set multiple configuration values at once.
 
-        All writes are performed within a single transaction. If any write
-        fails, the entire batch is rolled back. on_save callbacks are fired
-        sequentially only after the transaction commits successfully.
+        All writes are performed within a single transaction. If any write fails,
+        the entire batch is rolled back. on_save callbacks are fired sequentially
+        only after the transaction commits successfully.
 
         Args:
-            values: Dict mapping full paths to values
+            values (dict[str, Any]): Dict mapping full paths to values.
+            skip_on_save_callbacks (bool): If True, on_save callbacks are suppressed
+                for all fields in this batch. Useful for bulk imports or environment
+                cloning where side effects are undesirable. Defaults to False.
 
         Returns:
-            Number of values set
+            int: Number of values set.
 
         Raises:
-            InvalidPathError, AppNotFoundError, FieldNotFoundError, ConfigValueError,
-            ConfigValidationError
+            InvalidPathError: If any path format is invalid.
+            AppNotFoundError: If any app has no registered config.
+            FieldNotFoundError: If any field does not exist.
+            ConfigValueError: If any value cannot be serialized.
+            ConfigValidationError: If any value fails field validation.
         """
         from django.db import transaction
 
         with transaction.atomic():
             for path, value in values.items():
                 on_commit_callback = self._set_value_internal(path, value)
-                transaction.on_commit(on_commit_callback)
+
+                if not skip_on_save_callbacks:
+                    transaction.on_commit(on_commit_callback)
 
         return len(values)
 
@@ -282,13 +292,10 @@ class ConfigAccessor:
             defaults={"value": serialized},
         )
 
+        # Cache the new value immediately to avoid cache miss on next read
+        config_cache.set(path, serialized)
+
         def on_commit():
-            # Invalidate cache after successful DB save
-            config_cache.invalidate(path)
-
-            # Cache the new value immediately to avoid cache miss on next read
-            config_cache.set(path, serialized)
-
             # Call on_save callback if defined
             if field.on_save:
                 field.on_save(path, value, old_value)
