@@ -12,7 +12,7 @@
                        id="{{ input_id }}"
                        value="{{ value|default:'' }}"
                        {% if field.extra.placeholder %}placeholder="{{ field.extra.placeholder }}"{% endif %}
-                       {% if field.extra.maxlength %}maxlength="{{ field.extra.maxlength }}"{% endif %}>
+                       {% if field.extra.maxlength %}maxlength="{{ field.extra.maxlength }}"{% endif %} />
             </div>
             {% if field.comment %}
             <div class="config-field-comment">{{ field.comment|safe }}</div>
