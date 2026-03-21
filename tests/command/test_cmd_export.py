@@ -1,5 +1,5 @@
 """
-Tests for: python manage.py config export [app] [--output] [--batch-size]
+Tests for: python manage.py config export [app] [--output]
 
 Covers:
 - Exports all apps to default output file
@@ -9,10 +9,8 @@ Covers:
 - Secrets are decrypted in export
 - Warning about plaintext secrets written to stderr
 - Raises CommandError for non-.json output path
-- Raises CommandError for invalid batch size
 - Raises CommandError for unknown app label
 - Raises CommandError if no apps registered
-- Batching — all values present regardless of batch size
 """
 
 import json
@@ -27,15 +25,13 @@ from django.core.management.base import CommandError
 # ---------------------------------------------------------------------------
 
 
-def run_export(output_path, app=None, batch_size=None, **kwargs):
+def run_export(output_path, app=None, **kwargs):
     stdout = StringIO()
     stderr = StringIO()
     args = ["config", "export"]
     if app:
         args.append(app)
     extra = {"output": output_path, "stdout": stdout, "stderr": stderr}
-    if batch_size is not None:
-        extra["batch_size"] = batch_size
     call_command(*args, **extra, **kwargs)
     return stdout.getvalue().strip(), stderr.getvalue().strip()
 
@@ -153,31 +149,6 @@ class TestCmdExportSecrets:
 
 
 # ---------------------------------------------------------------------------
-# Batching
-# ---------------------------------------------------------------------------
-
-
-class TestCmdExportBatching:
-
-    def test_all_values_present_with_batch_size_1(self, tmp_path):
-        output = str(tmp_path / "export.json")
-        run_export(output, batch_size=1)
-        data = json.loads((tmp_path / "export.json").read_text())
-        general = data["config"]["testapp"]["general"]
-        assert "site_name" in general
-        assert "max_items" in general
-        assert "enabled" in general
-
-    def test_all_values_present_with_large_batch_size(self, tmp_path):
-        output = str(tmp_path / "export.json")
-        run_export(output, batch_size=100)
-        data = json.loads((tmp_path / "export.json").read_text())
-        general = data["config"]["testapp"]["general"]
-        assert "site_name" in general
-        assert "max_items" in general
-
-
-# ---------------------------------------------------------------------------
 # Error cases
 # ---------------------------------------------------------------------------
 
@@ -187,14 +158,6 @@ class TestCmdExportErrors:
     def test_raises_for_non_json_output_path(self, tmp_path):
         with pytest.raises(CommandError):
             run_export(str(tmp_path / "export.txt"))
-
-    def test_raises_for_batch_size_zero(self, tmp_path):
-        with pytest.raises(CommandError):
-            run_export(str(tmp_path / "export.json"), batch_size=0)
-
-    def test_raises_for_batch_size_over_max(self, tmp_path):
-        with pytest.raises(CommandError):
-            run_export(str(tmp_path / "export.json"), batch_size=101)
 
     def test_raises_for_unknown_app(self, tmp_path):
         with pytest.raises(CommandError):
