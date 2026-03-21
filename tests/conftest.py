@@ -118,7 +118,7 @@ def make_test_config():
 
 
 @pytest.fixture(autouse=True)
-def isolate_registry(db):
+def isolate_registry(request, db):
     """
     Reset the config registry and cache before every test, then re-register
     the test app config so each test starts from a known state.
@@ -127,6 +127,10 @@ def isolate_registry(db):
     Django's test DB is set up and migrations have run before we attempt to
     write ConfigValue rows.
     """
+    if "no_db" in request.keywords:
+        yield
+        return
+
     from django_sysconfig.registry import config_registry
 
     # Clear any registrations left by previous tests or autodiscovery
