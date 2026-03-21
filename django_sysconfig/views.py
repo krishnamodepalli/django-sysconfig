@@ -54,9 +54,12 @@ class BaseConfigView(View):
         return True
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.is_staff:
-            raise PermissionDenied
-        if not self.has_extra_permissions(request):
+        if not request.user.is_authenticated:
+            from django.contrib.auth.views import redirect_to_login
+
+            return redirect_to_login(request.get_full_path())
+
+        if not request.user.is_staff or not self.has_extra_permissions(request):
             raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
