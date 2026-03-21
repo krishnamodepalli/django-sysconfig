@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v0.2.0 (2026-03-15)
+
+### Bug Fixes
+
+- **docs**: Support deployment path prefixes
+  ([`9928ca2`](https://github.com/krishnamodepalli/django-sysconfig/commit/9928ca2f668ddc3974ac5c325417883109c21eb5))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Continuous Integration
+
+- **docs**: Remove fix/docs-pages-path-prefix branch to trigger docs generation
+  ([`b72c8b8`](https://github.com/krishnamodepalli/django-sysconfig/commit/b72c8b8ce01f16f7a3ab6609e7d4ce0c5c13a0f0))
+
+- **docs**: Run workflow on fix branch
+  ([`2c90fc6`](https://github.com/krishnamodepalli/django-sysconfig/commit/2c90fc652ab99338ba5e05a7dae64988ca6717a0))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Features
+
+- **docs**: Generate SEO metadata artifacts
+  ([`219e29f`](https://github.com/krishnamodepalli/django-sysconfig/commit/219e29f6582e65e10692cd289f0cb06f1c970c20))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+
 ## v0.1.0 (2026-03-15)
 
 ### Bug Fixes
