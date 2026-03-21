@@ -259,7 +259,7 @@ class ConfigAccessor:
 
         Performs validation, serialization, and database write. Returns two
         callbacks intended to be registered with transaction.on_commit:
-          - on_commit_cache_refresh: invalidates and repopulates the cache
+          - on_commit_cache_refresh: repopulates the cache
           - on_commit_callback: dispatches the field's on_save hook if defined
 
         Both callbacks must only be executed after the transaction commits
