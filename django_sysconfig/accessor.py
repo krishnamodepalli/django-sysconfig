@@ -209,8 +209,9 @@ class ConfigAccessor:
         from django.db import transaction
 
         with transaction.atomic():
-            on_commit_callback = self._set_value_internal(path, value)
-            transaction.on_commit(on_commit_callback)
+            cache_refresh, callbacks = self._set_value_internal(path, value)
+            transaction.on_commit(cache_refresh)
+            transaction.on_commit(callbacks)
 
     def set_many(
         self, values: dict[str, Any], skip_on_save_callbacks: bool = False
@@ -242,20 +243,27 @@ class ConfigAccessor:
 
         with transaction.atomic():
             for path, value in values.items():
-                on_commit_callback = self._set_value_internal(path, value)
+                cache_refresh, callbacks = self._set_value_internal(path, value)
+                transaction.on_commit(cache_refresh)
 
                 if not skip_on_save_callbacks:
-                    transaction.on_commit(on_commit_callback)
+                    transaction.on_commit(callbacks)
 
         return len(values)
 
-    def _set_value_internal(self, path: str, value: Any) -> Callable[[], None]:
+    def _set_value_internal(
+        self, path: str, value: Any
+    ) -> tuple[Callable[[], None], Callable[[], None]]:
         """
         Internal implementation of setting a configuration value.
 
-        Performs validation, serialization, and database write. Returns a
-        callback function that should be executed after the database
-        transaction commits to handle cache invalidation and on_save dispatch.
+        Performs validation, serialization, and database write. Returns two
+        callbacks intended to be registered with transaction.on_commit:
+          - on_commit_cache_refresh: invalidates and repopulates the cache
+          - on_commit_callback: dispatches the field's on_save hook if defined
+
+        Both callbacks must only be executed after the transaction commits
+        successfully to ensure cache always reflects durable DB state.
         """
         app_label, section, field_name = self._parse_path(path)
         field = self._get_field(app_label, section, field_name)
@@ -276,7 +284,7 @@ class ConfigAccessor:
 
         db_path = self._to_db_path(section, field_name)
 
-        # Get old value before saving (for on_save callback)
+        # Fetch old value before the write so on_save receives the previous state.
         old_value = None
         if field.on_save:
             try:
@@ -292,15 +300,15 @@ class ConfigAccessor:
             defaults={"value": serialized},
         )
 
-        # Cache the new value immediately to avoid cache miss on next read
-        config_cache.set(path, serialized)
+        def on_commit_cache_refresh():
+            config_cache.set(path, serialized)
 
-        def on_commit():
-            # Call on_save callback if defined
+        def on_commit_callback():
+            # Dispatch on_save hook if the field defines one.
             if field.on_save:
                 field.on_save(path, value, old_value)
 
-        return on_commit
+        return on_commit_cache_refresh, on_commit_callback
 
     def all(self, app_label: str) -> dict[str, dict[str, Any]]:
         """
