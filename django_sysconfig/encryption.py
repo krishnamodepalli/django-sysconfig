@@ -63,9 +63,12 @@ def decrypt(encrypted_value: str) -> str:
 
 def is_encrypted(value: str) -> bool:
     """
-    Check if a value appears to be encrypted.
+    Check if a value appears to be a Fernet-encrypted token.
 
-    This is a heuristic check - Fernet tokens have a specific format.
+    Uses two heuristics: minimum decoded length and the Fernet version
+    byte (0x80), which is always the first byte of a valid Fernet token.
+    This eliminates false positives from other long base64-encoded values
+    such as JWTs, hashed passwords, or long API keys.
 
     Args:
         value: The value to check
@@ -76,12 +79,9 @@ def is_encrypted(value: str) -> bool:
     if not value:
         return False
     try:
-        # Fernet tokens are base64-encoded and start with 'gAAAAA'
-        # They also have a specific length pattern
         decoded = base64.urlsafe_b64decode(value.encode())
-        return len(decoded) >= MIN_FERNET_TOKEN_SIZE
+        return len(decoded) >= MIN_FERNET_TOKEN_SIZE and decoded[0] == 0x80
     except (ValueError, TypeError, UnicodeDecodeError):
-        # Invalid base64 or encoding issues mean it's not encrypted
         return False
 
 
