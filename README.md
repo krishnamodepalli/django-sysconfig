@@ -95,10 +95,10 @@ Staff can change `maintenance_mode` through `/admin/config/` — no code change,
 
 ## Documentation
 
-**[docs.djangosysconfig.com](https://docs.djangosysconfig.com)**
+**[krishnamodepalli.github.io/django-sysconfig](https://krishnamodepalli.github.io/django-sysconfig/)**
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests are welcome.
+See [CONTRIBUTING.md](https://github.com/krishnamodepalli/django-sysconfig/blob/develop/CONTRIBUTING.md). Issues and pull requests are welcome.
