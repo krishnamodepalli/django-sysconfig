@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 (
                     "path",
                     models.CharField(
-                        help_text="Configuration path, e.g., 'general/max_todos_per_user'",
+                        help_text="Configuration path, e.g., 'general.max_todos_per_user'",
                         max_length=255,
                     ),
                 ),
