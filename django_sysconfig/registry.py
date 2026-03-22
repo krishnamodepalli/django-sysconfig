@@ -115,8 +115,10 @@ class SectionMeta(type):
         # Collect all Field instances from the class namespace
         for key, value in list(namespace.items()):
             if isinstance(value, Field):
-                value.name = key
-                fields[key] = value
+                # Normalise field name to snake_case at definition time
+                normalised_key = to_snake_case(key)
+                value.name = normalised_key
+                fields[normalised_key] = value
 
         namespace["_fields"] = fields
         return super().__new__(mcs, name, bases, namespace)
@@ -140,12 +142,13 @@ class Section(metaclass=SectionMeta):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        # Ensure each subclass has its own _fields dict
         cls._fields = {}
         for key, value in vars(cls).items():
             if isinstance(value, Field):
-                value.name = key
-                cls._fields[key] = value
+                # Normalise field name to snake_case at definition time
+                normalised_key = to_snake_case(key)
+                value.name = normalised_key
+                cls._fields[normalised_key] = value
 
     @classmethod
     def get_fields(cls) -> dict[str, Field]:
@@ -162,6 +165,8 @@ class AppConfigDefinition:
     """
 
     def __init__(self, app_label: str, config_class: type):
+        # Normalise app_label to snake_case — this is the canonical form
+        # used in DB paths, cache keys, and accessor paths.
         self.app_label = to_snake_case(app_label)
         self.config_class = config_class
         self.sections: dict[str, type[Section]] = {}
@@ -176,12 +181,17 @@ class AppConfigDefinition:
                 and issubclass(attr, Section)
                 and attr is not Section
             ):
-                # Set path for each field in the section
-                section_name = to_snake_case(name)
+                # Normalise section name to snake_case — used as the second
+                # path segment in DB paths, cache keys, and accessor paths.
+                section_key = to_snake_case(name)
+
+                # Update each field's path using the normalised section key.
+                # field.name is already normalised by SectionMeta / __init_subclass__.
                 for field_name, field in attr.get_fields().items():
-                    field_name = to_snake_case(field_name)
-                    field.path = f"{section_name}/{field_name}"
-                self.sections[name] = attr
+                    field.path = f"{section_key}/{field_name}"
+
+                # Store section under its normalised snake_case key.
+                self.sections[section_key] = attr
 
     def get_sections(self) -> list[tuple[str, type[Section]]]:
         """Return sections sorted by sort_order."""
@@ -190,17 +200,24 @@ class AppConfigDefinition:
             key=lambda x: (x[1].sort_order, x[0]),
         )
 
-    def get_field(self, path: str) -> Field | None:
-        """Get a field by its path (e.g., 'general/max_todos')."""
+    def get_field(self, path: str) -> "Field | None":
+        """Get a field by its path (e.g., 'general/max_todos').
+
+        Both path segments are expected to be in snake_case — the same
+        normalised form used when the section and field were registered.
+        """
         parts = path.split("/")
         if len(parts) != 2:
             return None
 
-        section_name, field_name = parts
-        for name, section in self.sections.items():
-            if name.lower() == section_name:
-                return section.get_fields().get(field_name)
-        return None
+        section_key, field_name = parts
+
+        # sections dict is keyed by snake_case names — direct lookup, no .lower()
+        section = self.sections.get(section_key)
+        if section is None:
+            return None
+
+        return section.get_fields().get(field_name)
 
 
 class ConfigRegistry:
@@ -221,12 +238,17 @@ class ConfigRegistry:
         return cls._instance
 
     def register(self, app_label: str, config_class: type) -> None:
-        """Register a configuration class for an app."""
-        config_def = AppConfigDefinition(app_label, config_class)
-        self._configs[app_label] = config_def
+        """Register a configuration class for an app.
 
-        # Create DB records for all fields with default values
-        self._ensure_db_records(app_label, config_def)
+        The app_label is normalised to snake_case before storage so that
+        get_config() and all downstream consumers use the canonical form.
+        """
+        config_def = AppConfigDefinition(app_label, config_class)
+
+        # Store under the normalised app_label, not the original string.
+        self._configs[config_def.app_label] = config_def
+
+        self._ensure_db_records(config_def.app_label, config_def)
 
     def _ensure_db_records(
         self, app_label: str, config_def: AppConfigDefinition
@@ -235,7 +257,8 @@ class ConfigRegistry:
         Ensure database records exist for all config fields.
 
         Creates records with default values for fields that don't have
-        a database entry yet.
+        a database entry yet. All path segments are already normalised
+        to snake_case by AppConfigDefinition at this point.
         """
         try:
             from django.db import transaction
@@ -243,9 +266,10 @@ class ConfigRegistry:
             from .models import ConfigValue
 
             with transaction.atomic():
-                for section_name, section in config_def.get_sections():
-                    section_key = section_name.lower()
+                for section_key, section in config_def.get_sections():
+                    # section_key is already snake_case — no further normalisation needed
                     for field_name, field in section.get_fields().items():
+                        # field_name is already snake_case — set by SectionMeta
                         db_path = f"{section_key}.{field_name}"
 
                         # Serialize the default value
@@ -270,9 +294,13 @@ class ConfigRegistry:
             # This is expected during initial app loading before migrations are applied
             pass
 
-    def get_config(self, app_label: str) -> AppConfigDefinition | None:
-        """Get the configuration definition for an app."""
-        return self._configs.get(app_label)
+    def get_config(self, app_label: str) -> "AppConfigDefinition | None":
+        """Get the configuration definition for an app.
+
+        Normalises app_label to snake_case before lookup so callers do not
+        need to remember the canonical form.
+        """
+        return self._configs.get(to_snake_case(app_label))
 
     def get_all_configs(self) -> dict[str, AppConfigDefinition]:
         """Get all registered configurations."""
