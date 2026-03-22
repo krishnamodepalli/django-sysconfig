@@ -13,6 +13,8 @@ from decimal import Decimal
 import pytest
 from django.core.cache import cache
 
+from django_sysconfig.registry import AppConfigDefinition
+
 # ---------------------------------------------------------------------------
 # Test app label
 # ---------------------------------------------------------------------------
@@ -115,8 +117,8 @@ def make_test_config():
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
-def isolate_registry(db):
+@pytest.fixture(autouse=True)
+def isolate_registry(request, db):
     """
     Reset the config registry and cache before every test, then re-register
     the test app config so each test starts from a known state.
@@ -125,6 +127,10 @@ def isolate_registry(db):
     Django's test DB is set up and migrations have run before we attempt to
     write ConfigValue rows.
     """
+    if "no_db" in request.keywords:
+        yield
+        return
+
     from django_sysconfig.registry import config_registry
 
     # Clear any registrations left by previous tests or autodiscovery
@@ -135,13 +141,44 @@ def isolate_registry(db):
 
     # Register the canonical test config; this also seeds ConfigValue rows
     # for fields that carry defaults
-    config_registry.register(TEST_APP, make_test_config())
+    test_app_config = make_test_config()
+    config_registry.register(TEST_APP, test_app_config)
+
+    config_registry._ensure_db_records(
+        TEST_APP,
+        AppConfigDefinition(TEST_APP, test_app_config),
+    )
 
     yield
 
     # Teardown: wipe registry and cache again so the next test's setup is clean
     config_registry.clear()
     cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def auto_capture_on_commit(django_capture_on_commit_callbacks):
+    """
+    Automatically execute on_commit callbacks after every test.
+    Ensures cache refresh and on_save hooks fire consistently
+    without needing to wrap individual calls in tests.
+    """
+    with django_capture_on_commit_callbacks(execute=True):
+        yield
+
+
+@pytest.fixture()
+def tmp_json_file(tmp_path):
+    """Return a factory that writes a dict as JSON to a temp file and returns its path."""
+
+    def _make(data: dict, filename: str = "config.json") -> str:
+        path = tmp_path / filename
+        import json
+
+        path.write_text(json.dumps(data))
+        return str(path)
+
+    return _make
 
 
 @pytest.fixture()

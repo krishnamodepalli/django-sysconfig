@@ -308,6 +308,7 @@ class ConfigAccessor:
         )
 
         def on_commit_cache_refresh():
+            # Cache the new value immediately to avoid cache miss on next read
             config_cache.set(path, serialized)
 
         def on_commit_callback():
@@ -416,6 +417,26 @@ class ConfigAccessor:
             return config_value.value is not None and config_value.value != ""
         except ConfigValue.DoesNotExist:
             return False
+
+    def reset(self, path: str) -> None:
+        """
+        Reset a configuration value to its field default.
+
+        Sets the DB row back to the field's default value using the standard
+        set() path — handles serialization, cache refresh, and on_save dispatch.
+
+        Args:
+            path: Full path like 'todo.general.max_todos_per_user'
+
+        Raises:
+            InvalidPathError: If path format is invalid
+            AppNotFoundError: If app has no registered config
+            FieldNotFoundError: If field doesn't exist
+        """
+        app_label, section, field_name = self._parse_path(path)
+        field = self._get_field(app_label, section, field_name)
+
+        self.set(path, field.default)
 
 
 # Global config accessor instance
