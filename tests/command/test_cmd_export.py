@@ -99,11 +99,6 @@ class TestCmdExportStructure:
 class TestCmdExportValues:
 
     def test_exports_default_values(self, tmp_path):
-        from django_sysconfig.models import ConfigValue
-
-        rows = ConfigValue.objects.filter(app_label="testapp")
-        print(rows.count())
-        print(list(rows.values("path", "value")))
 
         output = str(tmp_path / "export.json")
         run_export(output)
