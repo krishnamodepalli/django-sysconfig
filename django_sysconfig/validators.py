@@ -282,13 +282,43 @@ class UrlValidator(BaseValidator):
 
     message = "Enter a valid URL."
 
+    ALLOWED_SCHEMES = frozenset(
+        {
+            "http",
+            "https",
+            "ftp",
+            "ftps",
+            "ws",
+            "wss",
+            "sftp",
+            "smtp",
+            "ldap",
+            "ldaps",
+        }
+    )
+
     def __init__(self, schemes: list[str] | None = None, message: str | None = None):
         """
         Args:
-            schemes: Allowed URL schemes (default: ['http', 'https', 'ftp'])
+            schemes: Subset of allowed schemes to accept.
+                     Defaults to ['http', 'https', 'ftp'].
+                     Must be a non-empty list drawn from:
+                     http, https, ftp, ftps, ws, wss, sftp, smtp, ldap, ldaps.
             message: Custom error message
         """
-        self.schemes = schemes or ["http", "https", "ftp"]
+        resolved = schemes if schemes is not None else ["http", "https", "ftp"]
+
+        if not resolved:
+            raise ValueError("schemes must not be empty.")
+
+        unknown = set(resolved) - self.ALLOWED_SCHEMES
+        if unknown:
+            raise ValueError(
+                f"Unsupported scheme(s): {sorted(unknown)}. "
+                f"Allowed: {sorted(self.ALLOWED_SCHEMES)}"
+            )
+
+        self.schemes = resolved
         scheme_pattern = "|".join(re.escape(s) for s in self.schemes)
         self.URL_PATTERN = re.compile(
             rf"^({scheme_pattern})://"
