@@ -31,6 +31,8 @@ from typing import TYPE_CHECKING, Any
 
 import django.db
 
+from django_sysconfig.utils import to_snake_case
+
 if TYPE_CHECKING:
     from .frontend_models import BaseFrontendModel
     from .validators import BaseValidator
@@ -160,7 +162,7 @@ class AppConfigDefinition:
     """
 
     def __init__(self, app_label: str, config_class: type):
-        self.app_label = app_label
+        self.app_label = to_snake_case(app_label)
         self.config_class = config_class
         self.sections: dict[str, type[Section]] = {}
 
@@ -175,8 +177,9 @@ class AppConfigDefinition:
                 and attr is not Section
             ):
                 # Set path for each field in the section
-                section_name = name.lower()
+                section_name = to_snake_case(name)
                 for field_name, field in attr.get_fields().items():
+                    field_name = to_snake_case(field_name)
                     field.path = f"{section_name}/{field_name}"
                 self.sections[name] = attr
 
