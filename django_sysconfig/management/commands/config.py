@@ -206,8 +206,11 @@ class Command(BaseCommand):
             result["config"][app_label] = config.all(app_label)
             self.stdout.write(f"  {app_label} exported...")
 
-        # 4. Write
-        with open(output_path, "w") as f:
+        # 4. Write — restricted to owner read/write only (secrets may be present)
+        if os.path.exists(output_path):
+            os.chmod(output_path, 0o600)
+        fd = os.open(output_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
             json.dump(result, f, indent=2, cls=_JSONEncoder)
 
         self.stdout.write(self.style.SUCCESS(f"\n✔ Export complete → {output_path}"))
@@ -240,6 +243,29 @@ class Command(BaseCommand):
         if not config_data:
             raise CommandError("No config data found in file")
 
+        # 3. Validate structure before attempting to iterate
+        if not isinstance(config_data, dict):
+            raise CommandError("Invalid format: 'config' must be a JSON object")
+
+        for app, sections in config_data.items():
+            if not isinstance(sections, dict):
+                raise CommandError(
+                    f"Invalid format: expected an object for app '{app}', "
+                    f"got {type(sections).__name__}"
+                )
+            for section, fields in sections.items():
+                if not isinstance(fields, dict):
+                    raise CommandError(
+                        f"Invalid format: expected an object for '{app}.{section}', "
+                        f"got {type(fields).__name__}"
+                    )
+                for field in fields:
+                    if not isinstance(field, str):
+                        raise CommandError(
+                            f"Invalid format: field keys must be strings "
+                            f"in '{app}.{section}'"
+                        )
+
         paths = [
             (f"{app}.{section}.{field}", value)
             for app, sections in config_data.items()
@@ -247,7 +273,7 @@ class Command(BaseCommand):
             for field, value in fields.items()
         ]
 
-        # 3. Confirm (skipped for dry-run and --force)
+        # 4. Confirm (skipped for dry-run and --force)
         if not dry_run and not force:
             source = "stdin" if use_stdin else file_path
             self._confirm(
@@ -258,11 +284,26 @@ class Command(BaseCommand):
         if dry_run:
             self.stdout.write(self.style.WARNING("Dry run — no values will be saved\n"))
 
-            unknown = [path for path, _ in paths if not config.exists(path)]
-            if unknown:
+            # Exercise the full import path inside a transaction that is always
+            # rolled back — this runs path resolution, frontend-model coercion,
+            # serialization, and field validators, so a dry-run failure means the
+            # real import would also fail.
+            from django.db import transaction
+
+            errors = []
+            try:
+                with transaction.atomic():
+                    config.set_many(dict(paths), skip_on_save_callbacks=True)
+                    raise transaction.TransactionManagementError("dry-run rollback")
+            except transaction.TransactionManagementError:
+                pass
+            except (ConfigValidationError, ConfigError) as e:
+                errors.append(str(e))
+
+            if errors:
                 raise CommandError(
-                    "Validation failed:\n"
-                    + "\n".join(f"  • {p}: unknown path" for p in unknown)
+                    "Dry run failed — import would not succeed:\n"
+                    + "\n".join(f"  • {err}" for err in errors)
                 )
 
             self.stdout.write(
@@ -272,7 +313,7 @@ class Command(BaseCommand):
             )
             return
 
-        # 4. Execute
+        # 5. Execute
         try:
             config.set_many(dict(paths), skip_on_save_callbacks=skip_callbacks)
         except (ConfigValidationError, ConfigError) as e:
