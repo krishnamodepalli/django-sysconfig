@@ -60,6 +60,12 @@ export default {
         { slug: "guides/on-save-callbacks",  title: "on_save Callbacks"       },
       ],
     },
+    {
+      label: "CLI",
+      pages: [
+        { slug: "cli/management-command", title: "Management Command" },
+      ],
+    },
     /** {
       label: "Reference",
       pages: [
