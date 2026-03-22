@@ -222,6 +222,9 @@ class ConfigRegistry:
         config_def = AppConfigDefinition(app_label, config_class)
         self._configs[app_label] = config_def
 
+        # Create DB records for all fields with default values
+        self._ensure_db_records(app_label, config_def)
+
     def _ensure_db_records(
         self, app_label: str, config_def: AppConfigDefinition
     ) -> None:
