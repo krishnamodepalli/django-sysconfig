@@ -6,7 +6,9 @@ Covers:
 - Imports from file successfully
 - Imports from --stdin successfully
 - --dry-run passes for valid file, no DB writes
-- --dry-run fails listing unknown paths
+- --dry-run fails for unknown paths
+- --dry-run catches validation errors before any write
+- --dry-run does not write on validation failure
 - --force skips confirmation prompt
 - Confirmation prompt proceeds on y
 - Confirmation prompt aborts on n
@@ -20,6 +22,7 @@ Covers:
 - Raises CommandError for empty config data
 - Raises CommandError on validation failure, rolls back all
 - Raises CommandError for unknown path in import file
+- Raises CommandError for malformed JSON structure
 """
 
 import json
@@ -159,9 +162,10 @@ class TestCmdImportDryRun:
         path = tmp_json_file(data)
         with pytest.raises(CommandError) as exc:
             run_import(file=path, dry_run=True, force=True)
-        assert "unknown path" in str(exc.value)
+        assert "Dry run failed" in str(exc.value)
 
-    def test_dry_run_lists_all_unknown_paths(self, tmp_json_file):
+    def test_dry_run_fails_for_invalid_field(self, tmp_json_file):
+        # set_many raises on the first failure so only one error is reported
         data = {
             "version": 1,
             "config": {
@@ -176,8 +180,33 @@ class TestCmdImportDryRun:
         path = tmp_json_file(data)
         with pytest.raises(CommandError) as exc:
             run_import(file=path, dry_run=True, force=True)
-        assert "bad_field_one" in str(exc.value)
-        assert "bad_field_two" in str(exc.value)
+        assert "Dry run failed" in str(exc.value)
+
+    def test_dry_run_catches_validation_errors(self, tmp_json_file):
+        # Exercises the full validator path — not just path existence
+        data = {
+            "version": 1,
+            "config": {
+                "testapp": {"general": {"max_items": 99999}}  # fails RangeValidator
+            },
+        }
+        path = tmp_json_file(data)
+        with pytest.raises(CommandError) as exc:
+            run_import(file=path, dry_run=True, force=True)
+        assert "Dry run failed" in str(exc.value)
+
+    def test_dry_run_does_not_write_on_validation_failure(self, config, tmp_json_file):
+        original = config.get("testapp.general.max_items")
+        data = {
+            "version": 1,
+            "config": {
+                "testapp": {"general": {"max_items": 99999}}  # fails RangeValidator
+            },
+        }
+        path = tmp_json_file(data)
+        with pytest.raises(CommandError):
+            run_import(file=path, dry_run=True, force=True)
+        assert config.get("testapp.general.max_items") == original
 
     def test_dry_run_skips_confirmation_prompt(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
@@ -316,6 +345,31 @@ class TestCmdImportAtomicity:
             run_import(file=path, force=True)
         assert "rolled back" in str(exc.value)
         assert config.get("testapp.general.site_name") == original_name
+
+
+# ---------------------------------------------------------------------------
+# Structure validation
+# ---------------------------------------------------------------------------
+
+
+class TestCmdImportStructureValidation:
+
+    def test_raises_for_non_dict_app_value(self, tmp_json_file):
+        path = tmp_json_file({"version": 1, "config": {"testapp": "not a dict"}})
+        with pytest.raises(CommandError) as exc:
+            run_import(file=path, force=True)
+        assert "testapp" in str(exc.value)
+
+    def test_raises_for_non_dict_section_value(self, tmp_json_file):
+        path = tmp_json_file(
+            {
+                "version": 1,
+                "config": {"testapp": {"general": ["not", "a", "dict"]}},
+            }
+        )
+        with pytest.raises(CommandError) as exc:
+            run_import(file=path, force=True)
+        assert "testapp.general" in str(exc.value)
 
 
 # ---------------------------------------------------------------------------
