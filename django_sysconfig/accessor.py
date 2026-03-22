@@ -242,12 +242,19 @@ class ConfigAccessor:
         from django.db import transaction
 
         with transaction.atomic():
+            callbacks_to_register = []
+
             for path, value in values.items():
-                cache_refresh, callbacks = self._set_value_internal(path, value)
-                transaction.on_commit(cache_refresh)
+                cache_refresh_callback, on_save_callback = self._set_value_internal(
+                    path, value
+                )
+                transaction.on_commit(cache_refresh_callback)
 
                 if not skip_on_save_callbacks:
-                    transaction.on_commit(callbacks)
+                    callbacks_to_register.append(on_save_callback)
+
+            for callback in callbacks_to_register:
+                transaction.on_commit(callback)
 
         return len(values)
 
