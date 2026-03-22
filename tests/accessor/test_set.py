@@ -72,7 +72,7 @@ class TestSetPersistence:
             app_label="testapp",
             path="general.max_items",
         )
-        assert row is not None
+        assert row.value == "77"
 
     def test_overwrite_updates_existing_row(self, config):
         config.set("testapp.general.max_items", 10)
@@ -191,9 +191,40 @@ class TestSetOnSave:
         section._fields["max_items"] = new_field
 
         with django_capture_on_commit_callbacks(execute=True):
-            config.set("testapp.general.max_items", 10)  # set initial
+            config.set("testapp.general.max_items", 50)  # differs from default of 10
         with django_capture_on_commit_callbacks(execute=True):
             config.set("testapp.general.max_items", 20)  # update
+
+        assert received["old_value"] == 50
+
+    def test_on_save_receives_field_default_as_old_value_on_first_set(
+        self, config, registry, django_capture_on_commit_callbacks
+    ):
+        # When no prior DB row exists, old_value should fall back to field.default
+        received = {}
+
+        def capture(path, new_value, old_value):
+            received["old_value"] = old_value
+
+        from django_sysconfig.frontend_models import IntegerFrontendModel
+        from django_sysconfig.models import ConfigValue
+        from django_sysconfig.registry import Field
+        from tests.conftest import TEST_APP
+
+        section = registry.get_config(TEST_APP).sections["General"]
+        new_field = Field(
+            IntegerFrontendModel, label="Max Items", default=10, on_save=capture
+        )
+        new_field.name = "max_items"
+        section._fields["max_items"] = new_field
+
+        # Delete the seeded row so there is no prior DB value
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.max_items"
+        ).delete()
+
+        with django_capture_on_commit_callbacks(execute=True):
+            config.set("testapp.general.max_items", 99)
 
         assert received["old_value"] == 10
 
