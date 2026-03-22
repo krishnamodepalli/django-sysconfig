@@ -92,4 +92,4 @@ The detail view includes a breadcrumb back to both the app list and the Django a
 ## Tips for staff users
 
 - **Changes take effect immediately.** There's no "publish" or "activate" step. As soon as you hit Save, the new values are live (the cache is invalidated and the database is updated).
-- **Secret fields are write-only.** If you need to verify what's stored, use the management command — the UI will never show the decrypted value.
+- **Secret fields are write-only.** If you need to inspect a stored value, use [config `get`](/cli/management-command#get) from the terminal.

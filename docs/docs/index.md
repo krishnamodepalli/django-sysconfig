@@ -26,6 +26,7 @@ It's the configuration workflow that Magento figured out years ago, brought to D
 - **Auto-discovery** — drop a `sysconfig.py` in any installed app and it's picked up on startup
 - **Admin UI** — staff-only views for browsing and editing configuration, per app and section
 - **`on_save` callbacks** — react to value changes with custom logic
+- **Management commands** — `config [get | set | reset | export | import]`. [See more](/cli/management-command)
 
 ## A quick taste
 

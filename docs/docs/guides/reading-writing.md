@@ -120,6 +120,11 @@ config.set_many({
 
 If any value fails validation, the entire transaction is rolled back and no values are saved.
 
+:::tip
+You can also read and write values directly from the terminal using the
+[`config` management command](/cli/management-command).
+:::
+
 ## Exceptions
 
 All exceptions inherit from `ConfigError`, so you can catch the base class if you want to handle any config-related error in one place.

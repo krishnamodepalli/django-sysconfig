@@ -123,6 +123,8 @@ The import runs inside a single transaction — it either fully succeeds or roll
 Once the import completes successfully, delete `config_backup.json`. It contains your secrets in plaintext.
 :::
 
+See the [Management Commands](/cli/management-commands) reference for all available flags.
+
 ### Coming in Phase 2: `SYSCONFIG_ENCRYPTION_KEY`
 
 This coupling between `SECRET_KEY` and config encryption is a known limitation being addressed in the next major release ([#32](https://github.com/krishnamodepalli/django-sysconfig/issues/32)).
