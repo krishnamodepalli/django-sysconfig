@@ -282,17 +282,6 @@ class UrlValidator(BaseValidator):
 
     message = "Enter a valid URL."
 
-    # URL pattern supporting http, https, ftp
-    URL_PATTERN = re.compile(
-        r"^(https?|ftp)://"  # Scheme
-        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}\.?|"  # Domain
-        r"localhost|"  # localhost
-        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # or IPv4
-        r"(?::\d+)?"  # Optional port
-        r"(?:/?|[/?]\S+)$",  # Path
-        re.IGNORECASE,
-    )
-
     def __init__(self, schemes: list[str] | None = None, message: str | None = None):
         """
         Args:
@@ -300,6 +289,16 @@ class UrlValidator(BaseValidator):
             message: Custom error message
         """
         self.schemes = schemes or ["http", "https", "ftp"]
+        scheme_pattern = "|".join(re.escape(s) for s in self.schemes)
+        self.URL_PATTERN = re.compile(
+            rf"^({scheme_pattern})://"
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}\.?|"
+            r"localhost|"
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            r"(?::\d+)?"
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
         super().__init__(message)
 
     def __call__(self, value: Any) -> None:
@@ -307,14 +306,8 @@ class UrlValidator(BaseValidator):
             return
         if not isinstance(value, str):
             self._fail()
-            return
         if not self.URL_PATTERN.match(value):
             self._fail()
-
-        # Check scheme
-        scheme = value.split("://")[0].lower()
-        if scheme not in self.schemes:
-            self._fail(f"URL scheme must be one of: {', '.join(self.schemes)}")
 
 
 class IPv4Validator(BaseValidator):
