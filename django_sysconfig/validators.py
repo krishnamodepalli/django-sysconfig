@@ -278,7 +278,48 @@ class EmailValidator(BaseValidator):
 
 
 class UrlValidator(BaseValidator):
-    """Validates that a value is a valid URL."""
+    """
+    Validates that a value is a valid URL.
+
+    Checks that the value is a non-empty string, matches a valid URL
+    structure (scheme, host, optional port and path), and uses one of
+    the permitted schemes.
+
+    Skips validation for ``None`` and empty strings — combine with
+    ``NotEmptyValidator`` if the field is required.
+
+    Args:
+        schemes: List of permitted URL schemes. Must be a non-empty subset of:
+                 ``http``, ``https``, ``ftp``, ``ftps``, ``ws``, ``wss``,
+                 ``sftp``, ``smtp``, ``ldap``, ``ldaps``.
+                 Defaults to ``["http", "https", "ftp"]``.
+                 Pass ``None`` to use the default.
+        message: Custom error message. Defaults to ``"Enter a valid URL."``.
+
+    Raises:
+        ValueError: At init time if ``schemes`` is an empty list or contains
+                    a scheme not in the supported set.
+        ValidationError: At call time if the value is not a valid URL or uses
+                         a scheme outside the permitted list.
+
+    Examples::
+
+        # Default — accepts http, https, ftp
+        UrlValidator()
+
+        # Restrict to secure schemes only
+        UrlValidator(schemes=["https", "ftps", "wss"])
+
+        # WebSocket URLs only
+        UrlValidator(schemes=["ws", "wss"])
+
+        # Combined with NotEmptyValidator on a Field
+        Field(
+            StringFrontendModel,
+            label="Webhook URL",
+            validators=[NotEmptyValidator(), UrlValidator(schemes=["https"])],
+        )
+    """
 
     message = "Enter a valid URL."
 
