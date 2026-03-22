@@ -278,28 +278,98 @@ class EmailValidator(BaseValidator):
 
 
 class UrlValidator(BaseValidator):
-    """Validates that a value is a valid URL."""
+    """
+    Validates that a value is a valid URL.
+
+    Checks that the value is a non-empty string, matches a valid URL
+    structure (scheme, host, optional port and path), and uses one of
+    the permitted schemes.
+
+    Skips validation for ``None`` and empty strings — combine with
+    ``NotEmptyValidator`` if the field is required.
+
+    Args:
+        schemes: List of permitted URL schemes. Must be a non-empty subset of:
+                 ``http``, ``https``, ``ftp``, ``ftps``, ``ws``, ``wss``,
+                 ``sftp``, ``smtp``, ``ldap``, ``ldaps``.
+                 Defaults to ``["http", "https", "ftp"]``.
+                 Pass ``None`` to use the default.
+        message: Custom error message. Defaults to ``"Enter a valid URL."``.
+
+    Raises:
+        ValueError: At init time if ``schemes`` is an empty list or contains
+                    a scheme not in the supported set.
+        ValidationError: At call time if the value is not a valid URL or uses
+                         a scheme outside the permitted list.
+
+    Examples::
+
+        # Default — accepts http, https, ftp
+        UrlValidator()
+
+        # Restrict to secure schemes only
+        UrlValidator(schemes=["https", "ftps", "wss"])
+
+        # WebSocket URLs only
+        UrlValidator(schemes=["ws", "wss"])
+
+        # Combined with NotEmptyValidator on a Field
+        Field(
+            StringFrontendModel,
+            label="Webhook URL",
+            validators=[NotEmptyValidator(), UrlValidator(schemes=["https"])],
+        )
+    """
 
     message = "Enter a valid URL."
 
-    # URL pattern supporting http, https, ftp
-    URL_PATTERN = re.compile(
-        r"^(https?|ftp)://"  # Scheme
-        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}\.?|"  # Domain
-        r"localhost|"  # localhost
-        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # or IPv4
-        r"(?::\d+)?"  # Optional port
-        r"(?:/?|[/?]\S+)$",  # Path
-        re.IGNORECASE,
+    ALLOWED_SCHEMES = frozenset(
+        {
+            "http",
+            "https",
+            "ftp",
+            "ftps",
+            "ws",
+            "wss",
+            "sftp",
+            "smtp",
+            "ldap",
+            "ldaps",
+        }
     )
 
     def __init__(self, schemes: list[str] | None = None, message: str | None = None):
         """
         Args:
-            schemes: Allowed URL schemes (default: ['http', 'https', 'ftp'])
+            schemes: Subset of allowed schemes to accept.
+                     Defaults to ['http', 'https', 'ftp'].
+                     Must be a non-empty list drawn from:
+                     http, https, ftp, ftps, ws, wss, sftp, smtp, ldap, ldaps.
             message: Custom error message
         """
-        self.schemes = schemes or ["http", "https", "ftp"]
+        resolved = schemes if schemes is not None else ["http", "https", "ftp"]
+
+        if not resolved:
+            raise ValueError("schemes must not be empty.")
+
+        unknown = set(resolved) - self.ALLOWED_SCHEMES
+        if unknown:
+            raise ValueError(
+                f"Unsupported scheme(s): {sorted(unknown)}. "
+                f"Allowed: {sorted(self.ALLOWED_SCHEMES)}"
+            )
+
+        self.schemes = resolved
+        scheme_pattern = "|".join(re.escape(s) for s in self.schemes)
+        self.URL_PATTERN = re.compile(
+            rf"^({scheme_pattern})://"
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}\.?|"
+            r"localhost|"
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            r"(?::\d+)?"
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
         super().__init__(message)
 
     def __call__(self, value: Any) -> None:
@@ -307,14 +377,8 @@ class UrlValidator(BaseValidator):
             return
         if not isinstance(value, str):
             self._fail()
-            return
         if not self.URL_PATTERN.match(value):
             self._fail()
-
-        # Check scheme
-        scheme = value.split("://")[0].lower()
-        if scheme not in self.schemes:
-            self._fail(f"URL scheme must be one of: {', '.join(self.schemes)}")
 
 
 class IPv4Validator(BaseValidator):

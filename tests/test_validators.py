@@ -424,31 +424,60 @@ class TestUrlValidator:
     def test_empty_string_skips_validation(self):
         self.validator("")
 
-    def test_valid_urls(self):
+    def test_valid_http_url(self):
         self.validator("http://example.com")
-        self.validator("https://example.com/path")
-        self.validator("ftp://example.com")
+
+    def test_valid_https_url(self):
+        self.validator("https://example.com/path?foo=bar")
+
+    def test_valid_ftp_url(self):
+        self.validator("ftp://files.example.com")
+
+    def test_valid_localhost_with_port(self):
         self.validator("http://localhost:8000")
+
+    def test_valid_ipv4(self):
         self.validator("https://192.168.1.1:8080/path")
 
-    def test_invalid_urls(self):
-        with pytest.raises(ValidationError):
-            self.validator("not a url")
+    def test_invalid_url_no_scheme(self):
         with pytest.raises(ValidationError):
             self.validator("example.com")
+
+    def test_invalid_url_scheme_only(self):
         with pytest.raises(ValidationError):
             self.validator("http://")
 
-    def test_custom_schemes(self):
-        custom_validator = UrlValidator(schemes=["http"])
-        custom_validator("http://example.com")
-
+    def test_invalid_url_plain_string(self):
         with pytest.raises(ValidationError):
-            custom_validator("https://example.com")
+            self.validator("not a url")
 
-    def test_non_string(self):
+    def test_unsupported_scheme_raises(self):
+        with pytest.raises(ValidationError):
+            self.validator("ssh://example.com")
+
+    def test_non_string_raises(self):
         with pytest.raises(ValidationError):
             self.validator(123)
+
+    def test_custom_schemes_restricts_correctly(self):
+        validator = UrlValidator(schemes=["https"])
+        validator("https://example.com")
+        with pytest.raises(ValidationError):
+            validator("http://example.com")
+
+    def test_custom_schemes_unknown_raises_at_init(self):
+        with pytest.raises(ValueError):
+            UrlValidator(schemes=["ssh"])
+
+    def test_empty_schemes_raises_at_init(self):
+        with pytest.raises(ValueError):
+            UrlValidator(schemes=[])
+
+    def test_custom_message(self):
+        validator = UrlValidator(message="Bad URL.")
+        with pytest.raises(ValidationError) as exc:
+            validator("not-a-url")
+        assert "Bad URL." in str(exc.value)
 
 
 # ---------------------------------------------------------------------------
