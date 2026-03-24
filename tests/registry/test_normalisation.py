@@ -52,32 +52,24 @@ def make_registry() -> ConfigRegistry:
 class TestFieldNormalisation:
     """Field names are normalised to snake_case by SectionMeta at definition time."""
 
-    def test_camel_case_field_name(self):
-        class MySection(Section):
-            siteURL = Field(StringFrontendModel, label="Site URL")
+    @pytest.mark.parametrize(
+        "attr_name, expected_key",
+        [
+            ("siteURL", "site_url"),
+            ("MaxItems", "max_items"),
+            ("already_normalised", "already_normalised"),
+        ],
+    )
+    def test_field_name_normalised_to_snake_case(self, attr_name, expected_key):
+        MySection = type(
+            "MySection",
+            (Section,),
+            {attr_name: Field(StringFrontendModel, label="Test")},
+        )
 
-        assert "site_url" in MySection._fields
-        assert MySection._fields["site_url"].name == "site_url"
-
-    def test_pascal_case_field_name(self):
-        class MySection(Section):
-            MaxItems = Field(IntegerFrontendModel, label="Max Items")
-
-        assert "max_items" in MySection._fields
-        assert MySection._fields["max_items"].name == "max_items"
-
-    def test_already_snake_case_field_name(self):
-        class MySection(Section):
-            site_name = Field(StringFrontendModel, label="Site Name")
-
-        assert "site_name" in MySection._fields
-        assert MySection._fields["site_name"].name == "site_name"
-
-    def test_original_attribute_name_not_in_fields(self):
-        class MySection(Section):
-            siteURL = Field(StringFrontendModel, label="Site URL")
-
-        assert "siteURL" not in MySection._fields
+        assert expected_key in MySection._fields
+        assert MySection._fields[expected_key].name == expected_key
+        assert attr_name not in MySection._fields or attr_name == expected_key
 
     def test_multiple_fields_all_normalised(self):
         class MySection(Section):
@@ -91,23 +83,13 @@ class TestFieldNormalisation:
             "already_normalised",
         }
 
-    def test_field_name_attribute_matches_dict_key(self):
-        class MySection(Section):
-            siteURL = Field(StringFrontendModel, label="Site URL")
-
-        field = MySection._fields["site_url"]
-        assert field.name == "site_url"
-
     def test_get_fields_returns_normalised_keys(self):
         class MySection(Section):
             siteURL = Field(StringFrontendModel, label="Site URL")
             MaxItems = Field(IntegerFrontendModel, label="Max Items")
 
         fields = MySection.get_fields()
-        assert "site_url" in fields
-        assert "max_items" in fields
-        assert "siteURL" not in fields
-        assert "MaxItems" not in fields
+        assert set(fields.keys()) == {"site_url", "max_items"}
 
 
 # ---------------------------------------------------------------------------
@@ -118,42 +100,30 @@ class TestFieldNormalisation:
 class TestSectionNormalisation:
     """Section class names are normalised to snake_case at AppConfigDefinition init."""
 
-    def test_multi_word_pascal_case_section(self):
-        class MyConfig:
-            class PaymentSettings(Section):
-                label = "Payment Settings"
-                site_name = Field(StringFrontendModel, label="Site Name")
+    @pytest.mark.parametrize(
+        "class_name, expected_key",
+        [
+            ("PaymentSettings", "payment_settings"),
+            ("General", "general"),
+            ("SMS", "sms"),
+            ("APIKeys", "api_keys"),
+        ],
+    )
+    def test_section_name_normalised_to_snake_case(self, class_name, expected_key):
+        SectionClass = type(
+            class_name,
+            (Section,),
+            {
+                "label": class_name,
+                "site_name": Field(StringFrontendModel, label="Site Name"),
+            },
+        )
+        config_def = AppConfigDefinition(
+            "myapp", type("MyConfig", (), {class_name: SectionClass})
+        )
 
-        config_def = AppConfigDefinition("myapp", MyConfig)
-        assert "payment_settings" in config_def.sections
-        assert "PaymentSettings" not in config_def.sections
-
-    def test_single_word_section(self):
-        class MyConfig:
-            class General(Section):
-                label = "General"
-                site_name = Field(StringFrontendModel, label="Site Name")
-
-        config_def = AppConfigDefinition("myapp", MyConfig)
-        assert "general" in config_def.sections
-
-    def test_all_caps_section(self):
-        class MyConfig:
-            class SMS(Section):
-                label = "SMS"
-                site_name = Field(StringFrontendModel, label="Site Name")
-
-        config_def = AppConfigDefinition("myapp", MyConfig)
-        assert "sms" in config_def.sections
-
-    def test_mixed_caps_section(self):
-        class MyConfig:
-            class APIKeys(Section):
-                label = "API Keys"
-                site_name = Field(StringFrontendModel, label="Site Name")
-
-        config_def = AppConfigDefinition("myapp", MyConfig)
-        assert "api_keys" in config_def.sections
+        assert expected_key in config_def.sections
+        assert class_name not in config_def.sections or class_name == expected_key
 
     def test_multiple_sections_all_normalised(self):
         class MyConfig:
@@ -197,24 +167,20 @@ class TestSectionNormalisation:
 class TestAppLabelNormalisation:
     """App labels are normalised to snake_case at registration time."""
 
-    def test_pascal_case_app_label(self):
-        class MyConfig:
-            class General(Section):
-                label = "General"
-                site_name = Field(StringFrontendModel, label="Site Name")
+    @pytest.mark.parametrize(
+        "app_label, expected",
+        [
+            ("MyApp", "my_app"),
+            ("myApp", "my_app"),
+            ("my_app", "my_app"),
+        ],
+    )
+    def test_app_label_normalised_to_snake_case(self, app_label, expected):
+        config_def = AppConfigDefinition(app_label, type("C", (), {}))
+        assert config_def.app_label == expected
 
-        config_def = AppConfigDefinition("MyApp", MyConfig)
-        assert config_def.app_label == "my_app"
-
-    def test_camel_case_app_label(self):
-        config_def = AppConfigDefinition("myApp", type("C", (), {}))
-        assert config_def.app_label == "my_app"
-
-    def test_already_snake_case_app_label(self):
-        config_def = AppConfigDefinition("my_app", type("C", (), {}))
-        assert config_def.app_label == "my_app"
-
-    def test_registry_stores_under_normalised_label(self):
+    @pytest.mark.parametrize("lookup", ["MyApp", "myApp", "my_app"])
+    def test_registry_normalises_on_register_and_lookup(self, lookup):
         class MyConfig:
             class General(Section):
                 label = "General"
@@ -222,32 +188,10 @@ class TestAppLabelNormalisation:
 
         r = make_registry()
         r.register("MyApp", MyConfig)
+
         assert "my_app" in r._configs
         assert "MyApp" not in r._configs
-
-    def test_get_config_finds_by_normalised_label(self):
-        class MyConfig:
-            class General(Section):
-                label = "General"
-                site_name = Field(StringFrontendModel, label="Site Name")
-
-        r = make_registry()
-        r.register("MyApp", MyConfig)
-        assert r.get_config("my_app") is not None
-
-    def test_get_config_normalises_lookup_input(self):
-        class MyConfig:
-            class General(Section):
-                label = "General"
-                site_name = Field(StringFrontendModel, label="Site Name")
-
-        r = make_registry()
-        r.register("MyApp", MyConfig)
-
-        # All of these should find the same config
-        assert r.get_config("MyApp") is not None
-        assert r.get_config("myApp") is not None
-        assert r.get_config("my_app") is not None
+        assert r.get_config(lookup) is not None
 
     def test_get_registered_apps_returns_normalised_labels(self):
         class MyConfig:
@@ -269,27 +213,31 @@ class TestAppLabelNormalisation:
 class TestFieldPathNormalisation:
     """field.path uses fully normalised snake_case segments."""
 
-    def test_field_path_uses_normalised_section_and_field(self):
-        class MyConfig:
-            class PaymentSettings(Section):
-                label = "Payment"
-                siteURL = Field(StringFrontendModel, label="Site URL")
+    @pytest.mark.parametrize(
+        "section_name, field_attr, expected_path",
+        [
+            ("PaymentSettings", "siteURL", "payment_settings/site_url"),
+            ("General", "site_name", "general/site_name"),
+        ],
+    )
+    def test_field_path_uses_normalised_segments(
+        self, section_name, field_attr, expected_path
+    ):
+        section_key, field_key = expected_path.split("/")
+        SectionClass = type(
+            section_name,
+            (Section,),
+            {
+                "label": section_name,
+                field_attr: Field(StringFrontendModel, label="Test"),
+            },
+        )
+        config_def = AppConfigDefinition(
+            "myapp", type("MyConfig", (), {section_name: SectionClass})
+        )
 
-        config_def = AppConfigDefinition("MyApp", MyConfig)
-        section = config_def.sections["payment_settings"]
-        field = section.get_fields()["site_url"]
-        assert field.path == "payment_settings/site_url"
-
-    def test_field_path_already_normalised(self):
-        class MyConfig:
-            class General(Section):
-                label = "General"
-                site_name = Field(StringFrontendModel, label="Site Name")
-
-        config_def = AppConfigDefinition("myapp", MyConfig)
-        section = config_def.sections["general"]
-        field = section.get_fields()["site_name"]
-        assert field.path == "general/site_name"
+        field = config_def.sections[section_key].get_fields()[field_key]
+        assert field.path == expected_path
 
     def test_get_field_finds_by_normalised_path(self):
         class MyConfig:
@@ -309,7 +257,6 @@ class TestFieldPathNormalisation:
                 siteURL = Field(StringFrontendModel, label="Site URL")
 
         config_def = AppConfigDefinition("MyApp", MyConfig)
-        # Original un-normalised path should not be found
         assert config_def.get_field("PaymentSettings/siteURL") is None
 
 
