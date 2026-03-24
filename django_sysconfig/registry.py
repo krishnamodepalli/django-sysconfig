@@ -332,7 +332,7 @@ def register_config(app_label: str):
     """
 
     def decorator(cls):
-        config_registry.register(app_label, cls)
+        config_registry.register(to_snake_case(app_label), cls)
         return cls
 
     return decorator
