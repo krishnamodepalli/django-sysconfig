@@ -16,7 +16,7 @@ class ConfigValue(models.Model):
     )
     path = models.CharField(
         max_length=255,
-        help_text="Configuration path, e.g., 'general/max_todos_per_user'",
+        help_text="Configuration path, e.g., 'general.max_todos_per_user'",
     )
     value = models.TextField(
         null=True,

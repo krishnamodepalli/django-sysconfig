@@ -1,4 +1,10 @@
-from django.test import SimpleTestCase as TestCase
+"""
+Tests for all validators in django_sysconfig.validators.
+
+These are pure unit tests — no DB, no registry, no cache.
+"""
+
+import pytest
 
 from django_sysconfig.validators import (
     ChoiceValidator,
@@ -24,26 +30,33 @@ from django_sysconfig.validators import (
     ValidationError,
 )
 
+# Mark this whole file as "no_db"
+pytestmark = pytest.mark.no_db
 
-class NotEmptyValidatorTestCase(TestCase):
-    def setUp(self):
-        message = "The value provided is Empty"
-        self.validator = NotEmptyValidator(message)
+# ---------------------------------------------------------------------------
+# NotEmptyValidator
+# ---------------------------------------------------------------------------
+
+
+class TestNotEmptyValidator:
+
+    def setup_method(self):
+        self.validator = NotEmptyValidator("The value provided is Empty")
 
     def test_none_is_empty(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(None)
 
     def test_empty_string_is_empty(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("")
 
     def test_empty_list_is_empty(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator([])
 
     def test_empty_dict_is_empty(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator({})
 
     def test_zero_is_not_empty(self):
@@ -63,12 +76,18 @@ class NotEmptyValidatorTestCase(TestCase):
         self.validator(False)
 
 
-class NotBlankValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# NotBlankValidator
+# ---------------------------------------------------------------------------
+
+
+class TestNotBlankValidator:
+
+    def setup_method(self):
         self.validator = NotBlankValidator()
 
     def test_empty_string_is_blank(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("")
 
     def test_none_is_not_blank(self):
@@ -97,74 +116,92 @@ class NotBlankValidatorTestCase(TestCase):
         self.validator(False)
 
 
-class MinLengthValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# MinLengthValidator
+# ---------------------------------------------------------------------------
+
+
+class TestMinLengthValidator:
+
+    def setup_method(self):
         self.validator = MinLengthValidator(4)
 
     def test_min_length_must_be_more_than_one(self):
-        with self.assertRaises(ValidationError):
-            _ = MinLengthValidator(0)
-        with self.assertRaises(ValidationError):
-            _ = MinLengthValidator(-2)
+        with pytest.raises(ValidationError):
+            MinLengthValidator(0)
+        with pytest.raises(ValidationError):
+            MinLengthValidator(-2)
 
-    def test_do_not_care_min_length_for_int(self):
+    def test_does_not_validate_int(self):
         self.validator(1)
         self.validator(-100)
 
-    def test_do_not_care_min_length_for_float(self):
+    def test_does_not_validate_float(self):
         self.validator(1.0)
         self.validator(-10.0)
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_string_length(self):
         self.validator("hello")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("hi")
 
 
-class MaxLengthValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# MaxLengthValidator
+# ---------------------------------------------------------------------------
+
+
+class TestMaxLengthValidator:
+
+    def setup_method(self):
         self.validator = MaxLengthValidator(5)
 
     def test_max_length_must_be_more_than_one(self):
-        with self.assertRaises(ValidationError):
-            _ = MaxLengthValidator(0)
-        with self.assertRaises(ValidationError):
-            _ = MaxLengthValidator(-2)
+        with pytest.raises(ValidationError):
+            MaxLengthValidator(0)
+        with pytest.raises(ValidationError):
+            MaxLengthValidator(-2)
 
-    def test_do_not_care_max_length_for_int(self):
+    def test_does_not_validate_int(self):
         self.validator(1)
         self.validator(-100)
 
-    def test_do_not_care_max_length_for_float(self):
+    def test_does_not_validate_float(self):
         self.validator(1.0)
         self.validator(-10.0)
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_string_length(self):
         self.validator("hello")
         self.validator("hi")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("hello world")
 
 
-class RegexValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# RegexValidator
+# ---------------------------------------------------------------------------
+
+
+class TestRegexValidator:
+
+    def setup_method(self):
         self.validator = RegexValidator(r"^[a-z]+$")
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_non_string_fails_validation(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator([])
 
     def test_matching_pattern(self):
@@ -172,9 +209,9 @@ class RegexValidatorTestCase(TestCase):
         self.validator("abc")
 
     def test_non_matching_pattern(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("Hello")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("hello123")
 
     def test_inverse_validator(self):
@@ -182,16 +219,22 @@ class RegexValidatorTestCase(TestCase):
         inverse_validator("Hello")
         inverse_validator("hello123")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             inverse_validator("hello")
 
 
-class RangeValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# RangeValidator
+# ---------------------------------------------------------------------------
+
+
+class TestRangeValidator:
+
+    def setup_method(self):
         self.validator = RangeValidator(min_value=1, max_value=10)
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_valid_range(self):
         self.validator(1)
@@ -199,15 +242,15 @@ class RangeValidatorTestCase(TestCase):
         self.validator(10)
 
     def test_below_minimum(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(0)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(-1)
 
     def test_above_maximum(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(11)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(100)
 
     def test_min_only(self):
@@ -215,7 +258,7 @@ class RangeValidatorTestCase(TestCase):
         min_validator(5)
         min_validator(100)
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             min_validator(4)
 
     def test_max_only(self):
@@ -223,36 +266,42 @@ class RangeValidatorTestCase(TestCase):
         max_validator(10)
         max_validator(-100)
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             max_validator(11)
 
     def test_float_values(self):
         self.validator(1.5)
         self.validator(9.9)
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(0.5)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(10.5)
 
     def test_string_numbers(self):
         self.validator("5")
         self.validator("1")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("0")
 
     def test_invalid_number(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not a number")
 
 
-class PositiveValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# PositiveValidator
+# ---------------------------------------------------------------------------
+
+
+class TestPositiveValidator:
+
+    def setup_method(self):
         self.validator = PositiveValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_positive_numbers(self):
         self.validator(1)
@@ -260,35 +309,41 @@ class PositiveValidatorTestCase(TestCase):
         self.validator(0.1)
 
     def test_zero_is_not_positive(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(0)
 
     def test_negative_numbers(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(-1)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(-0.1)
 
     def test_string_numbers(self):
         self.validator("1")
         self.validator("100")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("0")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("-1")
 
     def test_invalid_number(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not a number")
 
 
-class NonNegativeValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# NonNegativeValidator
+# ---------------------------------------------------------------------------
+
+
+class TestNonNegativeValidator:
+
+    def setup_method(self):
         self.validator = NonNegativeValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_positive_numbers(self):
         self.validator(1)
@@ -299,32 +354,38 @@ class NonNegativeValidatorTestCase(TestCase):
         self.validator(0)
 
     def test_negative_numbers(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(-1)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(-0.1)
 
     def test_string_numbers(self):
         self.validator("0")
         self.validator("1")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("-1")
 
     def test_invalid_number(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not a number")
 
 
-class EmailValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# EmailValidator
+# ---------------------------------------------------------------------------
+
+
+class TestEmailValidator:
+
+    def setup_method(self):
         self.validator = EmailValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_emails(self):
         self.validator("test@example.com")
@@ -333,66 +394,107 @@ class EmailValidatorTestCase(TestCase):
         self.validator("user_name@example-domain.com")
 
     def test_invalid_emails(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("notanemail")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("@example.com")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("user@")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("user@example")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
 
-class UrlValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# UrlValidator
+# ---------------------------------------------------------------------------
+
+
+class TestUrlValidator:
+
+    def setup_method(self):
         self.validator = UrlValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
-    def test_valid_urls(self):
+    def test_valid_http_url(self):
         self.validator("http://example.com")
-        self.validator("https://example.com/path")
-        self.validator("ftp://example.com")
+
+    def test_valid_https_url(self):
+        self.validator("https://example.com/path?foo=bar")
+
+    def test_valid_ftp_url(self):
+        self.validator("ftp://files.example.com")
+
+    def test_valid_localhost_with_port(self):
         self.validator("http://localhost:8000")
+
+    def test_valid_ipv4(self):
         self.validator("https://192.168.1.1:8080/path")
 
-    def test_invalid_urls(self):
-        with self.assertRaises(ValidationError):
-            self.validator("not a url")
-        with self.assertRaises(ValidationError):
+    def test_invalid_url_no_scheme(self):
+        with pytest.raises(ValidationError):
             self.validator("example.com")
-        with self.assertRaises(ValidationError):
+
+    def test_invalid_url_scheme_only(self):
+        with pytest.raises(ValidationError):
             self.validator("http://")
 
-    def test_custom_schemes(self):
-        custom_validator = UrlValidator(schemes=["http"])
-        custom_validator("http://example.com")
+    def test_invalid_url_plain_string(self):
+        with pytest.raises(ValidationError):
+            self.validator("not a url")
 
-        with self.assertRaises(ValidationError):
-            custom_validator("https://example.com")
+    def test_unsupported_scheme_raises(self):
+        with pytest.raises(ValidationError):
+            self.validator("ssh://example.com")
 
-    def test_non_string(self):
-        with self.assertRaises(ValidationError):
+    def test_non_string_raises(self):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
+    def test_custom_schemes_restricts_correctly(self):
+        validator = UrlValidator(schemes=["https"])
+        validator("https://example.com")
+        with pytest.raises(ValidationError):
+            validator("http://example.com")
 
-class IPv4ValidatorTestCase(TestCase):
-    def setUp(self):
+    def test_custom_schemes_unknown_raises_at_init(self):
+        with pytest.raises(ValueError):
+            UrlValidator(schemes=["ssh"])
+
+    def test_empty_schemes_raises_at_init(self):
+        with pytest.raises(ValueError):
+            UrlValidator(schemes=[])
+
+    def test_custom_message(self):
+        validator = UrlValidator(message="Bad URL.")
+        with pytest.raises(ValidationError) as exc:
+            validator("not-a-url")
+        assert "Bad URL." in str(exc.value)
+
+
+# ---------------------------------------------------------------------------
+# IPv4Validator
+# ---------------------------------------------------------------------------
+
+
+class TestIPv4Validator:
+
+    def setup_method(self):
         self.validator = IPv4Validator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_ipv4(self):
         self.validator("192.168.1.1")
@@ -401,29 +503,35 @@ class IPv4ValidatorTestCase(TestCase):
         self.validator("255.255.255.255")
 
     def test_invalid_ipv4(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("256.1.1.1")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("192.168.1")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("192.168.1.1.1")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not an ip")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
 
-class IPv6ValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# IPv6Validator
+# ---------------------------------------------------------------------------
+
+
+class TestIPv6Validator:
+
+    def setup_method(self):
         self.validator = IPv6Validator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_ipv6(self):
         self.validator("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
@@ -432,27 +540,33 @@ class IPv6ValidatorTestCase(TestCase):
         self.validator("2001:db8::1")
 
     def test_invalid_ipv6(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("192.168.1.1")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not an ip")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("2001:db8::1::1")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
 
-class IPAddressValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# IPAddressValidator
+# ---------------------------------------------------------------------------
+
+
+class TestIPAddressValidator:
+
+    def setup_method(self):
         self.validator = IPAddressValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_ipv4(self):
         self.validator("192.168.1.1")
@@ -463,39 +577,45 @@ class IPAddressValidatorTestCase(TestCase):
         self.validator("::1")
 
     def test_invalid_ip(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not an ip")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("256.1.1.1")
 
     def test_version_4_only(self):
         v4_validator = IPAddressValidator(version=4)
         v4_validator("192.168.1.1")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             v4_validator("2001:db8::1")
 
     def test_version_6_only(self):
         v6_validator = IPAddressValidator(version=6)
         v6_validator("2001:db8::1")
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             v6_validator("192.168.1.1")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
 
-class HostnameValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# HostnameValidator
+# ---------------------------------------------------------------------------
+
+
+class TestHostnameValidator:
+
+    def setup_method(self):
         self.validator = HostnameValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_hostnames(self):
         self.validator("example.com")
@@ -504,22 +624,28 @@ class HostnameValidatorTestCase(TestCase):
         self.validator("localhost")
 
     def test_invalid_hostnames(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("-example.com")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("example..com")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("example-.com")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("example.com-")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
 
-class ChoiceValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# ChoiceValidator
+# ---------------------------------------------------------------------------
+
+
+class TestChoiceValidator:
+
+    def setup_method(self):
         self.validator = ChoiceValidator(["option1", "option2", "option3"])
 
     def test_none_skips_validation(self):
@@ -531,9 +657,9 @@ class ChoiceValidatorTestCase(TestCase):
         self.validator("option3")
 
     def test_invalid_choices(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("option4")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("invalid")
 
     def test_numeric_choices(self):
@@ -541,19 +667,25 @@ class ChoiceValidatorTestCase(TestCase):
         numeric_validator(1)
         numeric_validator(2)
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             numeric_validator(4)
 
 
-class SlugValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# SlugValidator
+# ---------------------------------------------------------------------------
+
+
+class TestSlugValidator:
+
+    def setup_method(self):
         self.validator = SlugValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_slugs(self):
         self.validator("hello")
@@ -563,27 +695,33 @@ class SlugValidatorTestCase(TestCase):
         self.validator("123hello")
 
     def test_invalid_slugs(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("hello world")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("hello.world")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("hello@world")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
 
 
-class JsonValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# JsonValidator
+# ---------------------------------------------------------------------------
+
+
+class TestJsonValidator:
+
+    def setup_method(self):
         self.validator = JsonValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_json(self):
         self.validator("{}")
@@ -593,32 +731,37 @@ class JsonValidatorTestCase(TestCase):
         self.validator('{"nested": {"key": "value"}}')
 
     def test_invalid_json(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("{invalid}")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator('{"key": }')
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not json")
 
-    def test_non_string(self):
-        # Non-strings are considered already parsed
+    def test_non_string_already_parsed(self):
         self.validator({})
         self.validator([])
         self.validator({"key": "value"})
 
 
-class PathValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# PathValidator
+# ---------------------------------------------------------------------------
+
+
+class TestPathValidator:
+
+    def setup_method(self):
         self.relative_validator = PathValidator()
         self.absolute_validator = PathValidator(must_be_absolute=True)
 
     def test_none_skips_validation(self):
-        self.relative_validator(None)  # must not raise
-        self.absolute_validator(None)  # must not raise
+        self.relative_validator(None)
+        self.absolute_validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.relative_validator("")  # must not raise
-        self.absolute_validator("")  # must not raise
+        self.relative_validator("")
+        self.absolute_validator("")
 
     def test_valid_paths(self):
         self.relative_validator("/path/to/file")
@@ -631,29 +774,35 @@ class PathValidatorTestCase(TestCase):
         abs_path = os.path.abspath("/absolute/path")
         self.absolute_validator(abs_path)
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.absolute_validator("relative/path")
 
     def test_invalid_paths(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.relative_validator("path\x00with/null")
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.relative_validator(123)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.absolute_validator(123)
 
 
-class PortValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# PortValidator
+# ---------------------------------------------------------------------------
+
+
+class TestPortValidator:
+
+    def setup_method(self):
         self.validator = PortValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_ports(self):
         self.validator(1)
@@ -663,50 +812,56 @@ class PortValidatorTestCase(TestCase):
         self.validator("443")
 
     def test_invalid_ports(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(0)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(65536)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(-1)
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("0")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("65536")
 
     def test_non_numeric(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("not a port")
 
 
-class DomainValidatorTestCase(TestCase):
-    def setUp(self):
+# ---------------------------------------------------------------------------
+# DomainValidator
+# ---------------------------------------------------------------------------
+
+
+class TestDomainValidator:
+
+    def setup_method(self):
         self.validator = DomainValidator()
 
     def test_none_skips_validation(self):
-        self.validator(None)  # must not raise
+        self.validator(None)
 
     def test_empty_string_skips_validation(self):
-        self.validator("")  # must not raise
+        self.validator("")
 
     def test_valid_domains(self):
         self.validator("example.com")
         self.validator("sub.example.com")
         self.validator("example.co.uk")
-        self.validator("a" * 63 + ".com")  # Max label length
+        self.validator("a" * 63 + ".com")
 
     def test_invalid_domains(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("example..com")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("-example.com")
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator("example-.com")
-        with self.assertRaises(ValidationError):
-            self.validator("a" * 64 + ".com")  # Label too long
-        with self.assertRaises(ValidationError):
-            self.validator("a" * 254)  # Total too long
+        with pytest.raises(ValidationError):
+            self.validator("a" * 64 + ".com")
+        with pytest.raises(ValidationError):
+            self.validator("a" * 254)
 
     def test_non_string(self):
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.validator(123)
