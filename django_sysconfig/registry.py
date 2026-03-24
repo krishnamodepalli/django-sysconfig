@@ -190,7 +190,7 @@ class AppConfigDefinition:
                 # Set path for each field in the section
                 section_key = to_snake_case(name)
                 for field_name, field in attr.get_fields().items():
-                    field.path = f"{section_key}/{field_name}"
+                    field.path = f"{section_key}.{field_name}"
                 self.sections[section_key] = attr
 
     def get_sections(self) -> list[tuple[str, type[Section]]]:
@@ -201,8 +201,8 @@ class AppConfigDefinition:
         )
 
     def get_field(self, path: str) -> Field | None:
-        """Get a field by its path (e.g., 'general/max_todos')."""
-        parts = path.split("/")
+        """Get a field by its path (e.g., 'general.max_todos')."""
+        parts = path.split(".")
         if len(parts) != 2:
             return None
 

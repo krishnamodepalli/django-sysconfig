@@ -104,8 +104,7 @@ class ConfigAccessor:
         if not config_def:
             raise AppNotFoundError(app_label)
 
-        # Registry uses slash notation internally
-        registry_path = f"{section}/{field}"
+        registry_path = f"{section}.{field}"
         field_def = config_def.get_field(registry_path)
         if not field_def:
             raise FieldNotFoundError(f"{app_label}.{section}.{field}")
