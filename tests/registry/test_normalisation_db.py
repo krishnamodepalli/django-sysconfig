@@ -17,13 +17,16 @@ import pytest
 
 from django_sysconfig.frontend_models import IntegerFrontendModel, StringFrontendModel
 from django_sysconfig.models import ConfigValue
-from django_sysconfig.registry import AppConfigDefinition, Field, Section
+from django_sysconfig.registry import Field, Section
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-NORM_APP = "norm_test_app"
+NORM_APP = "norm_test_app"  # expected normalised form used in DB and accessor paths
+RAW_APP = (
+    "NormTestApp"  # un-normalised label passed to register() to exercise normalisation
+)
 
 
 def make_normalisation_config():
@@ -60,18 +63,9 @@ class TestDbRowNormalisation:
         cache.clear()
 
         norm_config = make_normalisation_config()
-        config_registry.register(NORM_APP, norm_config)
-        config_registry._ensure_db_records(
-            NORM_APP,
-            AppConfigDefinition(NORM_APP, norm_config),
-        )
+        config_registry.register(RAW_APP, norm_config)
 
         yield
-
-        config_registry.clear()
-        cache.clear()
-
-    def test_db_row_created_with_normalised_app_label(self):
         assert ConfigValue.objects.filter(app_label=NORM_APP).exists()
 
     def test_db_row_created_with_normalised_section_field_path(self):
@@ -130,18 +124,9 @@ class TestAccessorWithNormalisedPaths:
         cache.clear()
 
         norm_config = make_normalisation_config()
-        config_registry.register(NORM_APP, norm_config)
-        config_registry._ensure_db_records(
-            NORM_APP,
-            AppConfigDefinition(NORM_APP, norm_config),
-        )
+        config_registry.register(RAW_APP, norm_config)
 
         yield
-
-        config_registry.clear()
-        cache.clear()
-
-    def test_config_get_with_normalised_path(self):
         from django_sysconfig.accessor import config
 
         value = config.get(f"{NORM_APP}.payment_settings.site_url")

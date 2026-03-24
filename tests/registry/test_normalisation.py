@@ -34,8 +34,12 @@ pytestmark = pytest.mark.no_db
 
 
 def make_registry() -> ConfigRegistry:
-    """Return a fresh isolated registry for each test."""
-    r = ConfigRegistry.__new__(ConfigRegistry)
+    """Return a fresh isolated registry instance that does not touch the singleton."""
+
+    class _IsolatedRegistry(ConfigRegistry):
+        _instance = None  # own singleton slot, separate from ConfigRegistry._instance
+
+    r = _IsolatedRegistry()
     r._configs = {}
     return r
 
