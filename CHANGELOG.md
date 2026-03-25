@@ -1,6 +1,77 @@
 # CHANGELOG
 
 
+## v1.0.0 (2026-03-25)
+
+### Bug Fixes
+
+- **registry**: Enforce snake_case naming and consolidate to dot notation paths
+  ([#65](https://github.com/krishnamodepalli/django-sysconfig/pull/65),
+  [`3dd2c4a`](https://github.com/krishnamodepalli/django-sysconfig/commit/3dd2c4afce1289475083cabfd122379ce7bfc6f3))
+
+- fix: use snake_case consistency for app, sections, fields in registry - fix: move slash notation
+  for path to completely dot notation - test: Update accessor tests for snake_case sections in
+  registry - fix(tests): remove redundant _ensure_db_records call in isolate_registry fixture
+
+register() already calls _ensure_db_records internally. The manual second call was a no-op
+  (get_or_create is idempotent) but wasted 8 DB queries per test. Also removed the now-unused
+  AppConfigDefinition import.
+
+- test(registry): Add tests for registry
+
+### Documentation
+
+- First draft of the documentation site
+  ([#57](https://github.com/krishnamodepalli/django-sysconfig/pull/57),
+  [`ffb50b3`](https://github.com/krishnamodepalli/django-sysconfig/commit/ffb50b36ec7951ab8014cec0120162251dfb4ae5))
+
+* docs: Claude version docs for `django-sysconfi` app
+
+* style: Set serif font for `<em>` and italics in docs
+
+* docs: Improve & add accurate docs in home, intro, quickstart pages
+
+* docs(engine): Support `<code>` in headings and add title for TOC
+
+* docs: Update docs for getting-started, admin-ui, quickstart
+
+* docs: Update how-it-works page
+
+* docs: Update defining-config and reading-writing pages
+
+* docs: Update reading-writing page
+
+* docs: Update admin-ui page
+
+* docs: Update encryption page
+
+* docs: Update caching page
+
+* docs: Update on-save-callbacks page
+
+* docs: Show only required pages in the documentation for now
+
+* docs: Improve UI, UX for sidebar, search bar, etc
+
+* docs: refactor md files and remove un-wanted horizontal lines
+
+* docs: Set default collapsible state as closed and open collapsible on page change
+
+* docs: Add images and fix typos and minor miskates in docs
+
+* docs: Update README
+
+* docs: Add docs page for management command
+
+* docs: Fix minor mistakes and references
+
+* docs: Ref docs page in README, and correct references
+
+* docs(registry): Update docs for the registry in defining-config page
+
+* docs: Add gif for the index page in docs
+
+
 ## v0.3.0 (2026-03-24)
 
 ### Bug Fixes
