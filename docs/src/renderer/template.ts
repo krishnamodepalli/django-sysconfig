@@ -34,12 +34,16 @@ export function renderPage({
     const links = g.pages.map(p =>
       `<a class="slink${p.slug===slug?' active':''}" href="${slugToHref(p.slug)}">${p.title}</a>`
     ).join('');
-    return `<div class="sg">\n  <div class="sg-hdr"><span>${g.label}</span>`
+    if (!g.label) {
+      return `<div class="sg sg-flat">\n  <div class="sg-items">${links}</div>\n</div>`;
+    }
+    const hasActive = g.pages.some(p => p.slug === slug);
+    return `<div class="sg${hasActive ? '' : ' closed'}">\n  <div class="sg-hdr"><span>${g.label}</span>`
       + `<svg class="sg-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>\n`
       + `  <div class="sg-items">${links}</div>\n</div>`;
   }).join('\n');
 
-  const group = cfg.nav.find(g => g.pages.some(p => p.slug === slug));
+  const group = cfg.nav.find(g => g.label && g.pages.some(p => p.slug === slug));
   const breadcrumb = group
     ? `<div class="breadcrumb"><span>${group.label}</span><span>${title}</span></div>`
     : '';

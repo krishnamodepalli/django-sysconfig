@@ -31,4 +31,4 @@ class ConfigValue(models.Model):
         ordering = ["app_label", "path"]
 
     def __str__(self):
-        return f"{self.app_label}/{self.path}"
+        return f"{self.app_label}.{self.path}"

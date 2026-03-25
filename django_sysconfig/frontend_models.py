@@ -49,7 +49,7 @@ class BaseFrontendModel(ABC):
 
     def get_input_name(self) -> str:
         """Get the HTML input name attribute."""
-        return f"config_{self.field.path.replace('/', '_')}"
+        return f"config_{self.field.path.replace('.', '_')}"
 
     def get_input_id(self) -> str:
         """Get the HTML input id attribute."""

@@ -73,7 +73,7 @@ export function initSearch(searchIndexUrl) {
     var hIco = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/></svg>';
     Object.keys(groups).forEach(function (slug) {
       var g = groups[slug];
-      html += '<div class="sh-group-lbl">' + g.label + ' — ' + g.page + '</div>';
+      html += '<div class="sh-group-lbl">' + (g.label ? g.label + ' — ' : '') + g.page + '</div>';
       g.items.forEach(function (x) {
         var isH = x.item.type === 'heading';
         var href = x.item.url + (isH && x.item.id ? '#' + x.item.id : '');

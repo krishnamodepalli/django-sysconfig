@@ -30,6 +30,9 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import django.db
+from django.core.exceptions import ImproperlyConfigured
+
+from .utils import is_snake_case, to_snake_case
 
 if TYPE_CHECKING:
     from .frontend_models import BaseFrontendModel
@@ -113,6 +116,11 @@ class SectionMeta(type):
         # Collect all Field instances from the class namespace
         for key, value in list(namespace.items()):
             if isinstance(value, Field):
+                if not is_snake_case(key):
+                    raise ImproperlyConfigured(
+                        f"Field name '{key}' in section '{name}' must be snake_case "
+                        f"(e.g. 'site_url', 'max_items')."
+                    )
                 value.name = key
                 fields[key] = value
 
@@ -142,6 +150,11 @@ class Section(metaclass=SectionMeta):
         cls._fields = {}
         for key, value in vars(cls).items():
             if isinstance(value, Field):
+                if not is_snake_case(key):
+                    raise ImproperlyConfigured(
+                        f"Field name '{key}' in section '{cls.__name__}' must be snake_case "
+                        f"(e.g. 'site_url', 'max_items')."
+                    )
                 value.name = key
                 cls._fields[key] = value
 
@@ -175,10 +188,10 @@ class AppConfigDefinition:
                 and attr is not Section
             ):
                 # Set path for each field in the section
-                section_name = name.lower()
+                section_key = to_snake_case(name)
                 for field_name, field in attr.get_fields().items():
-                    field.path = f"{section_name}/{field_name}"
-                self.sections[name] = attr
+                    field.path = f"{section_key}.{field_name}"
+                self.sections[section_key] = attr
 
     def get_sections(self) -> list[tuple[str, type[Section]]]:
         """Return sections sorted by sort_order."""
@@ -188,15 +201,15 @@ class AppConfigDefinition:
         )
 
     def get_field(self, path: str) -> Field | None:
-        """Get a field by its path (e.g., 'general/max_todos')."""
-        parts = path.split("/")
+        """Get a field by its path (e.g., 'general.max_todos')."""
+        parts = path.split(".")
         if len(parts) != 2:
             return None
 
-        section_name, field_name = parts
-        for name, section in self.sections.items():
-            if name.lower() == section_name:
-                return section.get_fields().get(field_name)
+        section_key, field_name = parts
+        section = self.sections.get(section_key)
+        if section:
+            return section.get_fields().get(field_name)
         return None
 
 
@@ -219,6 +232,11 @@ class ConfigRegistry:
 
     def register(self, app_label: str, config_class: type) -> None:
         """Register a configuration class for an app."""
+        if not is_snake_case(app_label):
+            raise ImproperlyConfigured(
+                f"app_label '{app_label}' passed to @register_config must be snake_case "
+                f"(e.g. 'my_app', 'user_preferences')."
+            )
         config_def = AppConfigDefinition(app_label, config_class)
         self._configs[app_label] = config_def
 
@@ -240,8 +258,7 @@ class ConfigRegistry:
             from .models import ConfigValue
 
             with transaction.atomic():
-                for section_name, section in config_def.get_sections():
-                    section_key = section_name.lower()
+                for section_key, section in config_def.get_sections():
                     for field_name, field in section.get_fields().items():
                         db_path = f"{section_key}.{field_name}"
 
