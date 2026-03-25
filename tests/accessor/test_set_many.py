@@ -187,7 +187,7 @@ class TestSetManyOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
 
         field_a = Field(
             StringFrontendModel,
@@ -227,7 +227,7 @@ class TestSetManyOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
         new_field = Field(
             StringFrontendModel,
             label="Site Name",
@@ -261,7 +261,7 @@ class TestSetManyOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
 
         field_a = Field(
             StringFrontendModel,
