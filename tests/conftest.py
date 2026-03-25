@@ -13,8 +13,6 @@ from decimal import Decimal
 import pytest
 from django.core.cache import cache
 
-from django_sysconfig.registry import AppConfigDefinition
-
 # ---------------------------------------------------------------------------
 # Test app label
 # ---------------------------------------------------------------------------
@@ -141,13 +139,7 @@ def isolate_registry(request, db):
 
     # Register the canonical test config; this also seeds ConfigValue rows
     # for fields that carry defaults
-    test_app_config = make_test_config()
-    config_registry.register(TEST_APP, test_app_config)
-
-    config_registry._ensure_db_records(
-        TEST_APP,
-        AppConfigDefinition(TEST_APP, test_app_config),
-    )
+    config_registry.register(TEST_APP, make_test_config())
 
     yield
 

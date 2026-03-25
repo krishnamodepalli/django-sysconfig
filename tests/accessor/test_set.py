@@ -132,7 +132,7 @@ class TestSetOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
         new_field = Field(
             IntegerFrontendModel, label="Max Items", default=10, on_save=callback
         )
@@ -158,7 +158,7 @@ class TestSetOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
         new_field = Field(
             IntegerFrontendModel, label="Max Items", default=10, on_save=capture
         )
@@ -183,7 +183,7 @@ class TestSetOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
         new_field = Field(
             IntegerFrontendModel, label="Max Items", default=10, on_save=capture
         )
@@ -211,7 +211,7 @@ class TestSetOnSave:
         from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
-        section = registry.get_config(TEST_APP).sections["General"]
+        section = registry.get_config(TEST_APP).sections["general"]
         new_field = Field(
             IntegerFrontendModel, label="Max Items", default=10, on_save=capture
         )

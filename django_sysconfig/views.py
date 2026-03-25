@@ -167,8 +167,7 @@ class ConfigAppDetailView(BaseConfigView):
 
         # Process only changed fields; validation happens inside config.set()
         saved_count = 0
-        for section_name, section in config_def.get_sections():
-            section_key = section_name.lower()
+        for section_key, section in config_def.get_sections():
             for field_name, field in section.get_fields().items():
                 input_name = f"config_{section_key}_{field_name}"
 
@@ -223,8 +222,7 @@ class ConfigAppDetailView(BaseConfigView):
         }
 
         sections_data = []
-        for section_name, section in config_def.get_sections():
-            section_key = section_name.lower()
+        for section_key, section in config_def.get_sections():
             fields_data = []
 
             for field_name, field in section.get_fields().items():
@@ -252,8 +250,8 @@ class ConfigAppDetailView(BaseConfigView):
 
             sections_data.append(
                 {
-                    "name": section_name,
-                    "label": section.label or section_name,
+                    "name": section_key,
+                    "label": section.label or section_key,
                     "sort_order": section.sort_order,
                     "fields": fields_data,
                 }
