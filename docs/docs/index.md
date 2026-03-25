@@ -4,8 +4,7 @@
 
 Define typed, structured configuration fields in code. Store their values in the database. Let your team manage everything through a clean admin UI — without ever touching `settings.py`.
 
-<!-- SCREENSHOT: Hero image of the admin UI config list view -->
-<!-- GIF: Short clip showing editing a config value in the admin UI and the change taking effect live -->
+![django-sysconfig demo](https://github.com/krishnamodepalli/django-sysconfig/releases/download/v0.3.0/django-sysconfig.gif)
 
 ## Why django-sysconfig?
 
