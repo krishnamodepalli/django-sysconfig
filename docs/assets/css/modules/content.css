@@ -123,6 +123,7 @@
 }
 
 .md em {
+  font-family: var(--serif);
   font-style: italic;
   color: var(--tx-2);
 }

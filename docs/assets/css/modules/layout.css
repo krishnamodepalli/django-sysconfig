@@ -120,6 +120,13 @@
   margin-bottom: 0.1rem;
 }
 
+.sg:not(.sg-flat) + .sg:not(.sg-flat),
+.sg.sg-flat + .sg:not(.sg-flat) {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--bdr);
+  padding-top: 0.5rem;
+}
+
 .sg-hdr {
   display: flex;
   align-items: center;
@@ -127,10 +134,10 @@
   padding: 0.42rem 0.95rem 0.42rem 1.15rem;
   cursor: pointer;
   user-select: none;
-  color: var(--tx-3);
-  font-size: 0.675rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  color: var(--tx-2);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   transition: color var(--ease);
 }

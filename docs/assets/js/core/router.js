@@ -19,6 +19,11 @@ export function initRouter(reinitCallback) {
         link.classList.toggle('active', url.endsWith(href) || url === href);
       });
 
+      // Open the group containing the new active link; close all others
+      document.querySelectorAll('.sg:not(.sg-flat)').forEach(function (group) {
+        group.classList.toggle('closed', !group.querySelector('.slink.active'));
+      });
+
       if (push) history.pushState({ url }, doc.title, url);
 
       window.scrollTo(0, 0);

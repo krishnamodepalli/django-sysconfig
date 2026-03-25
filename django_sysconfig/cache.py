@@ -4,7 +4,7 @@ from django.core.cache import cache
 
 
 class ConfigCache:
-    CACHE_KEY_PREFIX = "config:"
+    CACHE_KEY_PREFIX = "django_sysconfig:"
     # Sentinel value to distinguish between "key doesn't exist" and "value is None"
     # Made a class attribute for public access
     NOT_FOUND = object()
