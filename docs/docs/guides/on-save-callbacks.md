@@ -136,7 +136,7 @@ stripe_secret_key = Field(
 
 When you call `config.set_many({...})`, each field's `on_save` callback fires after the transaction commits, once per changed path.
 
-When importing values in bulk via the CLI, use `--skip-on-save-callbacks` to suppress all callbacks for that batch. See [Management Commands](/cli/management-commands#import).
+When importing values in bulk via the CLI, use `--skip-on-save-callbacks` to suppress all callbacks for that batch. See [Management Commands](/cli/management-command#import).
 
 ## Asynchronous callbacks
 

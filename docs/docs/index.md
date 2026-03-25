@@ -1,8 +1,8 @@
 # django-sysconfig
 
-**A Magento-style system configuration app for Django.**
+**Schema-driven, database-backed runtime configuration for Django.**
 
-Define typed, structured configuration fields in code. Store their values in the database. Let your team manage everything through a clean admin UI — without ever touching `settings.py`.
+Define typed configuration fields in code. Store their values in the database. Let your team manage everything through a clean admin UI — without ever touching `settings.py`.
 
 ![django-sysconfig demo](https://github.com/krishnamodepalli/django-sysconfig/releases/download/v0.3.0/django-sysconfig.gif)
 
@@ -12,7 +12,7 @@ Most Django projects eventually hit the same wall: some settings need to change 
 
 `django-sysconfig` gives you a better answer. Your configuration *schema* — the fields, their types, their defaults, their validation rules — lives in code, right next to the app that owns it. The *values* live in the database, editable through a built-in staff UI. Your application code reads values with a single, typed accessor call.
 
-It's the configuration workflow that Magento figured out years ago, brought to Django.
+It's the pattern that enterprise CMSes have used for years — brought to Django with a clean, Pythonic API.
 
 ## What you get out of the box
 

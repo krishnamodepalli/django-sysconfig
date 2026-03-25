@@ -24,7 +24,7 @@ The usual workaround is a freeform key-value model in the database — but that 
 
 ## The core idea: schema in code, values in the database
 
-This is the design philosophy the whole library is built on, borrowed from Magento's system configuration.
+This is the design philosophy the whole library is built on.
 
 **Your schema lives in code.** You define fields — their types, labels, defaults, validation rules — in a `sysconfig.py` file inside your Django app. This is versioned, reviewable, and self-documenting. It's the single source of truth for *what* can be configured.
 

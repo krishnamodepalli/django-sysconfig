@@ -19,7 +19,7 @@ try {
 export default {
   site: {
     name: "django-sysconfig",
-    tagline: "Magento-style system configuration for Django",
+    tagline: "Schema-driven, database-backed runtime configuration for Django",
     version: version,
     repo: "https://github.com/krishnamodepalli/django-sysconfig",
     // Base URL for production (used in sitemap, canonical links)
