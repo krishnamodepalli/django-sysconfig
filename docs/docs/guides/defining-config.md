@@ -23,9 +23,9 @@ class MyAppConfig:
 
 Three pieces:
 
-1. **`@register_config("app_label")`** — registers the class under the given label. The label becomes the first segment of every config path in this app (`myapp.general.site_name`).
-2. **Inner class extending `Section`** — a logical grouping of related fields. The class name (lowercased) becomes the second path segment (`myapp.general.*`).
-3. **`Field(...)` assignments** — individual configurable values. The attribute name (lowercased) becomes the third path segment (`myapp.general.site_name`).
+1. **`@register_config("app_label")`** — registers the class under the given label. Must be `snake_case` — raises `ImproperlyConfigured` on startup if not. The label becomes the first segment of every config path in this app (`myapp.general.site_name`).
+2. **Inner class extending `Section`** — a logical grouping of related fields. The class name is automatically converted to `snake_case` and becomes the second path segment (`PaymentSettings` → `myapp.payment_settings.*`).
+3. **`Field(...)` assignments** — individual configurable values. The attribute name must be `snake_case` — raises `ImproperlyConfigured` on startup if not. It becomes the third path segment (`myapp.general.site_name`).
 
 ## Section options
 
