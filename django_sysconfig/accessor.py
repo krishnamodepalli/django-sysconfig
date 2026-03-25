@@ -24,6 +24,7 @@ Usage:
     general = config.section('todo.general')
 """
 
+from collections.abc import Callable
 from typing import Any
 
 from .cache import config_cache
@@ -205,12 +206,76 @@ class ConfigAccessor:
             FieldNotFoundError: If field doesn't exist
             ConfigValueError: If value cannot be serialized
         """
+        from django.db import transaction
+
+        with transaction.atomic():
+            cache_refresh, callbacks = self._set_value_internal(path, value)
+            transaction.on_commit(cache_refresh)
+            transaction.on_commit(callbacks)
+
+    def set_many(
+        self, values: dict[str, Any], skip_on_save_callbacks: bool = False
+    ) -> int:
+        """
+        Set multiple configuration values at once.
+
+        All writes are performed within a single transaction. If any write fails,
+        the entire batch is rolled back. on_save callbacks are fired sequentially
+        only after the transaction commits successfully.
+
+        Args:
+            values (dict[str, Any]): Dict mapping full paths to values.
+            skip_on_save_callbacks (bool): If True, on_save callbacks are suppressed
+                for all fields in this batch. Useful for bulk imports or environment
+                cloning where side effects are undesirable. Defaults to False.
+
+        Returns:
+            int: Number of values set.
+
+        Raises:
+            InvalidPathError: If any path format is invalid.
+            AppNotFoundError: If any app has no registered config.
+            FieldNotFoundError: If any field does not exist.
+            ConfigValueError: If any value cannot be serialized.
+            ConfigValidationError: If any value fails field validation.
+        """
+        from django.db import transaction
+
+        with transaction.atomic():
+            callbacks_to_register = []
+
+            for path, value in values.items():
+                cache_refresh_callback, on_save_callback = self._set_value_internal(
+                    path, value
+                )
+                transaction.on_commit(cache_refresh_callback)
+
+                if not skip_on_save_callbacks:
+                    callbacks_to_register.append(on_save_callback)
+
+            for callback in callbacks_to_register:
+                transaction.on_commit(callback)
+
+        return len(values)
+
+    def _set_value_internal(
+        self, path: str, value: Any
+    ) -> tuple[Callable[[], None], Callable[[], None]]:
+        """
+        Internal implementation of setting a configuration value.
+
+        Performs validation, serialization, and database write. Returns two
+        callbacks intended to be registered with transaction.on_commit:
+          - on_commit_cache_refresh: repopulates the cache
+          - on_commit_callback: dispatches the field's on_save hook if defined
+
+        Both callbacks must only be executed after the transaction commits
+        successfully to ensure cache always reflects durable DB state.
+        """
         app_label, section, field_name = self._parse_path(path)
         field = self._get_field(app_label, section, field_name)
 
         # Run field validators before doing anything else.
-        # Each validator is responsible for deciding how to handle None/empty —
-        # e.g. NotEmptyValidator raises, while length/regex validators skip.
         if field.validators:
             from .validators import validate_value
 
@@ -226,7 +291,7 @@ class ConfigAccessor:
 
         db_path = self._to_db_path(section, field_name)
 
-        # Get old value before saving (for on_save callback)
+        # Fetch old value before the write so on_save receives the previous state.
         old_value = None
         if field.on_save:
             try:
@@ -242,34 +307,16 @@ class ConfigAccessor:
             defaults={"value": serialized},
         )
 
-        # Invalidate cache after successful DB save
-        config_cache.invalidate(path)
+        def on_commit_cache_refresh():
+            # Cache the new value immediately to avoid cache miss on next read
+            config_cache.set(path, serialized)
 
-        # Cache the new value immediately to avoid cache miss on next read
-        config_cache.set(path, serialized)
+        def on_commit_callback():
+            # Dispatch on_save hook if the field defines one.
+            if field.on_save:
+                field.on_save(path, value, old_value)
 
-        # Call on_save callback if defined
-        if field.on_save:
-            field.on_save(path, value, old_value)
-
-    def set_many(self, values: dict[str, Any]) -> int:
-        """
-        Set multiple configuration values at once.
-
-        Args:
-            values: Dict mapping full paths to values
-
-        Returns:
-            Number of values set
-
-        Raises:
-            InvalidPathError, AppNotFoundError, FieldNotFoundError, ConfigValueError
-        """
-        count = 0
-        for path, value in values.items():
-            self.set(path, value)
-            count += 1
-        return count
+        return on_commit_cache_refresh, on_commit_callback
 
     def all(self, app_label: str) -> dict[str, dict[str, Any]]:
         """
@@ -337,7 +384,10 @@ class ConfigAccessor:
         """
         try:
             app_label, section, field_name = self._parse_path(path)
+
+            # This ensures the config exists in the registry singleton object
             self._get_field(app_label, section, field_name)
+
             return True
         except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
             return False
@@ -350,18 +400,43 @@ class ConfigAccessor:
             path: Full path like 'todo.general.max_todos_per_user'
 
         Returns:
-            True if value exists in database, False if using default
+            True if value exists in database with a non-empty value, False if using default
         """
-        try:
-            app_label, section, field_name = self._parse_path(path)
-        except InvalidPathError:
+        if not self.exists(path):
             return False
 
+        app_label, section, field_name = self._parse_path(path)
         db_path = self._to_db_path(section, field_name)
-        return ConfigValue.objects.filter(
-            app_label=app_label,
-            path=db_path,
-        ).exists()
+
+        try:
+            config_value = ConfigValue.objects.get(
+                app_label=app_label,
+                path=db_path,
+            )
+            # Check if value is not None and not empty string
+            return config_value.value is not None and config_value.value != ""
+        except ConfigValue.DoesNotExist:
+            return False
+
+    def reset(self, path: str) -> None:
+        """
+        Reset a configuration value to its field default.
+
+        Sets the DB row back to the field's default value using the standard
+        set() path — handles serialization, cache refresh, and on_save dispatch.
+
+        Args:
+            path: Full path like 'todo.general.max_todos_per_user'
+
+        Raises:
+            InvalidPathError: If path format is invalid
+            AppNotFoundError: If app has no registered config
+            FieldNotFoundError: If field doesn't exist
+        """
+        app_label, section, field_name = self._parse_path(path)
+        field = self._get_field(app_label, section, field_name)
+
+        self.set(path, field.default)
 
 
 # Global config accessor instance

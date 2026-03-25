@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-sysconfig"
-version = "0.1.0"
+version = "0.3.0"
 description = "A Magento-style system configuration app for Django"
 readme = "README.md"
 license = { text = "MIT" }
@@ -37,6 +37,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-django>=4.8",
+    "pytest-cov",
     "black>=24.0",
     "ruff>=0.4",
     "pre-commit>=3.7",
@@ -64,6 +65,9 @@ DJANGO_SETTINGS_MODULE = "tests.settings"
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "no_db: marks tests that do not require database access",
+]
 
 [tool.black]
 line-length = 88

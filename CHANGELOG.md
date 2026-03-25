@@ -1,6 +1,298 @@
 # CHANGELOG
 
 
+## v0.3.0 (2026-03-24)
+
+### Bug Fixes
+
+- Set_many() is not atomic — partial writes on failure
+  ([#58](https://github.com/krishnamodepalli/django-sysconfig/pull/58),
+  [`db7f6a9`](https://github.com/krishnamodepalli/django-sysconfig/commit/db7f6a955e0bc2cbac8f19cef052d70d1f4dc409))
+
+* fix(accessor):importing the callable module from collections * tests: Add tests for accessor
+  config
+
+- **accessor**: Check for non-empty values in `accessor.is_set` method
+  ([#53](https://github.com/krishnamodepalli/django-sysconfig/pull/53),
+  [`ec70975`](https://github.com/krishnamodepalli/django-sysconfig/commit/ec70975509302c63277f4fb1429c5b5e3b676372))
+
+* fix(accessor): check for non-empty values in `accessor.is_set` method
+
+The is_set() method now verifies that ConfigValue.value is not None and not an empty string, not
+  just that the database row exists.
+
+This ensures is_set() correctly distinguishes between "explicitly set to a value" vs "using default
+  or empty".
+
+* refactor: Add todo comments for accessor.py to mark some methods as private
+
+* chore: Remove unwanted todos in the accessor
+
+- **encryption**: Is_encrypted() uses an unreliable length heuristic
+  ([`88efb54`](https://github.com/krishnamodepalli/django-sysconfig/commit/88efb54ca14a45d859d93e6693693d2fd68df528))
+
+changes: - Now `is_encrypted()` method uses two heuristic, instead of only depending one lenght. -
+  Both length and the decoded format starting with `0x80`.
+
+- **validators**: Fix the URLValidator not respecting the schemes provided
+  ([#64](https://github.com/krishnamodepalli/django-sysconfig/pull/64),
+  [`33239d9`](https://github.com/krishnamodepalli/django-sysconfig/commit/33239d9fc069c52bee942868f907a35dc1561ed9))
+
+* fix(validators): Fix the URLValidator not respecting the schemes provided
+
+* refactor: Restrict what schemes are allowed in Url Validator
+
+* tests: Update tests for URL validator
+
+* docs: Improve annotation for URL validator
+
+### Chores
+
+- Remove extra migration and modify the initial
+  ([`9b7e6af`](https://github.com/krishnamodepalli/django-sysconfig/commit/9b7e6af1962ddda2f03de2c78236d63cfe2ee838))
+
+### Documentation
+
+- **typo**: Correct the models value col help text
+  ([`ac63a8c`](https://github.com/krishnamodepalli/django-sysconfig/commit/ac63a8cc77f897fcf2cba59fa8c29ab593950861))
+
+### Features
+
+- Add `skip_on_save_callbacks` flag for `set_many` in accessor.
+  ([#59](https://github.com/krishnamodepalli/django-sysconfig/pull/59),
+  [`a6b102d`](https://github.com/krishnamodepalli/django-sysconfig/commit/a6b102d20106f4adc098608d5c5d43b0a2880812))
+
+* fix(accessor):importing the callable module from collections
+
+* tests: Add tests for accessor config
+
+* feat: Add `skip_on_save_callbacks` flag for `set_many` in accessor.
+
+changes: - This is very helpful for bulk imports and CI environments where we do not want any
+  undesired side-effects
+
+* fix(accessor): `set_many` should handle cache_refresh via `on_commit`
+
+changes: Previously, cache invalidation and repopulation were grouped with the on_save callback
+  inside a single on_commit handler. This made it unclear that cache refresh and on_save dispatch
+  are independent concerns — one is always required, the other is optional.
+
+_set_value_internal now returns two separate callables instead of one: on_commit_cache_refresh and
+  on_commit_callback. Both are still registered with transaction.on_commit to ensure cache only
+  reflects durable DB state — setting cache before commit would risk serving values from a
+  rolled-back transaction.
+
+set_many now conditionally registers on_commit_callback based on skip_on_save_callbacks, so the
+  callback is never queued at all when suppressed rather than being queued and silently skipped
+  inside the handler.
+
+* test: Add tests for new feature `skip_on_save_callbacks` in `set_many`
+
+* docs(accessor): Improve docstring annotation for `_set_value_internal`
+
+* fix: ensure full cache refresh before on_save callbacks in set_many
+
+changes: Previously, on_commit callbacks were registered per-item in interleaved order: refresh(A) →
+  on_save(A) → refresh(B) → on_save(B). Since transaction.on_commit fires in FIFO order, on_save(A)
+  could read a stale cached value for B if B was part of the same batch and already cached.
+
+Collect all cache_refresh callbacks first, then register all on_save callbacks, so the entire batch
+  cache is guaranteed to be consistent before any on_save hook runs.
+
+---------
+
+Co-authored-by: Shivaram4011 <maddipati.ram2003@gmail.com>
+
+- Make the config views extendable with extra permissions
+  ([#55](https://github.com/krishnamodepalli/django-sysconfig/pull/55),
+  [`e8a04e8`](https://github.com/krishnamodepalli/django-sysconfig/commit/e8a04e855df6d09a00feb595edd9268843b4920a))
+
+* feat: Make the config views extendable with extra permissions
+
+* fix(views): Redirect to login page if not logged in for config views
+
+changes: - Redirect to login page if an anonymous user tries to access config pages. - Throw errors
+  if the user is not a staff or doesn't have specified extra permissions.
+
+- **management**: Config management command (get, set, reset, export, import)
+  ([#42](https://github.com/krishnamodepalli/django-sysconfig/pull/42),
+  [`c966515`](https://github.com/krishnamodepalli/django-sysconfig/commit/c9665152644986d9d01cb204d297173355e19294))
+
+* feat(management): scaffold config command with subparsers
+
+Adds the management command skeleton for: - get: read a config value by path - set: write a config
+  value by path - reset: restore a field to its default (with -f/--force flag to skip confirmation)
+  - export: dump config to JSON/YAML (with --output and --batch-size flags) - import: load config
+  from JSON/YAML (with --dry-run flag)
+
+No subcommand logic yet — all handlers raise NotImplementedError.
+
+* feat(management): implement get and set subcommands
+
+* feat(accessor,management): add reset() to ConfigAccessor and implement reset subcommand
+
+- ConfigAccessor.reset() removes the DB override and re-primes the cache with the serialized field
+  default - Management command reset subcommand prompts for confirmation unless -f/--force is passed
+
+* feat(management): implement export and import subcommands
+
+- Export enumerates registry metadata, batches 100 fields at a time across app boundaries, one
+  targeted DB query per a per batch - Secrets are decrypted to plaintext in the export file (warning
+  printed) - Decimal values serialised via custom _JSONEncoder - Import accepts --dry-run flag
+  (validates paths without writing) - Import is wrapped in transaction.atomic() for all-or-nothing
+  behaviour - --output defaults to config_export.json in current working directory
+
+Closes #36
+
+* fix(apps): defer _ensure_db_records to post_migrate signal
+
+Calling _ensure_db_records() from register() triggered DB queries during AppConfig.ready() when
+  sysconfig.py files were autodiscovered, producing a RuntimeWarning on every management command
+  invocation.
+
+Move DB default-seeding to a post_migrate signal handler so it runs after migrations complete. The
+  accessor already falls back to field defaults when no DB row exists, so runtime behaviour is
+  unchanged.
+
+* fix(apps,management): fix import name and two handle_set/import bugs
+
+- apps.py: _sync_defaults imported 'registry' which doesn't exist; correct name is 'config_registry'
+  - handle_set: used raw path.split('.') which raised ValueError for malformed paths; replaced with
+  config._parse_path() so InvalidPathError is raised and caught as ConfigError -> CommandError -
+  handle_import: cache was not invalidated when the DB transaction rolled back on validation error;
+  now invalidates all cache keys that were written before the rollback so the cache stays consistent
+
+* test(management): add tests for config management command
+
+37 tests covering all five subcommands:
+
+- get: field default, DB value, integer, unknown app/field, invalid path - set:
+  string/integer/boolean coercion, validation failure, bad path - reset: --force flag, confirmation
+  yes/no, bad path - export: JSON structure, DB values, None for unset fields, secret decryption,
+  stderr warning, non-.json extension, bad batch size, specific app, unknown app, no apps registered
+  - import: basic import, --dry-run (no save), --dry-run unknown path, non-.json extension, file not
+  found, invalid JSON, empty config, atomic rollback on validation error, secret encryption at rest
+
+Also adds tests/conftest.py with: - clean_state (autouse): isolates registry singleton and cache per
+  test - registered_config: testapp with General + Secrets sections
+
+* fix(accessor):importing the callable module from collections
+
+* refactor: Refactor config command
+
+* tests: Add tests for accessor config
+
+* feat: Add `skip_on_save_callbacks` flag for `set_many` in accessor.
+
+changes: - This is very helpful for bulk imports and CI environments where we do not want any
+  undesired side-effects
+
+* fix(accessor): `set_many` should handle cache_refresh via `on_commit`
+
+changes: Previously, cache invalidation and repopulation were grouped with the on_save callback
+  inside a single on_commit handler. This made it unclear that cache refresh and on_save dispatch
+  are independent concerns — one is always required, the other is optional.
+
+_set_value_internal now returns two separate callables instead of one: on_commit_cache_refresh and
+  on_commit_callback. Both are still registered with transaction.on_commit to ensure cache only
+  reflects durable DB state — setting cache before commit would risk serving values from a
+  rolled-back transaction.
+
+set_many now conditionally registers on_commit_callback based on skip_on_save_callbacks, so the
+  callback is never queued at all when suppressed rather than being queued and silently skipped
+  inside the handler.
+
+* test: Add tests for new feature `skip_on_save_callbacks` in `set_many`
+
+* docs(accessor): Improve docstring annotation for `_set_value_internal`
+
+* Revert "test(management): add tests for config management command"
+
+This reverts commit 85db9f3aa237adaa0c9de8ac4bfdcb266fd6a9c9.
+
+* refactor: Use the in-built `set_many` method form accessor in command
+
+changes: Previously, the import command is depending on manual transactions and rollbacks. This was
+  already implemented in accessor. So directly using it instead of large chunks of duplicated and
+  bad code
+
+* fix: Fix the reset method in accessor
+
+changes: - `reset()` method is deleting the existing row, and invalidating the cache previously.
+  Modified it to just set the value for that field to the default value.
+
+* fix(command): Hide the changed values with `config set` command
+
+changes: - Could expose secrets if we log or print the values after setting a config from command.
+  Removed the value from the log statement.
+
+* tests: Add tests for the management command
+
+* test: Modify validator tests from unittests to pytest
+
+* chore: Add pyproject configuraiton for pytest
+
+* refactor: Use config.all() instead of DB queries in the export command
+
+* test(command): Adjust (and remove unwanted) tests for export command
+
+* Revert "fix(apps): defer _ensure_db_records to post_migrate signal"
+
+This reverts commit 108acabc45aaba784b71ce682fc5f52ccbb235f7.
+
+* tests: Remove unnescessary print statements
+
+* feat(management): harden import command with structure validation, real dry-run, and secure export
+  permissions
+
+changes: - Validate the nested JSON structure before iterating, with clear error messages pointing
+  to the exact malformed app, section, or field key. - Replace the shallow dry-run exists() check
+  with a full set_many() call inside a transaction that is always rolled back. Validators, coercion,
+  and serialization now run on dry-run, so failures are caught before any real write. - Tighten
+  export file permissions to 0600 so plaintext secrets are not readable by other users on shared
+  systems.
+
+* test: Update tests for modified management command
+
+---------
+
+Co-authored-by: Shivaram4011 <maddipati.ram2003@gmail.com>
+
+Co-authored-by: Miles Mace <169963839+milesmace@users.noreply.github.com>
+
+
+## v0.2.0 (2026-03-15)
+
+### Bug Fixes
+
+- **docs**: Support deployment path prefixes
+  ([`9928ca2`](https://github.com/krishnamodepalli/django-sysconfig/commit/9928ca2f668ddc3974ac5c325417883109c21eb5))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Continuous Integration
+
+- **docs**: Remove fix/docs-pages-path-prefix branch to trigger docs generation
+  ([`b72c8b8`](https://github.com/krishnamodepalli/django-sysconfig/commit/b72c8b8ce01f16f7a3ab6609e7d4ce0c5c13a0f0))
+
+- **docs**: Run workflow on fix branch
+  ([`2c90fc6`](https://github.com/krishnamodepalli/django-sysconfig/commit/2c90fc652ab99338ba5e05a7dae64988ca6717a0))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Features
+
+- **docs**: Generate SEO metadata artifacts
+  ([`219e29f`](https://github.com/krishnamodepalli/django-sysconfig/commit/219e29f6582e65e10692cd289f0cb06f1c970c20))
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Refactoring
+
+- **frontend_models**: Close all input tags used in `frontend_models`
+  ([`43f8727`](https://github.com/krishnamodepalli/django-sysconfig/commit/43f87272adac5390b74c9b0fddb7d17b51c9c82f))
+
+
 ## v0.1.0 (2026-03-15)
 
 ### Bug Fixes
