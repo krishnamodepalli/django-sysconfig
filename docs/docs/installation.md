@@ -1,15 +1,9 @@
 ---
 title: Installation
-description: Get django-sysconfig running in under five minutes.
+description: Add django-sysconfig to your Django project.
 ---
 
 # Installation
-
-Get django-sysconfig running in under five minutes.
-
-:::tip
-We recommend using a virtual environment to isolate your project dependencies.
-:::
 
 ## Requirements
 
@@ -17,7 +11,7 @@ We recommend using a virtual environment to isolate your project dependencies.
 - Django **4.2** or higher
 - A supported database: PostgreSQL, MySQL, or SQLite
 
-## Install via pip
+## Install
 
 ```bash
 pip install django-sysconfig
@@ -28,55 +22,51 @@ pip install django-sysconfig
 ```python
 # settings.py
 INSTALLED_APPS = [
+    "django_sysconfig",  # ← must be first
     "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-
-    "django_sysconfig",  # ← Add this
+    ...
 ]
 ```
 
-## Configure URLs
+:::warning Why must it be first?
+Django loads admin templates from apps in `INSTALLED_APPS` order. `django-sysconfig` overrides the admin index template to add the **System Configuration** button. If it's not listed before `django.contrib.admin`, the standard admin templates load first and the button won't appear.
+:::
 
-Include the `django-sysconfig` URLs in your root `urls.py` file. It's recommended to mount them under `admin/config/`.
+## Wire up the URLs
+
+Add the config UI routes to your root `urls.py`. The config path **must come before** `path("admin/", ...)`:
 
 ```python
 # urls.py
 from django.urls import path, include
+from django.contrib import admin
 
 urlpatterns = [
+    path("admin/config/", include("django_sysconfig.urls")),  # ← before admin/
     path("admin/", admin.site.urls),
-    path("admin/config/", include("django_sysconfig.urls")), # ← Add this
 ]
 ```
 
-## Run Migrations
+Django matches URL patterns in order. Placing the config URL first ensures `/admin/config/` is routed correctly rather than being caught by the admin's catch-all.
+
+## Run migrations
+
+`django-sysconfig` needs one database table to store configuration values:
 
 ```bash
 python manage.py migrate
 ```
 
-## Create a Superuser
-
-To access the config UI, you'll need to be a staff member.
-
-```bash
-python manage.py createsuperuser
-```
-
 ## Verify
 
-Start the dev server and open [http://127.0.0.1:8000/admin/config/](http://127.0.0.1:8000/admin/config/):
+Start your dev server and visit `/admin/config/`:
 
 ```bash
 python manage.py runserver
 ```
 
-You should see the django-sysconfig App List view. 🎉
+You should see the django-sysconfig App List view — empty for now, since no apps have registered any config yet.
 
 ---
 
-Ready to configure your first app? Head over to [Configuration](/configuration/) next.
+Ready to define your first config schema? Head to [Quick Start](/quickstart).

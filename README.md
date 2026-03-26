@@ -65,9 +65,10 @@ Staff can toggle `maintenance_mode` at `/admin/config/` — no code change, no r
 
 ## Documentation
 
-**[krishnamodepalli.github.io/django-sysconfig](https://krishnamodepalli.github.io/django-sysconfig/)**
-
 Full guides, API reference, and examples are in the docs.
+
+- [Quick Start](https://krishnamodepalli.github.io/django-sysconfig/quickstart/) — up and running in 5 minutes
+- [Installation](https://krishnamodepalli.github.io/django-sysconfig/installation/) — full setup guide
 
 ---
 

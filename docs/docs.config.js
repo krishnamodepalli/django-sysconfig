@@ -42,11 +42,12 @@ export default {
   nav: [
     {
       pages: [
-        { slug: "index",          title: "Home"           },
-        { slug: "introduction",   title: "Introduction"   },
-        { slug: "quickstart",    title: "Quick Start"    },
+        { slug: "index",           title: "Home"            },
+        { slug: "introduction",    title: "Introduction"    },
+        { slug: "installation",    title: "Installation"    },
+        { slug: "quickstart",      title: "Quick Start"     },
         { slug: "getting-started", title: "Getting Started" },
-        { slug: "how-it-works",   title: "How It Works"  },
+        { slug: "how-it-works",    title: "How It Works"    },
       ],
     },
     {
