@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-import { rewriteRootRelativeUrls, toAbsoluteSitePath } from '../paths.js';
+import { rewriteRootRelativeUrls } from '../paths.js';
 
 const CALLOUTS: Record<string, { icon: string; label: string }> = {
   note:    { icon: '💡', label: 'Note'    },
