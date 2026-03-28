@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-sysconfig"
-version = "0.3.0"
-description = "Schema-driven, database-backed runtime configuration for Django"
+version = "1.0.0"
+description = "Schema-driven, database-backed runtime configuration app for Django"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Krishna Modepalli" }]
