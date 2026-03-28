@@ -86,5 +86,5 @@ From here, explore:
 - [Getting Started](/getting-started) — a real-world walkthrough with multiple apps and field types
 - [Defining Configuration](/guides/defining-config) — all field options, section options, and design tips
 - [Reading & Writing Values](/guides/reading-writing) — `set`, `set_many`, `section`, `all`, and more
-- [Field Types](/reference/field-types) — all seven types with examples
-- [Validators](/reference/validators) — all 20 built-in validators
+<!-- - [Field Types](/reference/field-types) — all seven types with examples
+- [Validators](/reference/validators) — all 20 built-in validators -->
