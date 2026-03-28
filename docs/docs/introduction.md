@@ -10,21 +10,7 @@ title: Introduction
 
 Think of it as a first-class home for all the settings in your app that need to be **editable at runtime** by non-developers: things like feature flags, email sender addresses, rate limits, third-party API keys, or a maintenance mode toggle.
 
-## The problem it solves
-
-Every Django project has two kinds of settings:
-
-**Infrastructure settings** — database URL, secret key, allowed hosts. These belong in `settings.py` (or environment variables). They rarely change, and when they do, a redeploy is fine.
-
-**Operational settings** — things like "what's the from-address on outgoing emails?", "how many items can a user create per day?", or "is the beta feature enabled?". These change often, and the people who need to change them usually aren't engineers. Forcing a redeploy for each one doesn't scale.
-
-The usual workaround is a freeform key-value model in the database — but that gives you untyped strings, no validation, no defaults, no documentation, and nothing to guide whoever is editing the values.
-
-`django-sysconfig` fixes all of that.
-
 ## The core idea: schema in code, values in the database
-
-This is the design philosophy the whole library is built on, borrowed from Magento's system configuration.
 
 **Your schema lives in code.** You define fields — their types, labels, defaults, validation rules — in a `sysconfig.py` file inside your Django app. This is versioned, reviewable, and self-documenting. It's the single source of truth for *what* can be configured.
 

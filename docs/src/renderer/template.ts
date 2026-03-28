@@ -86,6 +86,7 @@ export function renderPage({
     : '';
 
   const firstSlug = flatPages[0]?.slug ?? '';
+  const safeDescription = (description ?? '').replace(/"/g, '&quot;');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -93,9 +94,9 @@ export function renderPage({
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} — ${name} Docs</title>
-<meta name="description" content="${description}">${canon}
+<meta name="description" content="${safeDescription}">${canon}
 <meta property="og:title" content="${title} — ${name} Docs">
-<meta property="og:description" content="${description}">
+<meta property="og:description" content="${safeDescription}">
 <meta property="og:url" content="${pageUrl}">
 <meta property="og:type" content="article">
 <meta property="og:image" content="${ogImageUrl}">

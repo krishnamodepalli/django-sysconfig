@@ -14,9 +14,11 @@ export function initRouter(reinitCallback) {
       document.getElementById('toc').innerHTML = doc.getElementById('toc').innerHTML;
 
       // Update Sidebar active state
+      const urlPath = url.split('#')[0];
+      const normalizedUrl = urlPath.endsWith('/') ? urlPath : urlPath + '/';
       document.querySelectorAll('.slink').forEach(link => {
         const href = link.getAttribute('href');
-        link.classList.toggle('active', url.endsWith(href) || url === href);
+        link.classList.toggle('active', normalizedUrl === href);
       });
 
       // Open the group containing the new active link; close all others

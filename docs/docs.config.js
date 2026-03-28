@@ -19,7 +19,7 @@ try {
 export default {
   site: {
     name: "django-sysconfig",
-    tagline: "Magento-style system configuration for Django",
+    tagline: "Schema-driven, database-backed runtime configuration for Django",
     version: version,
     repo: "https://github.com/krishnamodepalli/django-sysconfig",
     // Base URL for production (used in sitemap, canonical links)
@@ -42,11 +42,12 @@ export default {
   nav: [
     {
       pages: [
-        { slug: "index",          title: "Home"           },
-        { slug: "introduction",   title: "Introduction"   },
-        { slug: "quickstart",    title: "Quick Start"    },
+        { slug: "index",           title: "Home"            },
+        { slug: "introduction",    title: "Introduction"    },
+        { slug: "installation",    title: "Installation"    },
+        { slug: "quickstart",      title: "Quick Start"     },
         { slug: "getting-started", title: "Getting Started" },
-        { slug: "how-it-works",   title: "How It Works"  },
+        { slug: "how-it-works",    title: "How It Works"    },
       ],
     },
     {

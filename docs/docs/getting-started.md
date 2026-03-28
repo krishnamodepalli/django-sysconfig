@@ -207,5 +207,5 @@ You now have a fully working multi-app configuration setup. Explore deeper topic
 - [Defining Configuration](/guides/defining-config) — section options, field options, and design tips
 - [Admin UI Guide](/guides/admin-ui) — walkthrough of the staff interface
 - [Encryption Guide](/guides/encryption) — how secret fields work and how to handle key rotation
-- [Field Types Reference](/reference/field-types) — all seven types in detail
-- [Validators Reference](/reference/validators) — all 20 validators with usage examples
+- [on_save Callbacks](/guides/on-save-callbacks) — react to value changes with custom logic
+- [Management Commands](/cli/management-command) — inspect and edit config from the terminal
