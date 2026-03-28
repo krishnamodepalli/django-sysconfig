@@ -57,15 +57,6 @@ export class MarkdownRenderer {
     const withCallouts = this.parseCallouts(md);
     this.renderer = this.createRenderer();
 
-    const originalLink = this.renderer.link.bind(this.renderer);
-    this.renderer.link = (token) => {
-      let href = token.href;
-      if (href.startsWith('/') && !href.startsWith('//')) {
-        href = toAbsoluteSitePath(pathPrefix, href);
-      }
-      return originalLink({ ...token, href });
-    };
-
     const html = marked.parse(withCallouts, { renderer: this.renderer, gfm: true, breaks: false }) as string;
     return rewriteRootRelativeUrls(html, pathPrefix);
   }

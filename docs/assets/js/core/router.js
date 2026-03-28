@@ -14,7 +14,8 @@ export function initRouter(reinitCallback) {
       document.getElementById('toc').innerHTML = doc.getElementById('toc').innerHTML;
 
       // Update Sidebar active state
-      const normalizedUrl = url.endsWith('/') ? url : url + '/';
+      const urlPath = url.split('#')[0];
+      const normalizedUrl = urlPath.endsWith('/') ? urlPath : urlPath + '/';
       document.querySelectorAll('.slink').forEach(link => {
         const href = link.getAttribute('href');
         link.classList.toggle('active', normalizedUrl === href);
