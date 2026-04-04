@@ -186,6 +186,8 @@ class ConfigAccessor:
             field = self._get_field(app_label, section, field_name)
         elif isinstance(path, Field):
             field = path
+        else:
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
 
         value = self._get_raw(field)
         if value is not config_cache.NOT_FOUND:
@@ -220,6 +222,8 @@ class ConfigAccessor:
             field = self._get_field(app_label, section, field_name)
         elif isinstance(path, Field):
             field = path
+        else:
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
 
         with transaction.atomic():
             cache_refresh, callbacks = self._set_value_internal(field, value)
@@ -317,7 +321,7 @@ class ConfigAccessor:
                 existing = ConfigValue.objects.get(app_label=app_label, path=db_path)
                 old_value = self._deserialize(field, existing.value)
             except ConfigValue.DoesNotExist:
-                old_value = self._deserialize(field, field.default)
+                old_value = field.default
 
         # Save to database
         ConfigValue.objects.update_or_create(
