@@ -134,7 +134,31 @@ class ConfigAccessor:
         frontend_model = field.get_frontend_model_instance(value)
         return frontend_model.serialize_value(value)
 
-    def get(self, path: str, default: Any = None) -> Any:
+    def _get_raw(self, field: Field) -> Any:
+        """Fetch and deserialize a field's value from cache or DB. Returns NOT_FOUND if absent."""
+        path = field.full_path
+
+        cached_value = config_cache.get(path)
+        if cached_value is not config_cache.NOT_FOUND:
+            # Cache hit - deserialize the raw value
+            return self._deserialize(field, cached_value)
+
+        # Cache miss - query database
+        db_path = field.path
+        app_label = field._app_label
+
+        try:
+            config_value = ConfigValue.objects.get(
+                app_label=app_label,
+                path=db_path,
+            )
+            # Cache the raw database value
+            config_cache.set(path, config_value.value)
+            return self._deserialize(field, config_value.value)
+        except ConfigValue.DoesNotExist:
+            return config_cache.NOT_FOUND
+
+    def get(self, path: str | Field, default: Any = None) -> Any:
         """
         Get a configuration value.
 
@@ -156,39 +180,23 @@ class ConfigAccessor:
             AppNotFoundError: If app has no registered config (always raised)
             FieldNotFoundError: If field doesn't exist (always raised)
         """
-        app_label, section, field_name = self._parse_path(path)
-        field = self._get_field(app_label, section, field_name)
 
-        # First check cache
-        cached_value = config_cache.get(path)
-        if cached_value is not config_cache.NOT_FOUND:
-            # Cache hit - deserialize the raw value
-            return self._deserialize(field, cached_value)
+        if isinstance(path, str):
+            app_label, section, field_name = self._parse_path(path)
+            field = self._get_field(app_label, section, field_name)
+        elif isinstance(path, Field):
+            field = path
 
-        # Cache miss - query database
-        db_path = self._to_db_path(section, field_name)
+        value = self._get_raw(field)
+        if value is not config_cache.NOT_FOUND:
+            return value
 
-        try:
-            config_value = ConfigValue.objects.get(
-                app_label=app_label,
-                path=db_path,
-            )
-            # Cache the raw database value
-            config_cache.set(path, config_value.value)
-            return self._deserialize(field, config_value.value)
-        except ConfigValue.DoesNotExist:
-            # No DB value - use field default if available
-            if field.default is not None:
-                # Serialize and cache the default value
-                frontend_model = field.get_frontend_model_instance()
-                serialized_default = frontend_model.serialize_value(field.default)
-                config_cache.set(path, serialized_default)
-                return field.default
-            # Field has no default - return caller's fallback (None by default)
-            config_cache.set(path, None)
+        if default is not None:
             return default
 
-    def set(self, path: str, value: Any) -> None:
+        return field.default
+
+    def set(self, path: str | Field, value: Any) -> None:
         """
         Set a configuration value.
 
@@ -207,8 +215,14 @@ class ConfigAccessor:
         """
         from django.db import transaction
 
+        if isinstance(path, str):
+            app_label, section, field_name = self._parse_path(path)
+            field = self._get_field(app_label, section, field_name)
+        elif isinstance(path, Field):
+            field = path
+
         with transaction.atomic():
-            cache_refresh, callbacks = self._set_value_internal(path, value)
+            cache_refresh, callbacks = self._set_value_internal(field, value)
             transaction.on_commit(cache_refresh)
             transaction.on_commit(callbacks)
 
@@ -244,8 +258,11 @@ class ConfigAccessor:
             callbacks_to_register = []
 
             for path, value in values.items():
+                app_label, section, field_name = self._parse_path(path)
+                field = self._get_field(app_label, section, field_name)
+
                 cache_refresh_callback, on_save_callback = self._set_value_internal(
-                    path, value
+                    field, value
                 )
                 transaction.on_commit(cache_refresh_callback)
 
@@ -258,7 +275,9 @@ class ConfigAccessor:
         return len(values)
 
     def _set_value_internal(
-        self, path: str, value: Any
+        self,
+        field: Field,
+        value: Any,
     ) -> tuple[Callable[[], None], Callable[[], None]]:
         """
         Internal implementation of setting a configuration value.
@@ -271,8 +290,9 @@ class ConfigAccessor:
         Both callbacks must only be executed after the transaction commits
         successfully to ensure cache always reflects durable DB state.
         """
-        app_label, section, field_name = self._parse_path(path)
-        field = self._get_field(app_label, section, field_name)
+        path = field.full_path
+        app_label = field._app_label
+        field_name = field.name
 
         # Run field validators before doing anything else.
         if field.validators:
@@ -288,7 +308,7 @@ class ConfigAccessor:
         except Exception as e:
             raise ConfigValueError(path, value, str(e)) from e
 
-        db_path = self._to_db_path(section, field_name)
+        db_path = field.path
 
         # Fetch old value before the write so on_save receives the previous state.
         old_value = None
@@ -297,7 +317,7 @@ class ConfigAccessor:
                 existing = ConfigValue.objects.get(app_label=app_label, path=db_path)
                 old_value = self._deserialize(field, existing.value)
             except ConfigValue.DoesNotExist:
-                old_value = field.default
+                old_value = self._deserialize(field, field.default)
 
         # Save to database
         ConfigValue.objects.update_or_create(

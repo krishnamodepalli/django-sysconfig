@@ -89,6 +89,9 @@ class Field:
         # These will be set by the registry during registration
         self.name: str = ""
         self.path: str = ""
+        self.full_path: str = ""
+        self._section = ""
+        self._app_label = ""
 
     @property
     def required(self) -> bool:
@@ -190,6 +193,10 @@ class AppConfigDefinition:
                 # Set path for each field in the section
                 section_key = to_snake_case(name)
                 for field_name, field in attr.get_fields().items():
+                    field._section = section_key
+                    field._app_label = app_label
+                    field.name = field_name
+                    field.full_path = f"{app_label}.{section_key}.{field_name}"
                     field.path = f"{section_key}.{field_name}"
                 self.sections[section_key] = attr
 
