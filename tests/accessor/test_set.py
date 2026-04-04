@@ -128,16 +128,10 @@ class TestSetOnSave:
     ):
         callback = MagicMock()
 
-        from django_sysconfig.frontend_models import IntegerFrontendModel
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            IntegerFrontendModel, label="Max Items", default=10, on_save=callback
-        )
-        new_field.name = "max_items"
-        section._fields["max_items"] = new_field
+        section.max_items.on_save = callback
 
         with django_capture_on_commit_callbacks(execute=True):
             config.set("testapp.general.max_items", 42)
@@ -154,16 +148,10 @@ class TestSetOnSave:
             received["new_value"] = new_value
             received["old_value"] = old_value
 
-        from django_sysconfig.frontend_models import IntegerFrontendModel
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            IntegerFrontendModel, label="Max Items", default=10, on_save=capture
-        )
-        new_field.name = "max_items"
-        section._fields["max_items"] = new_field
+        section.max_items.on_save = capture
 
         with django_capture_on_commit_callbacks(execute=True):
             config.set("testapp.general.max_items", 99)
@@ -179,16 +167,10 @@ class TestSetOnSave:
         def capture(path, new_value, old_value):
             received["old_value"] = old_value
 
-        from django_sysconfig.frontend_models import IntegerFrontendModel
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            IntegerFrontendModel, label="Max Items", default=10, on_save=capture
-        )
-        new_field.name = "max_items"
-        section._fields["max_items"] = new_field
+        section.max_items.on_save = capture
 
         with django_capture_on_commit_callbacks(execute=True):
             config.set("testapp.general.max_items", 50)  # differs from default of 10
@@ -206,17 +188,11 @@ class TestSetOnSave:
         def capture(path, new_value, old_value):
             received["old_value"] = old_value
 
-        from django_sysconfig.frontend_models import IntegerFrontendModel
         from django_sysconfig.models import ConfigValue
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            IntegerFrontendModel, label="Max Items", default=10, on_save=capture
-        )
-        new_field.name = "max_items"
-        section._fields["max_items"] = new_field
+        section.max_items.on_save = capture
 
         # Delete the seeded row so there is no prior DB value
         ConfigValue.objects.filter(

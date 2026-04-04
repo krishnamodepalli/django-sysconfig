@@ -274,19 +274,10 @@ class TestCmdImportSkipCallbacks:
     ):
         callback = MagicMock()
 
-        from django_sysconfig.frontend_models import StringFrontendModel
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            StringFrontendModel,
-            label="Site Name",
-            default="Test Site",
-            on_save=callback,
-        )
-        new_field.name = "site_name"
-        section._fields["site_name"] = new_field
+        section.site_name.on_save = callback
 
         path = tmp_json_file(VALID_IMPORT_DATA)
         with django_capture_on_commit_callbacks(execute=True):
@@ -299,19 +290,10 @@ class TestCmdImportSkipCallbacks:
     ):
         callback = MagicMock()
 
-        from django_sysconfig.frontend_models import StringFrontendModel
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            StringFrontendModel,
-            label="Site Name",
-            default="Test Site",
-            on_save=callback,
-        )
-        new_field.name = "site_name"
-        section._fields["site_name"] = new_field
+        section.site_name.on_save = callback
 
         path = tmp_json_file(VALID_IMPORT_DATA)
         with django_capture_on_commit_callbacks(execute=True):
