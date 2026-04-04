@@ -10,6 +10,7 @@ Covers:
 - Unknown app label
 - Unknown field name
 - Caller-supplied default for fields with no value and no field default
+- Typed Field API (config.get(Field))
 """
 
 from decimal import Decimal
@@ -239,3 +240,58 @@ class TestGetErrors:
     def test_raises_for_empty_path(self, config):
         with pytest.raises(InvalidPathError):
             config.get("")
+
+    def test_raises_type_error_for_invalid_type(self, config):
+        with pytest.raises(TypeError):
+            config.get(123)
+
+
+# ---------------------------------------------------------------------------
+# Typed Field API
+# ---------------------------------------------------------------------------
+
+
+class TestGetWithField:
+    """Tests for config.get(Field) — typed accessor API."""
+
+    def test_returns_field_default(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.get(field) == 10
+
+    def test_returns_db_value_after_set(self, config, registry):
+        config.set("testapp.general.max_items", 42)
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.get(field) == 42
+
+    def test_returns_correct_type(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert isinstance(config.get(field), int)
+
+    def test_matches_string_path(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.get(field) == config.get("testapp.general.max_items")
+
+    def test_populates_cache(self, config, registry):
+        from django_sysconfig.cache import config_cache
+
+        field = registry.get_config("testapp").sections["general"].max_items
+        config_cache.invalidate(field.full_path)
+        config.get(field)
+        assert config_cache.get(field.full_path) is not config_cache.NOT_FOUND
+
+    def test_hits_cache_on_second_call(
+        self, config, registry, django_assert_num_queries
+    ):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.get(field)  # warm cache
+        with django_assert_num_queries(0):
+            config.get(field)
+
+    def test_shares_cache_with_string_api(
+        self, config, registry, django_assert_num_queries
+    ):
+        # Warm cache via string, then get via Field — should not hit DB
+        config.get("testapp.general.max_items")
+        field = registry.get_config("testapp").sections["general"].max_items
+        with django_assert_num_queries(0):
+            config.get(field)

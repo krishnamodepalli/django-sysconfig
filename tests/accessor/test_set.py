@@ -8,6 +8,7 @@ Covers:
 - on_save callback invoked with correct arguments
 - Validation errors raised before any DB write
 - Invalid path / unknown app / unknown field
+- Typed Field API (config.set(Field, value))
 """
 
 from decimal import Decimal
@@ -255,3 +256,67 @@ class TestSetErrors:
     def test_raises_for_unknown_field(self, config):
         with pytest.raises(FieldNotFoundError):
             config.set("testapp.general.unknown_field", 10)
+
+    def test_raises_type_error_for_invalid_type(self, config):
+        with pytest.raises(TypeError):
+            config.set(123, "value")
+
+
+# ---------------------------------------------------------------------------
+# Typed Field API
+# ---------------------------------------------------------------------------
+
+
+class TestSetWithField:
+    """Tests for config.set(Field, value) — typed accessor API."""
+
+    def test_persists_to_db(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set(field, 77)
+        row = ConfigValue.objects.get(app_label="testapp", path="general.max_items")
+        assert row.value == "77"
+
+    def test_readable_via_string_api(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set(field, 55)
+        assert config.get("testapp.general.max_items") == 55
+
+    def test_readable_via_field_api(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set(field, 55)
+        assert config.get(field) == 55
+
+    def test_updates_cache(self, config, registry, django_capture_on_commit_callbacks):
+        from django_sysconfig.cache import config_cache
+
+        field = registry.get_config("testapp").sections["general"].max_items
+        with django_capture_on_commit_callbacks(execute=True):
+            config.set(field, 88)
+        assert config_cache.get(field.full_path) is not config_cache.NOT_FOUND
+
+    def test_shares_cache_with_string_api(
+        self,
+        config,
+        registry,
+        django_assert_num_queries,
+        django_capture_on_commit_callbacks,
+    ):
+        # Set via Field, then get via string — should hit cache, no DB query
+        field = registry.get_config("testapp").sections["general"].max_items
+        with django_capture_on_commit_callbacks(execute=True):
+            config.set(field, 99)
+        with django_assert_num_queries(0):
+            assert config.get("testapp.general.max_items") == 99
+
+    def test_runs_validation(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        with pytest.raises(ConfigValidationError):
+            config.set(field, 9999)  # exceeds RangeValidator max of 1000
+
+    def test_fires_on_save(self, config, registry, django_capture_on_commit_callbacks):
+        callback = MagicMock()
+        field = registry.get_config("testapp").sections["general"].max_items
+        field.on_save = callback
+        with django_capture_on_commit_callbacks(execute=True):
+            config.set(field, 42)
+        callback.assert_called_once()
