@@ -200,6 +200,23 @@ class SelectFrontendModel(BaseFrontendModel):
 
     template_name = "django_sysconfig/frontend_models/select.html"
 
+    def __init__(self, field, current_value: Any = None):
+        super().__init__(field, current_value)
+        self._inject_choice_validator()
+
+    def _inject_choice_validator(self):
+        from .validators import ChoiceValidator
+
+        choices = self.field.extra.get("choices", [])
+        if not choices:
+            return
+
+        if any(isinstance(v, ChoiceValidator) for v in self.field.validators):
+            return
+
+        keys = [str(c[0]) if isinstance(c, (list, tuple)) else str(c) for c in choices]
+        self.field.validators.append(ChoiceValidator(keys))
+
     def get_context(self) -> dict:
         context = super().get_context()
         # Choices should be provided via field.extra['choices']
