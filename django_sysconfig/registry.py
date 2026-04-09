@@ -26,6 +26,7 @@ Usage:
             )
 """
 
+import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -37,6 +38,8 @@ from .utils import is_snake_case, to_snake_case
 if TYPE_CHECKING:
     from .frontend_models import BaseFrontendModel
     from .validators import BaseValidator
+
+logger = logging.getLogger(__name__)
 
 
 class Field:
@@ -279,10 +282,13 @@ class ConfigRegistry:
         except (
             django.db.utils.OperationalError,
             django.db.utils.ProgrammingError,
-        ):
-            # Silently ignore DB errors during startup (e.g., migrations not run yet)
-            # This is expected during initial app loading before migrations are applied
-            pass
+        ) as e:
+            logger.warning(
+                "django-sysconfig: could not seed DB records for '%s' — "
+                "run migrations if this is a fresh install. Error: %s",
+                app_label,
+                e,
+            )
 
     def get_config(self, app_label: str) -> AppConfigDefinition | None:
         """Get the configuration definition for an app."""
