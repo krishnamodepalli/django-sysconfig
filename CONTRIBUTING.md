@@ -78,7 +78,7 @@ This ensures no two contributors spend time on the same problem.
 2. Make your changes, ensure `pytest` passes and `pre-commit run --all-files` is clean
 3. Open a PR against `develop` and include `closes #<issue-number>` in the description
 4. Assign yourself as the **Assignee**
-5. Assign `@krishnamodepalli` or `@Shivaram4011` as **Reviewers**
+5. Assign a maintainer as **Reviewer**
 6. Keep PRs focused — one issue per PR. If you find a related bug while working, open a separate issue for it.
 
 ---
