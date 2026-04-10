@@ -18,7 +18,6 @@ class ConfigValueAdmin(admin.ModelAdmin):
     ordering = ("app_label", "path")
     readonly_fields = ("app_label", "path", "value_preview")
 
-    @admin.display(description="Value")
     def value_preview(self, obj):
         """Show value preview, masking secrets."""
         if not obj.value:
@@ -33,3 +32,5 @@ class ConfigValueAdmin(admin.ModelAdmin):
         if len(obj.value) > PREVIEW_MAX_LENGTH:
             return obj.value[:PREVIEW_MAX_LENGTH] + "..."
         return obj.value
+
+    value_preview.short_description = "Value"
