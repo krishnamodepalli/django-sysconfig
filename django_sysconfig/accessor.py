@@ -36,7 +36,7 @@ from .exceptions import (
     InvalidPathError,
 )
 from .models import ConfigValue
-from .registry import Field, config_registry
+from .registry import AppConfigDefinition, Field, config_registry
 
 
 class ConfigAccessor:
@@ -402,16 +402,33 @@ class ConfigAccessor:
         all_config = self.all(app_label)
         return all_config.get(section, {})
 
-    def exists(self, path: str) -> bool:
+    def exists(self, path: str | Field) -> bool:
         """
         Check if a configuration path exists (is registered).
 
         Args:
-            path: Full path like 'todo.general.max_todos_per_user'
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
 
         Returns:
             True if the field is registered, False otherwise
         """
+        if isinstance(path, Field):
+            app_label = path._app_label
+            section = path._section
+
+            app_config = config_registry.get_config(app_label)
+
+            if not isinstance(app_config, AppConfigDefinition):
+                return False
+
+            if section not in app_config.sections:
+                return False
+
+            if path not in app_config.sections[section].get_fields().values():
+                return False
+
+            return True
+
         try:
             app_label, section, field_name = self._parse_path(path)
 
@@ -422,21 +439,25 @@ class ConfigAccessor:
         except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
             return False
 
-    def is_set(self, path: str) -> bool:
+    def is_set(self, path: str | Field) -> bool:
         """
         Check if a configuration value has been explicitly set in the database.
 
         Args:
-            path: Full path like 'todo.general.max_todos_per_user'
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
 
         Returns:
             True if value exists in database with a non-empty value, False if using default
         """
-        if not self.exists(path):
-            return False
-
-        app_label, section, field_name = self._parse_path(path)
-        db_path = self._to_db_path(section, field_name)
+        if isinstance(path, Field):
+            field = path
+            app_label = field._app_label
+            db_path = field.path
+        else:
+            if not self.exists(path):
+                return False
+            app_label, section, field_name = self._parse_path(path)
+            db_path = self._to_db_path(section, field_name)
 
         try:
             config_value = ConfigValue.objects.get(
@@ -448,7 +469,7 @@ class ConfigAccessor:
         except ConfigValue.DoesNotExist:
             return False
 
-    def reset(self, path: str) -> None:
+    def reset(self, path: str | Field) -> None:
         """
         Reset a configuration value to its field default.
 
@@ -456,17 +477,20 @@ class ConfigAccessor:
         set() path — handles serialization, cache refresh, and on_save dispatch.
 
         Args:
-            path: Full path like 'todo.general.max_todos_per_user'
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
 
         Raises:
             InvalidPathError: If path format is invalid
             AppNotFoundError: If app has no registered config
             FieldNotFoundError: If field doesn't exist
         """
-        app_label, section, field_name = self._parse_path(path)
-        field = self._get_field(app_label, section, field_name)
+        if isinstance(path, Field):
+            field = path
+        else:
+            app_label, section, field_name = self._parse_path(path)
+            field = self._get_field(app_label, section, field_name)
 
-        self.set(path, field.default)
+        self.set(field, field.default)
 
 
 # Global config accessor instance
