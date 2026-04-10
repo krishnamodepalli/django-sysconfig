@@ -231,7 +231,7 @@ class ConfigAccessor:
             transaction.on_commit(callbacks)
 
     def set_many(
-        self, values: dict[str, Any], skip_on_save_callbacks: bool = False
+        self, values: dict[str | Field, Any], skip_on_save_callbacks: bool = False
     ) -> int:
         """
         Set multiple configuration values at once.
@@ -241,7 +241,7 @@ class ConfigAccessor:
         only after the transaction commits successfully.
 
         Args:
-            values (dict[str, Any]): Dict mapping full paths to values.
+            values (dict[str | Field, Any]): Dict mapping full paths to values.
             skip_on_save_callbacks (bool): If True, on_save callbacks are suppressed
                 for all fields in this batch. Useful for bulk imports or environment
                 cloning where side effects are undesirable. Defaults to False.
@@ -253,6 +253,7 @@ class ConfigAccessor:
             InvalidPathError: If any path format is invalid.
             AppNotFoundError: If any app has no registered config.
             FieldNotFoundError: If any field does not exist.
+            TypeError: If given argument is not a valid dict[str | Field, Any]
             ConfigValueError: If any value cannot be serialized.
             ConfigValidationError: If any value fails field validation.
         """
@@ -262,8 +263,15 @@ class ConfigAccessor:
             callbacks_to_register = []
 
             for path, value in values.items():
-                app_label, section, field_name = self._parse_path(path)
-                field = self._get_field(app_label, section, field_name)
+                if isinstance(path, str):
+                    app_label, section, field_name = self._parse_path(path)
+                    field = self._get_field(app_label, section, field_name)
+                elif isinstance(path, Field):
+                    field = path
+                else:
+                    raise TypeError(
+                        f"Expected dict[str | Field, Any], got dict[{type(path).__name__}, Any]"
+                    )
 
                 cache_refresh_callback, on_save_callback = self._set_value_internal(
                     field, value
