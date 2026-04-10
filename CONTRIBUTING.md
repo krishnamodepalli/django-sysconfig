@@ -76,7 +76,9 @@ This ensures no two contributors spend time on the same problem.
 
 1. Cut a branch off from `develop` — use the convention `feat/typed-accessor` or `fix/accessor-get-fail-with-field-param`
 2. Make your changes, ensure `pytest` passes and `pre-commit run --all-files` is clean
-3. Open a PR against `develop` and include `closes #<issue-number>` in the description
+3. Open a PR against `develop` using the PR template — fill in as much as you can:
+   - **Required:** Description, `closes #N`, Type of Change, Changes Made, Checklist
+   - **Optional:** Django/Python Compatibility (skip if not applicable), Breaking Changes, Additional Notes
 4. Assign yourself as the **Assignee**
 5. Assign a maintainer as **Reviewer**
 6. Keep PRs focused — one issue per PR. If you find a related bug while working, open a separate issue for it.
