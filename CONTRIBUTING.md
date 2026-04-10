@@ -94,4 +94,4 @@ Open an issue on [GitHub Issues](https://github.com/krishnamodepalli/django-sysc
 
 Apply the most relevant label (`bug`, `enhancement`, `good first issue`, etc.) if you have triage access. If not, a maintainer will label it.
 
-For security vulnerabilities, do **not** open a public issue — contact the maintainers directly.
+For security vulnerabilities, do **not** open a public issue — use [GitHub Security Advisories](https://github.com/krishnamodepalli/django-sysconfig/security/advisories/new) to report privately.
