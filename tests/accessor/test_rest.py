@@ -237,3 +237,61 @@ class TestSection:
         # section() delegates to all(), which returns {} for missing keys
         result = config.section("testapp.nonexistent")
         assert result == {}
+
+
+# ===========================================================================
+# Typed Field API — exists(), is_set(), reset()
+# ===========================================================================
+
+
+class TestExistsWithField:
+    def test_returns_true_for_registered_field(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.exists(field) is True
+
+    def test_returns_false_for_unregistered_field(self, config):
+        from django_sysconfig.frontend_models import IntegerFrontendModel
+        from django_sysconfig.registry import Field
+
+        detached = Field(IntegerFrontendModel, label="Detached")
+        detached.name = "max_items"
+        detached._section = "general"
+        detached._app_label = "testapp"
+        detached.path = "general.max_items"
+        detached.full_path = "testapp.general.max_items"
+        assert config.exists(detached) is False
+
+    def test_matches_string_api(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.exists(field) == config.exists("testapp.general.max_items")
+
+
+class TestIsSetWithField:
+    def test_returns_false_before_set(self, config, registry):
+        # api_key has default="" which serializes to None — no value seeded in DB
+        field = registry.get_config("testapp").sections["advanced"].api_key
+        assert config.is_set(field) is False
+
+    def test_returns_true_after_set(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set(field, 99)
+        assert config.is_set(field) is True
+
+    def test_matches_string_api(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set(field, 99)
+        assert config.is_set(field) == config.is_set("testapp.general.max_items")
+
+
+class TestResetWithField:
+    def test_resets_to_default(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set(field, 999)
+        config.reset(field)
+        assert config.get(field) == field.default
+
+    def test_matches_string_api(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.set("testapp.general.max_items", 999)
+        config.reset(field)
+        assert config.get("testapp.general.max_items") == field.default
