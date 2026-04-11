@@ -5,6 +5,8 @@ on:
     - cron: '0 0 1,15 * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   reload:
     runs-on: ubuntu-latest
