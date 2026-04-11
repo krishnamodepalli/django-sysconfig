@@ -11,7 +11,7 @@ from django.shortcuts import redirect, render
 from django.views import View
 
 from .accessor import config
-from .exceptions import ConfigValidationError
+from .exceptions import ConfigError, ConfigValidationError
 from .models import ConfigValue
 from .registry import config_registry
 
@@ -185,6 +185,9 @@ class ConfigAppDetailView(BaseConfigView):
                 except ConfigValidationError as e:
                     for error in e.errors:
                         messages.error(request, error)
+                    return redirect("django_sysconfig:app_detail", app_label=app_label)
+                except ConfigError as e:
+                    messages.error(request, str(e))
                     return redirect("django_sysconfig:app_detail", app_label=app_label)
                 saved_count += 1
 
