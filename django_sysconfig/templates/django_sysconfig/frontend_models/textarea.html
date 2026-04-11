@@ -12,8 +12,9 @@
                           rows="{{ field.extra.rows|default:4 }}"
                           {% if field.extra.placeholder %}placeholder="{{ field.extra.placeholder }}"{% endif %}>{{ value|default:'' }}</textarea>
             </div>
+            {% load sanitize %}
             {% if field.comment %}
-            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            <div class="config-field-comment">{{ field.comment|field_comment }}</div>
             {% endif %}
         </div>
     </div>

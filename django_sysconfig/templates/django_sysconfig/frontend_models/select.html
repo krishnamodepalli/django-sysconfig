@@ -16,8 +16,9 @@
                     {% endfor %}
                 </select>
             </div>
+            {% load sanitize %}
             {% if field.comment %}
-            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            <div class="config-field-comment">{{ field.comment|field_comment }}</div>
             {% endif %}
         </div>
     </div>

@@ -17,8 +17,9 @@
                 </span>
                 <span class="toggle-label" id="{{ input_id }}_label">{% if checked %}Yes{% else %}No{% endif %}</span>
             </label>
+            {% load sanitize %}
             {% if field.comment %}
-            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            <div class="config-field-comment">{{ field.comment|field_comment }}</div>
             {% endif %}
         </div>
     </div>
