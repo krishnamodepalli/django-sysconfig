@@ -81,7 +81,8 @@ This ensures no two contributors spend time on the same problem.
    - **Optional:** Django/Python Compatibility (skip if not applicable), Breaking Changes, Additional Notes
 4. Assign yourself as the **Assignee**
 5. Assign a maintainer as **Reviewer**
-6. Keep PRs focused — one issue per PR. If you find a related bug while working, open a separate issue for it.
+6. Add appropriate labels for the PR. E.g. `bug`, `enhancement`, `code-quality`, etc.
+7. Keep PRs focused — one issue per PR. If you find a related bug while working, open a separate issue for it.
 
 ---
 
