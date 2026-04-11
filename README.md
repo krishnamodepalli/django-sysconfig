@@ -75,3 +75,9 @@ Full guides, API reference, and examples are in the docs.
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/krishnamodepalli/django-sysconfig/blob/develop/CONTRIBUTING.md). Issues and pull requests are welcome.
+
+---
+
+## Security
+
+Please do not open a public issue for security vulnerabilities. Report them privately via [GitHub Security Advisories](https://github.com/krishnamodepalli/django-sysconfig/security/advisories/new).
