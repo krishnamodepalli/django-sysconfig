@@ -14,6 +14,7 @@ from .exceptions import (
     FieldNotFoundError,
     InvalidPathError,
 )
+from .registry import Section, register_config
 
 __all__ = [
     "ConfigError",
@@ -21,6 +22,8 @@ __all__ = [
     "FieldNotFoundError",
     "InvalidPathError",
     "ConfigValueError",
+    "Section",
+    "register_config",
 ]
 
 __version__ = "1.0.0"
