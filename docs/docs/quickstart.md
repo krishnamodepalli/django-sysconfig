@@ -5,7 +5,9 @@ description: Get django-sysconfig running in your project in under five minutes.
 
 # Quick Start
 
-> **First time?** Start with [Installation](/installation) to add `django-sysconfig` to your project, run migrations, and wire up the admin URL. Come back here once that's done.
+::: info First time?
+Start with [Installation](/installation) to add `django-sysconfig` to your project, run migrations, and wire up the admin URL. Come back here once that's done.
+:::
 
 ---
 

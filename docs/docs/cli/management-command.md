@@ -77,7 +77,7 @@ The value is never echoed back in the success message — this is intentional so
 
 ## Reset
 
-Reset a config value back to its [field default](/guides/defining-config/#always-set-a-default).
+Reset a config value back to its [field default](/guides/defining-config#always-set-a-default).
 
 ```bash
 python manage.py config reset <path> [--force]
@@ -218,7 +218,7 @@ The import runs inside a single database transaction. If any value fails validat
 
 **Skipping callbacks**
 
-`--skip-on-save-callbacks` suppresses all [`on_save` callbacks](/guides/on-save-callbacks/) for the duration of the import. This is useful when:
+`--skip-on-save-callbacks` suppresses all [`on_save` callbacks](/guides/on-save-callbacks) for the duration of the import. This is useful when:
 
 - Restoring a snapshot — you don't want 50 Slack notifications firing at once
 - Cloning an environment — callbacks may be environment-specific

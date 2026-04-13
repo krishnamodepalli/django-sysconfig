@@ -44,7 +44,7 @@ class Advanced(Section):
 
 | Parameter        | Type                     | Required | Description                                                         |
 | ---------------- | ------------------------ | -------- | ------------------------------------------------------------------- |
-| `frontend_model` | `type[BaseFrontendModel]`| Yes      | The field type class — determines Python type and UI widget. Full list [here](/reference/field-types/#overview)  |
+| `frontend_model` | `type[BaseFrontendModel]`| Yes      | The field type class — determines Python type and UI widget. Full list [here](/reference/field-types#overview)  |
 | `label`          | `str`                    | No       | Human-readable label shown in the admin UI                          |
 | `comment`        | `str`                    | No       | Help text below the input; HTML is allowed                          |
 | `default`        | `Any`                    | No       | Value used when no DB record exists                                 |
