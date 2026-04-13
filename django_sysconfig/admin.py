@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import ConfigValue
 
 # Constants for value preview display
