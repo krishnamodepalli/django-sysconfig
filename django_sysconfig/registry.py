@@ -144,20 +144,6 @@ class Section(metaclass=SectionMeta):
     sort_order: int = 0
     _fields: dict[str, Field] = {}
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        # Ensure each subclass has its own _fields dict
-        cls._fields = {}
-        for key, value in vars(cls).items():
-            if isinstance(value, Field):
-                if not is_snake_case(key):
-                    raise ImproperlyConfigured(
-                        f"Field name '{key}' in section '{cls.__name__}' must be snake_case "
-                        f"(e.g. 'site_url', 'max_items')."
-                    )
-                value.name = key
-                cls._fields[key] = value
-
     @classmethod
     def get_fields(cls) -> dict[str, Field]:
         """Return all fields in this section, sorted by sort_order."""
