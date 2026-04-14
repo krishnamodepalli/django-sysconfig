@@ -74,7 +74,7 @@ Start your dev server and visit `/admin/config/`. Log in with any staff account.
 You'll see your app listed with all its sections and fields, pre-populated with defaults. Change a value and hit **Save** — it takes effect immediately, no redeploy needed.
 
 :::tip
-The Django admin index page has a **System Configuration** button at the top that links here directly.
+The Django admin index page has a "**Manage System Configuration**" button at the top that links here directly.
 
 ![Django admin index page with the System Configuration button visible](/assets/images/sysconfig-button.png)
 :::
