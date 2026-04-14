@@ -89,8 +89,7 @@ Every `config.get(...)` call goes through the cache layer before hitting the dat
 
 The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. More info *[here](/guides/caching#cache-backend-requirements)*.
 
-<!-- DIAGRAM: Cache read flow: config.get → cache hit → return vs cache miss → DB → cache → return -->
-![](/assets/images/django_sysconfig_cache_read_flow.svg)
+![Cache read flow diagram](/assets/images/django_sysconfig_cache_read_flow.svg)
 
 ## 6. The accessor
 

@@ -64,14 +64,11 @@ python manage.py config set myapp.general.max_items 500
 python manage.py config set myapp.general.maintenance_mode True
 ```
 
-The value is parsed and validated through the field's frontend model and validators before being saved. If validation fails, nothing is written and the error is printed.
+The value is parsed and validated through the field's [frontend model](/reference/field-types) and [validators](/reference/validators) before being saved. If validation fails, nothing is written and the error is printed.
 
 :::tip
 The value is never echoed back in the success message — this is intentional so that secret fields are not exposed in terminal output or CI logs.
 :::
-
-<!-- REFERENCE: Link "frontend model" to reference/field-types -->
-<!-- REFERENCE: Link "validators" to reference/validators -->
 
 ---
 
@@ -267,5 +264,3 @@ python manage.py config export --output seed.json
 # On the target environment
 python manage.py config import --file seed.json --force --skip-on-save-callbacks
 ```
-
-<!-- REFERENCE: Link "Encryption guide" to guides/encryption -->
