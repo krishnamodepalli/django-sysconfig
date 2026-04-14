@@ -47,6 +47,7 @@ staticfiles/
 .env
 .env.*
 !.env.example
+.envrc
 
 # Ruff / Black
 .ruff_cache/
@@ -54,6 +55,8 @@ staticfiles/
 
 # Copilot AI context (session notes, discussions — not for version control)
 .copilot/
+.claude/
 
 # Agent instructions (local-only, not for version control)
 AGENTS.md
+CLAUDE.md

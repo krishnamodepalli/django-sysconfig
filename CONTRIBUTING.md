@@ -1,5 +1,17 @@
 # Contributing to django-sysconfig
 
+## Before you start
+
+**Check the issue tracker first.** Someone else may already be working on the same thing — duplicate PRs create unnecessary review overhead for maintainers.
+
+1. Browse [open issues](https://github.com/krishnamodepalli/django-sysconfig/issues). Look for ones labelled `good first issue` if you're new.
+2. If an issue exists for what you want to work on, comment on it and ask to be assigned. Wait for a maintainer to assign it to you before starting.
+3. If no issue exists, open one first — describe the bug or feature and mention that you'd like to work on it. A maintainer will assign it if it's a good fit.
+
+This ensures no two contributors spend time on the same problem.
+
+---
+
 ## Setup
 
 Fork the repo, then:
@@ -13,9 +25,7 @@ pre-commit install
 
 No database server or Docker required.
 
----
-
-## Run tests
+**Run the tests:**
 
 ```bash
 pytest
@@ -23,9 +33,7 @@ pytest
 
 Tests use an in-memory SQLite database. All tests should pass before opening a PR.
 
----
-
-## Dev server
+**Start the dev server:**
 
 ```bash
 DJANGO_SETTINGS_MODULE=settings_dev django-admin migrate
@@ -41,33 +49,38 @@ DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
 
 ---
 
-## Commit messages
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-<type>(<scope>): <short description>
-```
-
-Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`, `style`
-
-Examples:
-- `feat(registry): add support for nested sections`
-- `fix(accessor): always raise for invalid paths`
-- `docs: update quickstart`
-
-**PR titles must follow the same format.**
-
----
-
 ## Submitting a PR
 
-1. Branch off `master`: `fix/my-fix` or `feat/my-feature`
-2. Make changes, ensure `pytest` passes
-3. Open a PR against `master`
+1. Cut a branch off `develop` — use the convention `feat/typed-accessor` or `fix/accessor-get-fail`
+2. Make your changes, ensure `pytest` passes and `pre-commit run --all-files` is clean
+3. Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/):
+   ```
+   <type>(<scope>): <short description>
+   ```
+   Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`, `style`
+   — e.g. `fix(accessor): always raise for invalid paths`, `docs: update quickstart`
+4. Open a PR against `develop` using the PR template — fill in as much as you can:
+   - **Required:** Description, `closes #N`, Type of Change, Changes Made, Checklist
+   - **Optional:** Django/Python Compatibility (skip if not applicable), Breaking Changes, Additional Notes
+5. Assign yourself as the **Assignee** and a maintainer as **Reviewer**
+6. Add appropriate labels — e.g. `bug`, `enhancement`, `code-quality`
+7. Keep PRs focused — one issue per PR. If you find a related bug while working, open a separate issue for it.
+
+**PR titles must follow the same Conventional Commits format.**
 
 ---
 
-## Reporting issues
+## Reporting bugs
 
-Open an issue on [GitHub Issues](https://github.com/krishnamodepalli/django-sysconfig/issues) with Django/Python versions, a minimal reproduction, and expected vs actual behaviour.
+Open an issue on [GitHub Issues](https://github.com/krishnamodepalli/django-sysconfig/issues) with:
+- Django and Python versions
+- A minimal reproduction
+- Expected vs actual behaviour
+
+Apply the most relevant label (`bug`, `enhancement`, `good first issue`, etc.) if you have triage access. If not, a maintainer will label it.
+
+---
+
+## Security
+
+Please do **not** open a public issue for security vulnerabilities. Report them privately via [GitHub Security Advisories](https://github.com/krishnamodepalli/django-sysconfig/security/advisories/new).
