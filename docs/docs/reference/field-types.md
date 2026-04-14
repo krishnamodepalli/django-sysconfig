@@ -14,7 +14,7 @@ All field type classes live in `django_sysconfig.frontend_models`.
 | `TextareaFrontendModel`  | `str`       | Textarea               | String as-is          |
 | `IntegerFrontendModel`   | `int`       | Number input           | `str(int)`            |
 | `DecimalFrontendModel`   | `Decimal`   | Number input with step | `str(Decimal(...))`   |
-| `BooleanFrontendModel`   | `bool`      | Checkbox               | `"1"` or `"0"`        |
+| `BooleanFrontendModel`   | `bool`      | Checkbox               | `"true"` or `"false"` |
 | `SelectFrontendModel`    | `str`       | Dropdown select        | Selected value string |
 | `SecretFrontendModel`    | `str`       | Password input (masked)| Fernet-encrypted token |
 
@@ -144,7 +144,7 @@ maintenance_mode = Field(
 config.get("myapp.general.maintenance_mode")  # bool → False
 ```
 
-Stored as `"1"` (True) or `"0"` (False) in the database.
+Stored as `"true"` (True) or `"false"` (False) in the database.
 
 **Use for:** feature flags, toggles, enable/disable switches.
 

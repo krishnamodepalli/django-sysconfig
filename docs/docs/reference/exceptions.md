@@ -8,6 +8,7 @@ from django_sysconfig.exceptions import (
     InvalidPathError,
     AppNotFoundError,
     FieldNotFoundError,
+    ConfigValidationError,
     ConfigValueError,
 )
 ```
@@ -21,6 +22,7 @@ ConfigError
 ├── InvalidPathError
 ├── AppNotFoundError
 ├── FieldNotFoundError
+├── ConfigValidationError
 └── ConfigValueError
 ```
 
@@ -105,25 +107,42 @@ except FieldNotFoundError as e:
 
 ---
 
-## `ConfigValueError`
+## `ConfigValidationError`
 
-Raised when a value can't be saved — either because it fails validation, or because it can't be serialized for the given field type.
+Raised when a value fails one or more field validators. The write is aborted and nothing is saved.
 
 **Triggers:**
 - `config.set("myapp.general.max_items", -1)` — if a `PositiveValidator` is on the field
 - `config.set("notifications.email.sender", "not-an-email")` — if `EmailValidator` is on the field
+
+```python
+from django_sysconfig.exceptions import ConfigValidationError
+
+try:
+    config.set("myapp.general.max_items", -5)
+except ConfigValidationError as e:
+    print(e.errors)  # ["Max Items Per User: Value must be greater than zero."]
+```
+
+`e.errors` is a list of all validation error strings — all validators run even if an earlier one fails, so the user sees every issue at once.
+
+---
+
+## `ConfigValueError`
+
+Raised when a value can't be serialized for the given field type (not a validation failure — a type error).
+
+**Triggers:**
 - `config.set("myapp.general.max_items", "not-a-number")` — wrong type for `IntegerFrontendModel`
 
 ```python
 from django_sysconfig.exceptions import ConfigValueError
 
 try:
-    config.set("myapp.general.max_items", -5)
+    config.set("myapp.general.max_items", object())
 except ConfigValueError as e:
-    print(e)  # "Max Items Per User: Value must be greater than zero."
+    print(e)
 ```
-
-The error message includes the field label (if available) and the specific validation failure, making it suitable to display directly to users.
 
 ---
 
