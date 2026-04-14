@@ -124,7 +124,8 @@ class GreaterThanMinValidator(BaseValidator):
 You can compose your custom validator from existing built-in ones:
 
 ```python
-from django_sysconfig.validators import BaseValidator, UrlValidator, StartsWithValidator
+from django_sysconfig.validators import BaseValidator, UrlValidator
+from myapp.validators import StartsWithValidator  # defined earlier
 
 class HttpsUrlValidator(BaseValidator):
     """Must be a valid URL that uses the https scheme."""

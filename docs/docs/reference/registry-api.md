@@ -9,7 +9,7 @@ You rarely need to interact with the registry directly — the `config` accessor
 ## Importing the registry
 
 ```python
-from django_sysconfig.registry import registry
+from django_sysconfig.registry import config_registry
 ```
 
 This is the global singleton `ConfigRegistry` instance used by `django-sysconfig` internally.
@@ -101,47 +101,47 @@ site_name = Field(
 
 These methods are available on the `registry` singleton for tooling and introspection:
 
-### `registry.get_apps()`
+### `config_registry.get_apps()`
 
 Returns a list of all registered app labels.
 
 ```python
-from django_sysconfig.registry import registry
+from django_sysconfig.registry import config_registry
 
-registry.get_apps()
+config_registry.get_apps()
 # ["billing", "myapp", "notifications"]
 ```
 
 ---
 
-### `registry.get_sections(app_label)`
+### `config_registry.get_sections(app_label)`
 
 Returns the sections registered for a given app, as an ordered list.
 
 ```python
-registry.get_sections("billing")
+config_registry.get_sections("billing")
 # [<Section: general>, <Section: pricing>]
 ```
 
 ---
 
-### `registry.get_fields(app_label, section_name)`
+### `config_registry.get_fields(app_label, section_name)`
 
 Returns the fields registered for a given section.
 
 ```python
-registry.get_fields("billing", "pricing")
+config_registry.get_fields("billing", "pricing")
 # [<Field: tax_rate>, <Field: free_tier_limit>, <Field: trial_days>]
 ```
 
 ---
 
-### `registry.get_field(path)`
+### `config_registry.get_field(path)`
 
 Returns the `Field` definition for a given dot-notation path.
 
 ```python
-field = registry.get_field("billing.pricing.tax_rate")
+field = config_registry.get_field("billing.pricing.tax_rate")
 field.label    # "Tax Rate"
 field.default  # Decimal("0.20")
 ```
@@ -154,16 +154,16 @@ field.default  # Decimal("0.20")
 
 ```python
 from django.core.management.base import BaseCommand
-from django_sysconfig.registry import registry
+from django_sysconfig.registry import config_registry
 
 class Command(BaseCommand):
     help = "List all registered configuration fields"
 
     def handle(self, *args, **kwargs):
-        for app_label in registry.get_apps():
+        for app_label in config_registry.get_apps():
             self.stdout.write(f"\n[{app_label}]")
-            for section in registry.get_sections(app_label):
+            for section in config_registry.get_sections(app_label):
                 self.stdout.write(f"  {section.label}")
-                for field in registry.get_fields(app_label, section.__name__.lower()):
+                for field in config_registry.get_fields(app_label, section.__name__.lower()):
                     self.stdout.write(f"    {field.label} (default: {field.default!r})")
 ```

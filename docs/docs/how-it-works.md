@@ -22,7 +22,7 @@ config.set("myapp.general.site_name", "Acme")
     └─ Validate value against field's validators
     └─ Serialize value using field's FrontendModel
     └─ Write to DB (INSERT or UPDATE)
-    └─ Invalidate cache entry
+    └─ Update cache entry with new value
     └─ Call on_save callback (if defined)
 ```
 
@@ -84,7 +84,7 @@ For example, `IntegerFrontendModel` serializes `100` as `"100"` and deserializes
 Every `config.get(...)` call goes through the cache layer before hitting the database. The cache key for each value is derived from its path.
 
 - **On read**: check the cache. If the value is there, deserialize and return it. If not, query the database, write the result to the cache, and return it.
-- **On write**: after saving to the database, the cache entry for that path is deleted (invalidated). The next read will populate it from the database.
+- **On write**: after saving to the database, the cache entry for that path is updated with the new value (via `transaction.on_commit`). The next read is served directly from cache.
 - **Cache entries have no expiry.** They are only invalidated explicitly, on write. This means your configuration reads are very fast in steady state.
 
 The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. More info *[here](/guides/caching#cache-backend-requirements)*.

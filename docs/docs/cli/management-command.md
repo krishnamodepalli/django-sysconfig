@@ -64,7 +64,7 @@ python manage.py config set myapp.general.max_items 500
 python manage.py config set myapp.general.maintenance_mode True
 ```
 
-The value is parsed and validated through the field's [frontend model](/reference/field-types) and [validators](/reference/validators) before being saved. If validation fails, nothing is written and the error is printed.
+The value is parsed and validated through the field's [frontend model](../reference/field-types.md) and [validators](../reference/validators.md) before being saved. If validation fails, nothing is written and the error is printed.
 
 :::tip
 The value is never echoed back in the success message — this is intentional so that secret fields are not exposed in terminal output or CI logs.

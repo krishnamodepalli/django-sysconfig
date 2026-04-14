@@ -108,13 +108,13 @@ The export file contains **plaintext secrets**. Treat it like a credentials file
 **Step 3 — Re-import to re-encrypt everything under the new key:**
 
 ```bash
-python manage.py config import config_backup.json
+python manage.py config import --file config_backup.json
 ```
 
 You can validate the file first without writing anything using `--dry-run`:
 
 ```bash
-python manage.py config import config_backup.json --dry-run
+python manage.py config import --file config_backup.json --dry-run
 ```
 
 The import runs inside a single transaction — it either fully succeeds or rolls back entirely, leaving your config unchanged.
