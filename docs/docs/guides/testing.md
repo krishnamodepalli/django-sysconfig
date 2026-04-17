@@ -40,7 +40,7 @@ from django_sysconfig import override_sysconfig
 def test_dynamic_threshold():
     with override_sysconfig(myapp__general__threshold=10):
         assert calculate_logic() == "Low"
-        
+
     with override_sysconfig(myapp__general__threshold=100):
         assert calculate_logic() == "High"
 ```
@@ -95,7 +95,7 @@ class CallbackTests(TestCase):
     def test_callback_execution(self):
         with self.captureOnCommitCallbacks(execute=True):
             config.set("myapp.display.theme", "dark")
-        
+
         # Side effects from 'on_save' or 'on_commit' are now applied
         assert check_theme_applied("dark")
 ```
