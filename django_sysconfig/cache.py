@@ -40,6 +40,13 @@ class ConfigCache:
         """Invalidate (delete) a cache key."""
         cache.delete(self.CACHE_KEY_PREFIX + key)
 
+    def clear(self) -> None:
+        """Clear all cache keys matching the prefix. Only works on generic backends that support delete_pattern, otherwise clears all."""
+        try:
+            cache.delete_pattern(f"{self.CACHE_KEY_PREFIX}*")
+        except AttributeError:
+            cache.clear()
+
 
 # Singleton instance
 config_cache = ConfigCache()

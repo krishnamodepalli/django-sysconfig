@@ -42,7 +42,6 @@ def run_export(output_path, app=None, **kwargs):
 
 
 class TestCmdExportStructure:
-
     def test_creates_output_file(self, tmp_path):
         output = str(tmp_path / "export.json")
         run_export(output)
@@ -97,7 +96,6 @@ class TestCmdExportStructure:
 
 
 class TestCmdExportValues:
-
     def test_exports_default_values(self, tmp_path):
 
         output = str(tmp_path / "export.json")
@@ -130,7 +128,6 @@ class TestCmdExportValues:
 
 
 class TestCmdExportSecrets:
-
     def test_secret_field_present_in_export(self, tmp_path):
         output = str(tmp_path / "export.json")
         run_export(output)
@@ -149,7 +146,6 @@ class TestCmdExportSecrets:
 
 
 class TestCmdExportErrors:
-
     def test_raises_for_non_json_output_path(self, tmp_path):
         with pytest.raises(CommandError):
             run_export(str(tmp_path / "export.txt"))

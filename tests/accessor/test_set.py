@@ -29,7 +29,6 @@ from django_sysconfig.models import ConfigValue
 
 
 class TestSetHappyPath:
-
     def test_set_string(self, config):
         config.set("testapp.general.site_name", "New Name")
         assert config.get("testapp.general.site_name") == "New Name"
@@ -65,7 +64,6 @@ class TestSetHappyPath:
 
 
 class TestSetPersistence:
-
     def test_value_written_to_db(self, config):
         config.set("testapp.general.max_items", 77)
         row = ConfigValue.objects.get(
@@ -93,7 +91,6 @@ class TestSetPersistence:
 
 
 class TestSetCache:
-
     def test_cache_holds_new_value_after_set(
         self, config, django_capture_on_commit_callbacks
     ):
@@ -122,7 +119,6 @@ class TestSetCache:
 
 
 class TestSetOnSave:
-
     def test_on_save_called_after_set(
         self, config, registry, django_capture_on_commit_callbacks
     ):
@@ -235,7 +231,6 @@ class TestSetOnSave:
 
 
 class TestSetValidation:
-
     def test_raises_for_out_of_range_integer(self, config):
         with pytest.raises(ConfigValidationError):
             config.set("testapp.general.max_items", 9999)  # max is 1000
@@ -267,7 +262,6 @@ class TestSetValidation:
 
 
 class TestSetErrors:
-
     def test_raises_for_invalid_path_format(self, config):
         with pytest.raises(InvalidPathError):
             config.set("invalid", 10)

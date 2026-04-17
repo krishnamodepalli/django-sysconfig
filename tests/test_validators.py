@@ -39,7 +39,6 @@ pytestmark = pytest.mark.no_db
 
 
 class TestNotEmptyValidator:
-
     def setup_method(self):
         self.validator = NotEmptyValidator("The value provided is Empty")
 
@@ -82,7 +81,6 @@ class TestNotEmptyValidator:
 
 
 class TestNotBlankValidator:
-
     def setup_method(self):
         self.validator = NotBlankValidator()
 
@@ -122,7 +120,6 @@ class TestNotBlankValidator:
 
 
 class TestMinLengthValidator:
-
     def setup_method(self):
         self.validator = MinLengthValidator(4)
 
@@ -156,7 +153,6 @@ class TestMinLengthValidator:
 
 
 class TestMaxLengthValidator:
-
     def setup_method(self):
         self.validator = MaxLengthValidator(5)
 
@@ -191,7 +187,6 @@ class TestMaxLengthValidator:
 
 
 class TestRegexValidator:
-
     def setup_method(self):
         self.validator = RegexValidator(r"^[a-z]+$")
 
@@ -229,7 +224,6 @@ class TestRegexValidator:
 
 
 class TestRangeValidator:
-
     def setup_method(self):
         self.validator = RangeValidator(min_value=1, max_value=10)
 
@@ -296,7 +290,6 @@ class TestRangeValidator:
 
 
 class TestPositiveValidator:
-
     def setup_method(self):
         self.validator = PositiveValidator()
 
@@ -338,7 +331,6 @@ class TestPositiveValidator:
 
 
 class TestNonNegativeValidator:
-
     def setup_method(self):
         self.validator = NonNegativeValidator()
 
@@ -377,7 +369,6 @@ class TestNonNegativeValidator:
 
 
 class TestEmailValidator:
-
     def setup_method(self):
         self.validator = EmailValidator()
 
@@ -414,7 +405,6 @@ class TestEmailValidator:
 
 
 class TestUrlValidator:
-
     def setup_method(self):
         self.validator = UrlValidator()
 
@@ -486,7 +476,6 @@ class TestUrlValidator:
 
 
 class TestIPv4Validator:
-
     def setup_method(self):
         self.validator = IPv4Validator()
 
@@ -523,7 +512,6 @@ class TestIPv4Validator:
 
 
 class TestIPv6Validator:
-
     def setup_method(self):
         self.validator = IPv6Validator()
 
@@ -558,7 +546,6 @@ class TestIPv6Validator:
 
 
 class TestIPAddressValidator:
-
     def setup_method(self):
         self.validator = IPAddressValidator()
 
@@ -607,7 +594,6 @@ class TestIPAddressValidator:
 
 
 class TestHostnameValidator:
-
     def setup_method(self):
         self.validator = HostnameValidator()
 
@@ -644,7 +630,6 @@ class TestHostnameValidator:
 
 
 class TestChoiceValidator:
-
     def setup_method(self):
         self.validator = ChoiceValidator(["option1", "option2", "option3"])
 
@@ -677,7 +662,6 @@ class TestChoiceValidator:
 
 
 class TestSlugValidator:
-
     def setup_method(self):
         self.validator = SlugValidator()
 
@@ -713,7 +697,6 @@ class TestSlugValidator:
 
 
 class TestJsonValidator:
-
     def setup_method(self):
         self.validator = JsonValidator()
 
@@ -750,7 +733,6 @@ class TestJsonValidator:
 
 
 class TestPathValidator:
-
     def setup_method(self):
         self.relative_validator = PathValidator()
         self.absolute_validator = PathValidator(must_be_absolute=True)
@@ -794,7 +776,6 @@ class TestPathValidator:
 
 
 class TestPortValidator:
-
     def setup_method(self):
         self.validator = PortValidator()
 
@@ -834,7 +815,6 @@ class TestPortValidator:
 
 
 class TestDomainValidator:
-
     def setup_method(self):
         self.validator = DomainValidator()
 

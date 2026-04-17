@@ -36,7 +36,6 @@ def run_set(path, value, **kwargs):
 
 
 class TestCmdSet:
-
     def test_sets_string_value(self, config):
         run_set("testapp.general.site_name", "New Name")
         assert config.get("testapp.general.site_name") == "New Name"
@@ -79,7 +78,6 @@ class TestCmdSet:
 
 
 class TestCmdSetValidation:
-
     def test_raises_for_out_of_range_integer(self):
         with pytest.raises(CommandError) as exc:
             run_set("testapp.general.max_items", 9999)
@@ -107,7 +105,6 @@ class TestCmdSetValidation:
 
 
 class TestCmdSetErrors:
-
     def test_raises_for_invalid_path_format(self):
         with pytest.raises(CommandError):
             run_set("invalid", 10)

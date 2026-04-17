@@ -300,6 +300,21 @@ class ConfigRegistry:
         """Clear all registered configurations (useful for testing)."""
         self._configs.clear()
 
+    def reset_to_defaults(self) -> None:
+        """
+        Reset all configuration values to their registered defaults.
+
+        Deletes all ConfigValue records from the database and clears the cache.
+        Subsequent config.get() calls will return field defaults from the registry.
+
+        Useful for test cleanup or resetting to a known state.
+        """
+        from .cache import config_cache
+        from .models import ConfigValue
+
+        ConfigValue.objects.all().delete()
+        config_cache.clear()
+
 
 # Global registry instance
 config_registry = ConfigRegistry()

@@ -44,7 +44,6 @@ def run_reset(path, force=False, user_input="y", **kwargs):
 
 
 class TestCmdReset:
-
     def test_resets_to_default_with_force(
         self, config, django_capture_on_commit_callbacks
     ):
@@ -78,7 +77,6 @@ class TestCmdReset:
 
 
 class TestCmdResetConfirmation:
-
     def test_proceeds_on_y(self, config):
         config.set("testapp.general.max_items", 999)
         run_reset("testapp.general.max_items", force=False, user_input="y")
@@ -116,7 +114,6 @@ class TestCmdResetConfirmation:
 
 
 class TestCmdResetErrors:
-
     def test_raises_for_invalid_path_format(self):
         with pytest.raises(CommandError):
             run_reset("invalid", force=True)

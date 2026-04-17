@@ -14,6 +14,7 @@ from .exceptions import (
     FieldNotFoundError,
     InvalidPathError,
 )
+from .test_utils import override_sysconfig
 
 __all__ = [
     "ConfigError",
@@ -21,6 +22,7 @@ __all__ = [
     "FieldNotFoundError",
     "InvalidPathError",
     "ConfigValueError",
+    "override_sysconfig",
 ]
 
 __version__ = "1.0.0"

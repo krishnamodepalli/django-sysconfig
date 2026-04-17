@@ -27,7 +27,6 @@ from django_sysconfig.models import ConfigValue
 
 
 class TestSetManyHappyPath:
-
     def test_sets_multiple_values(self, config):
         config.set_many(
             {
@@ -78,7 +77,6 @@ class TestSetManyHappyPath:
 
 
 class TestSetManyAtomicity:
-
     def test_all_rolled_back_if_one_fails_validation(self, config):
         original_name = config.get("testapp.general.site_name")
         original_items = config.get("testapp.general.max_items")
@@ -129,7 +127,6 @@ class TestSetManyAtomicity:
 
 
 class TestSetManyCache:
-
     def test_all_paths_cached_after_set_many(
         self, config, django_capture_on_commit_callbacks
     ):
@@ -173,7 +170,6 @@ class TestSetManyCache:
 
 
 class TestSetManyOnSave:
-
     def test_on_save_fired_for_each_field_with_callback(
         self, config, registry, django_capture_on_commit_callbacks
     ):
