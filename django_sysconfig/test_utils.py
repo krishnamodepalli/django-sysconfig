@@ -57,8 +57,9 @@ class override_sysconfig:
             self.overrides[_resolve_config_path(k)] = v
         self.saved_state = {}
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> "override_sysconfig":
         self._save_and_apply()
+        return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self._restore()
@@ -75,20 +76,24 @@ class override_sysconfig:
 
     def _save_and_apply(self) -> None:
         from .accessor import config
+        from .cache import config_cache
+        from .models import ConfigValue
 
         for path, _ in self.overrides.items():
-            try:
+            # Check if there is an existing DB record for the field
+            app_label = path.split(".")[0]
+            db_path = ".".join(path.split(".")[1:])
+
+            if ConfigValue.objects.filter(app_label=app_label, path=db_path).exists():
                 self.saved_state[path] = config.get(path)
-            except Exception:
-                self.saved_state[path] = None  # Field didn't exist or wasn't set
+            else:
+                self.saved_state[path] = config_cache.NOT_FOUND
 
         with transaction.atomic():
             for path, new_value in self.overrides.items():
                 config.set(path, new_value)
                 # In testing, transactions might not commit immediately, so we
                 # manually invalidate the cache to ensure the next .get() sees the new value in DB
-                from .cache import config_cache
-
                 config_cache.invalidate(path)
 
     def _restore(self) -> None:
@@ -98,17 +103,14 @@ class override_sysconfig:
 
         with transaction.atomic():
             for path, original_value in self.saved_state.items():
-                if original_value is None:
-                    # Reset to field default via delete
-                    try:
-                        app_label = path.split(".")[0]
-                        db_path = ".".join(path.split(".")[1:])
-                        ConfigValue.objects.get(
-                            app_label=app_label, path=db_path
-                        ).delete()
-                        config_cache.invalidate(path)
-                    except ConfigValue.DoesNotExist:
-                        pass
+                if original_value is config_cache.NOT_FOUND:
+                    # Reset to field default via delete since it didn't exist in DB before override
+                    app_label = path.split(".")[0]
+                    db_path = ".".join(path.split(".")[1:])
+                    ConfigValue.objects.filter(
+                        app_label=app_label, path=db_path
+                    ).delete()
+                    config_cache.invalidate(path)
                 else:
                     config.set(path, original_value)
                     config_cache.invalidate(path)
