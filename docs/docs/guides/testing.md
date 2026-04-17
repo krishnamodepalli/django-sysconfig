@@ -24,57 +24,78 @@ Use this when a specific configuration applies to the entire test function.
 ```python
 from django_sysconfig import override_sysconfig
 
-@override_sysconfig(ENABLE_BETA_FEATURES=True, MAX_RETRIES=5)
+@override_sysconfig(myapp__general__beta_features=True, myapp__advanced__max_retries=5)
 def test_beta_logic():
     # Inside this test, these values are locked in
     assert my_function_using_config() is True
+```
 
+### As a Context Manager
 
+Use this when you need to test multiple configuration states within a single test.
 
-
-####Use this when you need to test multiple configuration states within a single test.
+```python
 from django_sysconfig import override_sysconfig
 
 def test_dynamic_threshold():
-    with override_sysconfig(THRESHOLD=10):
+    with override_sysconfig(myapp__general__threshold=10):
         assert calculate_logic() == "Low"
         
-    with override_sysconfig(THRESHOLD=100):
+    with override_sysconfig(myapp__general__threshold=100):
         assert calculate_logic() == "High"
+```
 
+## 2. Global Registry Isolation (pytest)
 
+If your project uses `pytest-django`, you should ensure the registry is reset automatically between every test run. Add an "autouse" fixture to your `conftest.py`:
 
-
-####Global Registry Isolation (pytest)
+```python
 import pytest
-from django_sysconfig import registry
+from django_sysconfig.registry import config_registry
 
 @pytest.fixture(autouse=True)
 def isolate_sysconfig():
     """Reset the config registry before and after every test."""
-    registry.reset_to_defaults()
+    config_registry.reset_to_defaults()
     yield
-    registry.reset_to_defaults()
+    config_registry.reset_to_defaults()
+```
 
+## 3. Handling on_commit Side Effects
 
-###For Handling on_commit Side Effects
-## You can use 2 options and they are 
-#Opt-A   Use transactional_db
+If your configuration logic triggers background tasks or cache updates via `on_commit`, a standard `db` fixture will not trigger them because the transaction is never committed.
+
+There are two primary options to handle this constraint:
+
+### Option A: Use transactional_db
+
+This allows the transaction to actually commit, triggering all associated callbacks.
+
+```python
 import pytest
+from django_sysconfig.accessor import config
+from django.core.cache import cache
 
 @pytest.mark.django_db(transaction=True)
 def test_cache_refresh_on_config_change():
-    config.set("MAINTENANCE_MODE", True)
+    config.set("myapp.general.maintenance_mode", True)
     # The transaction commits, and the refresh callback fires
     assert cache.get("is_maint_mode") is True
+```
 
+### Option B: Capture Callbacks
 
-#Opt-b   Capture Callbacks
+If you want to avoid the performance hit of a transactional database, use Django's capture utility to force execution.
+
+```python
 from django.test import TestCase
+from django_sysconfig.accessor import config
 
-def test_callback_execution(self):
-    with self.captureOnCommitCallbacks(execute=True):
-        config.set("THEME", "dark")
-    
-    # Side effects from 'on_save' or 'on_commit' are now applied
-    assert check_theme_applied("dark")
+class CallbackTests(TestCase):
+    def test_callback_execution(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            config.set("myapp.display.theme", "dark")
+        
+        # Side effects from 'on_save' or 'on_commit' are now applied
+        assert check_theme_applied("dark")
+```
