@@ -379,6 +379,12 @@ class ConfigAccessor:
 
         Returns:
             True if the field is registered, False otherwise
+
+        Raises:
+            InvalidPathError: If ``path`` is not a valid three-segment path.
+                A malformed path is a programmer error, not a "not found"
+                condition, and is left to propagate so callers can catch
+                bad path strings early.
         """
         try:
             app_label, section, field_name = self._parse_path(path)
@@ -387,7 +393,7 @@ class ConfigAccessor:
             self._get_field(app_label, section, field_name)
 
             return True
-        except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
+        except (AppNotFoundError, FieldNotFoundError):
             return False
 
     def is_set(self, path: str) -> bool:
