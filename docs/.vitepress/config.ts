@@ -103,7 +103,7 @@ export default defineConfig({
     siteTitle: "django-sysconfig",
 
     nav: [
-      { text: "Guide", link: "/introduction" },
+      { text: "Introduction", link: "/introduction" },
       {
         text: "Guides",
         items: [
@@ -115,7 +115,6 @@ export default defineConfig({
           { text: "on_save Callbacks", link: "/guides/on-save-callbacks" },
         ],
       },
-      { text: "Reference", link: "/reference/field-types" },
       { text: "Changelog", link: "/changelog" },
     ],
 
