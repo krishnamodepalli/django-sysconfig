@@ -10,6 +10,8 @@ from django_sysconfig.accessor import config
 from django_sysconfig.exceptions import ConfigError, ConfigValidationError
 from django_sysconfig.registry import config_registry
 
+UTC = UTC
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
