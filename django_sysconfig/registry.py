@@ -48,6 +48,9 @@ class Field:
     stored in the ConfigValue model.
     """
 
+    _app: "AppConfigDefinition"
+    _section: "type[Section]"
+
     def __init__(
         self,
         frontend_model: "type[BaseFrontendModel]",
@@ -90,7 +93,7 @@ class Field:
         self.name: str = ""
         self.path: str = ""
         self.full_path: str = ""
-        self._section = ""
+        self._section_name = ""
         self._app_label = ""
 
     @property
@@ -146,6 +149,9 @@ class Section(metaclass=SectionMeta):
     label: str = ""
     sort_order: int = 0
     _fields: dict[str, Field] = {}
+    _app_label: str = ""
+    _section_name: str = ""
+    _app: "AppConfigDefinition"
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -192,12 +198,19 @@ class AppConfigDefinition:
             ):
                 # Set path for each field in the section
                 section_key = to_snake_case(name)
+                attr._app_label = app_label
+                attr._section_name = section_key
+                attr._app = self
+
                 for field_name, field in attr.get_fields().items():
-                    field._section = section_key
+                    field._section_name = section_key
                     field._app_label = app_label
                     field.name = field_name
                     field.full_path = f"{app_label}.{section_key}.{field_name}"
                     field.path = f"{section_key}.{field_name}"
+                    field._app = self
+                    field._section = attr
+
                 self.sections[section_key] = attr
 
     def get_sections(self) -> list[tuple[str, type[Section]]]:

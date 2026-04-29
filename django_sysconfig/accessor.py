@@ -422,7 +422,7 @@ class ConfigAccessor:
         """
         if isinstance(path, Field):
             app_label = path._app_label
-            section = path._section
+            section = path._section_name
 
             app_config = config_registry.get_config(app_label)
 

@@ -255,7 +255,7 @@ class TestExistsWithField:
 
         detached = Field(IntegerFrontendModel, label="Detached")
         detached.name = "max_items"
-        detached._section = "general"
+        detached._section_name = "general"
         detached._app_label = "testapp"
         detached.path = "general.max_items"
         detached.full_path = "testapp.general.max_items"
