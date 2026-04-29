@@ -36,7 +36,7 @@ from .exceptions import (
     InvalidPathError,
 )
 from .models import ConfigValue
-from .registry import AppConfigDefinition, Field, config_registry
+from .registry import AppConfigDefinition, Field, Section, config_registry
 
 
 class ConfigAccessor:
@@ -349,7 +349,7 @@ class ConfigAccessor:
 
         return on_commit_cache_refresh, on_commit_callback
 
-    def all(self, app_label: str) -> dict[str, dict[str, Any]]:
+    def all(self, app: str | AppConfigDefinition) -> dict[str, dict[str, Any]]:
         """
         Get all configuration values for an app.
 
@@ -362,13 +362,16 @@ class ConfigAccessor:
         Raises:
             AppNotFoundError: If app has no registered config
         """
-        config_def = config_registry.get_config(app_label)
-        if not config_def:
-            raise AppNotFoundError(app_label)
+        if isinstance(app, str):
+            config_def = config_registry.get_config(app)
+            if not config_def:
+                raise AppNotFoundError(app)
+        else:
+            config_def = app
 
         # Fetch all stored values
         stored = {
-            cv.path: cv.value for cv in ConfigValue.objects.filter(app_label=app_label)
+            cv.path: cv.value for cv in ConfigValue.objects.filter(config_def.app_label)
         }
 
         result = {}
@@ -384,7 +387,7 @@ class ConfigAccessor:
 
         return result
 
-    def section(self, path: str) -> dict[str, Any]:
+    def section(self, section: str | Section) -> dict[str, Any]:
         """
         Get all configuration values for a specific section.
 
@@ -398,9 +401,14 @@ class ConfigAccessor:
             InvalidPathError: If path format is invalid
             AppNotFoundError: If app has no registered config
         """
-        app_label, section = self._parse_app_section(path)
+        if isinstance(section, str):
+            app_label, section_key = self._parse_app_section(section)
+        else:
+            app_label = section._app_label
+            section_key = section._section_name
+
         all_config = self.all(app_label)
-        return all_config.get(section, {})
+        return all_config.get(section_key, {})
 
     def exists(self, path: str | Field) -> bool:
         """
