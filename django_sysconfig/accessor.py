@@ -371,7 +371,8 @@ class ConfigAccessor:
 
         # Fetch all stored values
         stored = {
-            cv.path: cv.value for cv in ConfigValue.objects.filter(config_def.app_label)
+            cv.path: cv.value
+            for cv in ConfigValue.objects.filter(app_label=config_def.app_label)
         }
 
         result = {}
