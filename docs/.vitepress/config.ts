@@ -115,7 +115,7 @@ export default defineConfig({
           { text: "on_save Callbacks", link: "/guides/on-save-callbacks" },
         ],
       },
-      { text: "Changelog", link: "/changelog" },
+      // { text: "Changelog", link: "/changelog" },
     ],
 
     sidebar: [
