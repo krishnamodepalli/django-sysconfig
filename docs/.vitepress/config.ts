@@ -7,6 +7,7 @@ export default defineConfig({
     "Schema-driven, database-backed runtime configuration for Django. Define typed fields in code, store values in the database, manage through a clean admin UI.",
 
   srcDir: "./docs",
+  base: "/django-sysconfig",
   cleanUrls: true,
   lastUpdated: true,
 
