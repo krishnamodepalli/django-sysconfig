@@ -60,6 +60,7 @@ The admin UI **never exposes** the stored value of a secret field. Secret fields
 |---|---|
 | Set or update a secret | Type the new value and save |
 | Keep the existing value | Leave the field as-is and save — the encrypted value is preserved |
+| Remove the existing value | Remove the dummy placeholder in the input and save |
 
 :::warning
 Once a secret is saved, it cannot be retrieved through the admin UI. To verify or audit a stored secret, query the database directly (values are stored encrypted) or refer to your original source.

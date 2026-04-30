@@ -135,24 +135,3 @@ Returns a dict of all registered app configs keyed by app label.
 all_configs = config_registry.get_all_configs()
 # {"billing": <AppConfigDefinition>, "myapp": <AppConfigDefinition>, ...}
 ```
-
----
-
-## Writing a management command that inspects the schema
-
-```python
-from django.core.management.base import BaseCommand
-from django_sysconfig.registry import config_registry
-
-class Command(BaseCommand):
-    help = "List all registered configuration fields"
-
-    def handle(self, *args, **kwargs):
-        for app_label in config_registry.get_registered_apps():
-            self.stdout.write(f"\n[{app_label}]")
-            config_def = config_registry.get_config(app_label)
-            for section_key, section_class in config_def.get_sections():
-                self.stdout.write(f"  {section_class.label}")
-                for field_name, field in section_class.get_fields().items():
-                    self.stdout.write(f"    {field.label} (default: {field.default!r})")
-```

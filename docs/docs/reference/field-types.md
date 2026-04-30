@@ -126,7 +126,7 @@ Floating-point arithmetic is imprecise for financial calculations. `Decimal("0.1
 
 ## BooleanFrontendModel
 
-A checkbox. Returns a Python `bool`.
+A toggle button. Returns a Python `bool`.
 
 ```python
 from django_sysconfig.frontend_models import BooleanFrontendModel

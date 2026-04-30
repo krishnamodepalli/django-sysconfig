@@ -153,43 +153,6 @@ If any value fails validation, the entire transaction is rolled back and no valu
 
 ---
 
-## Exception hierarchy
-
-All exceptions are importable from `django_sysconfig.exceptions`.
-
-```python
-from django_sysconfig.exceptions import (
-    ConfigError,
-    InvalidPathError,
-    AppNotFoundError,
-    FieldNotFoundError,
-    ConfigValueError,
-)
-```
-
-| Exception            | When it's raised                                                        |
-| -------------------- | ----------------------------------------------------------------------- |
-| `ConfigError`            | Base class. Catch this to handle any config exception in one place. |
-| `InvalidPathError`       | The path doesn't have exactly three dot-separated parts.            |
-| `AppNotFoundError`       | No config is registered for the given app label.                    |
-| `FieldNotFoundError`     | The section or field doesn't exist in the registered schema.        |
-| `ConfigValidationError`  | A value fails one or more field validators.                         |
-| `ConfigValueError`       | A value can't be serialized for the given field type.               |
-
-```python
-from django_sysconfig.exceptions import ConfigError, FieldNotFoundError
-
-try:
-    value = config.get("myapp.general.some_field")
-except FieldNotFoundError:
-    value = "fallback"
-except ConfigError as e:
-    logger.warning("Config error: %s", e)
-    value = "fallback"
-```
-
----
-
 ## Thread safety
 
 The `config` accessor is thread-safe. The underlying `ConfigRegistry` is read-only after startup. All reads and writes go through Django's cache and ORM, which are designed for concurrent access.

@@ -178,7 +178,7 @@ export default defineConfig({
           { text: "Why django-sysconfig", link: "/comparison" },
           { text: "Contributing", link: "/contributing" },
           { text: "FAQ", link: "/faq" },
-          { text: "Changelog", link: "/changelog" },
+          // { text: "Changelog", link: "/changelog" },
         ],
       },
     ],
