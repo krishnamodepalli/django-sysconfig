@@ -8,3 +8,4 @@ dist-engine/
 
 # VitePress cache
 .vitepress/cache/
+.vitepress/.temp/

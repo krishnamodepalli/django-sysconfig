@@ -25,9 +25,9 @@ features:
   - title: Code-driven schema
     icon: 📐
     details: Your config structure lives in sysconfig.py files. Only the values go in the database. Schema changes are code reviews, not migration scripts.
-  - title: Dot-notation accessor
+  - title: Three part configuration path
     icon: 🎯
-    details: config.get("myapp.general.site_name") returns the right Python type, automatically. No casting, no parsing.
+    details: The part configuration path allows structured config tree which makes scaling seamless and structuring easy.
   - title: Built-in caching
     icon: ⚡
     details: Values are cached via Django's cache framework and invalidated on every write — via transaction.on_commit() to stay consistent.
@@ -49,7 +49,7 @@ features:
 
 | Dependency     | Minimum version |
 | -------------- | --------------- |
-| Python         | 3.11            |
+| Python         | 3.10            |
 | Django         | 4.2             |
 | `cryptography` | 41.0            |
 
