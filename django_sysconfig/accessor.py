@@ -380,14 +380,14 @@ class ConfigAccessor:
         Returns:
             True if the field is registered, False otherwise
         """
-        try:
-            app_label, section, field_name = self._parse_path(path)
+        app_label, section, field_name = self._parse_path(path)
 
+        try:
             # This ensures the config exists in the registry singleton object
             self._get_field(app_label, section, field_name)
 
             return True
-        except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
+        except (AppNotFoundError, FieldNotFoundError):
             return False
 
     def is_set(self, path: str) -> bool:
