@@ -90,8 +90,9 @@ class TestIsSet:
         config.set("testapp.general.max_items", 50)
         assert config.is_set("testapp.general.max_items") is True
 
-    def test_returns_false_for_invalid_path(self, config):
-        assert config.is_set("invalid") is False
+    def test_raises_for_invalid_path(self, config):
+        with pytest.raises(InvalidPathError):
+            config.is_set("invalid")
 
     def test_returns_false_for_unknown_field(self, config):
         assert config.is_set("testapp.general.nonexistent") is False

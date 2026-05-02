@@ -64,7 +64,7 @@ class ConfigAccessor:
             InvalidPathError: If path doesn't have exactly 3 parts
         """
         parts = path.split(".")
-        if len(parts) != 3:
+        if len(parts) != 3 or any(not part for part in parts):
             raise InvalidPathError(
                 path,
                 f"Invalid path '{path}'. Expected format: app.section.field",
@@ -85,7 +85,7 @@ class ConfigAccessor:
             InvalidPathError: If path doesn't have exactly 2 parts
         """
         parts = path.split(".")
-        if len(parts) != 2:
+        if len(parts) != 2 or any(not part for part in parts):
             raise InvalidPathError(
                 path,
                 f"Invalid path '{path}'. Expected format: app.section",
