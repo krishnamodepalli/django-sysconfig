@@ -119,8 +119,8 @@ class IntegerFrontendModel(BaseFrontendModel):
             return None
         try:
             return int(raw_value)
-        except (ValueError, TypeError):
-            return None
+        except (ValueError, TypeError) as e:
+            raise ValueError("Enter a valid integer.") from e
 
     def serialize_value(self, value: Any) -> str | None:
         if value is None:
@@ -144,8 +144,8 @@ class DecimalFrontendModel(BaseFrontendModel):
             return None
         try:
             return Decimal(raw_value)
-        except (InvalidOperation, TypeError):
-            return None
+        except (InvalidOperation, TypeError) as e:
+            raise ValueError("Enter a valid decimal number.") from e
 
     def serialize_value(self, value: Any) -> str | None:
         if value is None:
