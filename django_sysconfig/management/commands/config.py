@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -9,6 +9,8 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django_sysconfig.accessor import config
 from django_sysconfig.exceptions import ConfigError, ConfigValidationError
 from django_sysconfig.registry import config_registry
+
+UTC = timezone.utc
 
 # ---------------------------------------------------------------------------
 # Helpers

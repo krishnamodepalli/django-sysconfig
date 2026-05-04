@@ -33,7 +33,7 @@ Want the full picture first? Read the [Introduction](/introduction) to understan
 
 | Dependency     | Minimum version |
 | -------------- | --------------- |
-| Python         | 3.11            |
+| Python         | 3.10            |
 | Django         | 4.2             |
 | `cryptography` | 41.0            |
 
