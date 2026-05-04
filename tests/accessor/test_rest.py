@@ -20,7 +20,9 @@ from django_sysconfig.exceptions import AppNotFoundError, InvalidPathError
 class TestExists:
     """
     exists() returns True if the path is registered in the schema,
-    False otherwise. It never raises — all exceptions are swallowed.
+    False for unregistered apps/fields. InvalidPathError is raised
+    for malformed paths (wrong number of segments) so callers can
+    detect programmer errors early.
     """
 
     def test_returns_true_for_registered_field(self, config):
@@ -49,23 +51,23 @@ class TestExists:
     def test_returns_false_for_unknown_app(self, config):
         assert config.exists("unknown_app.general.site_name") is False
 
-    def test_returns_false_for_invalid_path_format(self, config):
-        assert config.exists("invalid") is False
+    def test_raises_for_invalid_path_format(self, config):
+        with pytest.raises(InvalidPathError):
+            config.exists("invalid")
 
-    def test_returns_false_for_two_part_path(self, config):
-        assert config.exists("testapp.general") is False
+    def test_raises_for_two_part_path(self, config):
+        with pytest.raises(InvalidPathError):
+            config.exists("testapp.general")
 
-    def test_returns_false_for_empty_string(self, config):
-        assert config.exists("") is False
+    def test_raises_for_empty_string(self, config):
+        with pytest.raises(InvalidPathError):
+            config.exists("")
 
-    def test_does_not_raise_for_any_bad_path(self, config):
-        # exists() must never raise, regardless of input
-        bad_paths = ["", "x", "x.y", "x.y.z.w", "...", "testapp..field"]
+    def test_raises_invalid_path_error_for_bad_paths(self, config):
+        bad_paths = ["", "x", "x.y", "x.y.z.w", "..."]
         for path in bad_paths:
-            try:
+            with pytest.raises(InvalidPathError):
                 config.exists(path)
-            except Exception as e:
-                pytest.fail(f"exists({path!r}) raised unexpectedly: {e}")
 
 
 # ===========================================================================
@@ -83,8 +85,9 @@ class TestIsSet:
         config.set("testapp.general.max_items", 50)
         assert config.is_set("testapp.general.max_items") is True
 
-    def test_returns_false_for_invalid_path(self, config):
-        assert config.is_set("invalid") is False
+    def test_raises_for_invalid_path(self, config):
+        with pytest.raises(InvalidPathError):
+            config.is_set("invalid")
 
     def test_returns_false_for_unknown_field(self, config):
         assert config.is_set("testapp.general.nonexistent") is False

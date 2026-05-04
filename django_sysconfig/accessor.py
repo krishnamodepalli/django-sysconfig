@@ -379,6 +379,9 @@ class ConfigAccessor:
 
         Returns:
             True if the field is registered, False otherwise
+
+        Raises:
+            InvalidPathError: If path format is invalid (wrong number of segments)
         """
         try:
             app_label, section, field_name = self._parse_path(path)
@@ -387,7 +390,7 @@ class ConfigAccessor:
             self._get_field(app_label, section, field_name)
 
             return True
-        except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
+        except (AppNotFoundError, FieldNotFoundError):
             return False
 
     def is_set(self, path: str) -> bool:
@@ -399,6 +402,9 @@ class ConfigAccessor:
 
         Returns:
             True if value exists in database with a non-empty value, False if using default
+
+        Raises:
+            InvalidPathError: If path format is invalid (wrong number of segments)
         """
         if not self.exists(path):
             return False
