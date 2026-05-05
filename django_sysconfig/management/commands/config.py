@@ -300,7 +300,7 @@ class Command(BaseCommand):
                     raise transaction.TransactionManagementError("dry-run rollback")
             except transaction.TransactionManagementError:
                 pass
-            except (ConfigValidationError, ConfigError) as e:
+            except (ConfigValidationError, ConfigError, ValueError) as e:
                 errors.append(str(e))
 
             if errors:
@@ -319,7 +319,7 @@ class Command(BaseCommand):
         # 5. Execute
         try:
             config.set_many(dict(paths), skip_on_save_callbacks=skip_callbacks)
-        except (ConfigValidationError, ConfigError) as e:
+        except (ConfigValidationError, ConfigError, ValueError) as e:
             raise CommandError(
                 f"Import aborted — all changes rolled back:\n  • {e}"
             ) from e
