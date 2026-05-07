@@ -155,7 +155,7 @@ django-sysconfig/
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 feat(validators): add JsonValidator
 fix(accessor): correct cache invalidation on set_many
 docs(readme): update installation steps

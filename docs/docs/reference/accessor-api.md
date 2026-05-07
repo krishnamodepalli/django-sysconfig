@@ -148,7 +148,7 @@ config.set_many({
 
 If any value fails validation, the entire transaction is rolled back and no values are saved.
 
-**Returns:** `None`
+**Returns:** `int` Number of values set
 **Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`, `ConfigValidationError`, `ConfigValueError`.
 
 ---

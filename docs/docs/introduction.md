@@ -42,7 +42,7 @@ The **frontend model** is the type system. It specifies how a value is serialize
 
 ## Caching
 
-This app uses [Django cache framework](https://docs.djangoproject.com/en/4.2/topics/cache/#django-s-cache-framework) for caching. We recommend configuring `RedisCache` or `PyMemCache` instead of `LocMemCache`. Check more about caching [here](/guides/caching).
+This app uses [Django cache framework](https://docs.djangoproject.com/en/4.2/topics/cache/#django-s-cache-framework) for caching. We recommend configuring `RedisCache` or `PyMemCache` instead of `LocMemCache`. [See the caching guide](/guides/caching).
 
 ## How autodiscovery works
 
