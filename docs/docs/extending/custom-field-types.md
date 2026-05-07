@@ -18,8 +18,6 @@ Consider writing a custom field type when:
 ## The `BaseFrontendModel` interface
 
 ```python
-from django_sysconfig.frontend_models import BaseFrontendModel
-
 class BaseFrontendModel:
     def serialize(self, value) -> str:
         """Convert a Python value to a string for database storage."""
@@ -38,7 +36,7 @@ You must implement all three methods.
 
 ---
 
-## Example: a `DateFrontendModel`
+## Example: `DateFrontendModel`
 
 This custom type stores a `datetime.date` value as an ISO 8601 string (`YYYY-MM-DD`) and renders a date picker in the admin.
 
@@ -183,3 +181,39 @@ def render(self, name: str, value, attrs: dict) -> str:
     safe_value = escape(value or "")
     return f'<input type="text" name="{name}" value="{safe_value}">'
 ```
+
+### Using a dedicated html template for input rendering
+
+Create a dedicated html template for the input
+
+```python
+# your_app/frontend_models/date.py
+def render(self, name: str, value, attrs: dict) -> str:
+    return render_to_string(self.template_name, self.get_context())
+```
+
+```html
+<!-- your_app/templates/django_sysconfig/date.html -->
+<div class="config-field">
+    <div class="config-field-label-col">
+        <label for="{{ input_id }}" class="config-field-label">
+            {{ field.label|default:field.name }}{% if field.required %}<span class="config-field-required">*</span>{% endif %}
+        </label>
+    </div>
+    <div class="config-field-input-col">
+        <div class="config-input-wrapper">
+            <div class="config-field-input">
+                <input type="date"
+                       name="{{ input_name }}"
+                       id="{{ input_id }}"
+                       value="{{ value|default:'' }}" />
+            </div>
+            {% if field.comment %}
+            <div class="config-field-comment">{{ field.comment|safe }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+```
+
+These classes are already defined in `django-sysconfig` styles module. You can always re-use them.

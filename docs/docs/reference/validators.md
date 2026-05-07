@@ -46,30 +46,6 @@ max_items = Field(
 
 ---
 
-## Running validators manually
-
-You can validate a value outside of `config.set(...)` using the `validate_value` helper:
-
-```python
-from django_sysconfig.validators import validate_value, NotEmptyValidator, EmailValidator
-
-errors = validate_value(
-    "not-an-email",
-    [NotEmptyValidator(), EmailValidator()],
-    field_label="Sender Address",
-)
-# ["Sender Address: Enter a valid email address."]
-
-errors = validate_value(
-    "hello@example.com",
-    [NotEmptyValidator(), EmailValidator()],
-    field_label="Sender Address",
-)
-# []
-```
-
----
-
 ## Presence validators
 
 ### `NotEmptyValidator()`

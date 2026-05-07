@@ -32,7 +32,7 @@ Returns the typed value for the given path.
 
 - If a value has been saved to the database, that value is returned (deserialized to the correct Python type).
 - If no value is saved, the field's defined `default` is returned.
-- If `default` is passed as a keyword argument and the path is not registered, that fallback is returned instead of raising an exception.
+- If `default` is passed and no field-level default, that fallback is returned. Invalid paths and unknown apps/fields always raise — `default` does not suppress them.
 
 ```python
 # Returns the saved value or the field's default
@@ -40,12 +40,12 @@ site_name = config.get("myapp.general.site_name")     # str
 max_items = config.get("myapp.general.max_items")     # int
 live_mode = config.get("billing.general.live_mode")   # bool
 
-# Provide a fallback for unknown/unregistered paths
-value = config.get("myapp.general.unknown", default=None)
+# Fallback for a registered field with no saved value and no field default
+value = config.get("myapp.general.some_field", default=None)
 ```
 
 **Returns:** The deserialized value in its correct Python type.
-**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError` (unless `default` is provided for unregistered paths).
+**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`.
 
 ---
 
@@ -127,10 +127,10 @@ config.set("billing.general.live_mode", True)
 config.set("billing.pricing.tax_rate", Decimal("0.15"))
 ```
 
-The value is validated against the field's `validators` before being written. If validation fails, `ConfigValueError` is raised and nothing is saved.
+The value is validated against the field's `validators` before being written. If validation fails, `ConfigValidationError` is raised and nothing is saved.
 
 **Returns:** `None`
-**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`, `ConfigValueError`.
+**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`, `ConfigValidationError`, `ConfigValueError`.
 
 ---
 
@@ -148,44 +148,8 @@ config.set_many({
 
 If any value fails validation, the entire transaction is rolled back and no values are saved.
 
-**Returns:** `None`
-**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`, `ConfigValueError`.
-
----
-
-## Exception hierarchy
-
-All exceptions are importable from `django_sysconfig.exceptions`.
-
-```python
-from django_sysconfig.exceptions import (
-    ConfigError,
-    InvalidPathError,
-    AppNotFoundError,
-    FieldNotFoundError,
-    ConfigValueError,
-)
-```
-
-| Exception            | When it's raised                                                        |
-| -------------------- | ----------------------------------------------------------------------- |
-| `ConfigError`        | Base class. Catch this to handle any config exception in one place.     |
-| `InvalidPathError`   | The path doesn't have exactly three dot-separated parts.                |
-| `AppNotFoundError`   | No config is registered for the given app label.                        |
-| `FieldNotFoundError` | The section or field doesn't exist in the registered schema.            |
-| `ConfigValueError`   | A value fails validation, or can't be serialized for the field type.    |
-
-```python
-from django_sysconfig.exceptions import ConfigError, FieldNotFoundError
-
-try:
-    value = config.get("myapp.general.some_field")
-except FieldNotFoundError:
-    value = "fallback"
-except ConfigError as e:
-    logger.warning("Config error: %s", e)
-    value = "fallback"
-```
+**Returns:** `int` Number of values set
+**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`, `ConfigValidationError`, `ConfigValueError`.
 
 ---
 

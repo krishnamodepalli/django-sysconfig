@@ -64,20 +64,17 @@ python manage.py config set myapp.general.max_items 500
 python manage.py config set myapp.general.maintenance_mode True
 ```
 
-The value is parsed and validated through the field's frontend model and validators before being saved. If validation fails, nothing is written and the error is printed.
+The value is parsed and validated through the field's [frontend model](../reference/field-types.md) and [validators](../reference/validators.md) before being saved. If validation fails, nothing is written and the error is printed.
 
 :::tip
 The value is never echoed back in the success message — this is intentional so that secret fields are not exposed in terminal output or CI logs.
 :::
 
-<!-- REFERENCE: Link "frontend model" to reference/field-types -->
-<!-- REFERENCE: Link "validators" to reference/validators -->
-
 ---
 
 ## Reset
 
-Reset a config value back to its [field default](/guides/defining-config/#always-set-a-default).
+Reset a config value back to its [field default](/guides/defining-config#always-set-a-default).
 
 ```bash
 python manage.py config reset <path> [--force]
@@ -218,7 +215,7 @@ The import runs inside a single database transaction. If any value fails validat
 
 **Skipping callbacks**
 
-`--skip-on-save-callbacks` suppresses all [`on_save` callbacks](/guides/on-save-callbacks/) for the duration of the import. This is useful when:
+`--skip-on-save-callbacks` suppresses all [`on_save` callbacks](/guides/on-save-callbacks) for the duration of the import. This is useful when:
 
 - Restoring a snapshot — you don't want 50 Slack notifications firing at once
 - Cloning an environment — callbacks may be environment-specific
@@ -267,5 +264,3 @@ python manage.py config export --output seed.json
 # On the target environment
 python manage.py config import --file seed.json --force --skip-on-save-callbacks
 ```
-
-<!-- REFERENCE: Link "Encryption guide" to guides/encryption -->

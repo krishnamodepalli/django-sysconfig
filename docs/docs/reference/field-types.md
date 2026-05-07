@@ -14,7 +14,7 @@ All field type classes live in `django_sysconfig.frontend_models`.
 | `TextareaFrontendModel`  | `str`       | Textarea               | String as-is          |
 | `IntegerFrontendModel`   | `int`       | Number input           | `str(int)`            |
 | `DecimalFrontendModel`   | `Decimal`   | Number input with step | `str(Decimal(...))`   |
-| `BooleanFrontendModel`   | `bool`      | Checkbox               | `"1"` or `"0"`        |
+| `BooleanFrontendModel`   | `bool`      | Checkbox               | `"true"` or `"false"` |
 | `SelectFrontendModel`    | `str`       | Dropdown select        | Selected value string |
 | `SecretFrontendModel`    | `str`       | Password input (masked)| Fernet-encrypted token |
 
@@ -118,13 +118,15 @@ The `step` kwarg is passed through to the HTML `<input step="...">` attribute. I
 
 **Use for:** tax rates, percentages, prices, exchange rates, any value where floating-point precision matters.
 
-> **Why `Decimal` and not `float`?** Floating-point arithmetic is imprecise for financial calculations. `Decimal("0.1") + Decimal("0.2")` is exactly `Decimal("0.3")`. `0.1 + 0.2` in Python floats is `0.30000000000000004`.
+::: info Why `Decimal` and not `float`?
+Floating-point arithmetic is imprecise for financial calculations. `Decimal("0.1") + Decimal("0.2")` is exactly `Decimal("0.3")`. `0.1 + 0.2` in Python floats is `0.30000000000000004`.
+:::
 
 ---
 
 ## BooleanFrontendModel
 
-A checkbox. Returns a Python `bool`.
+A toggle button. Returns a Python `bool`.
 
 ```python
 from django_sysconfig.frontend_models import BooleanFrontendModel
@@ -142,7 +144,7 @@ maintenance_mode = Field(
 config.get("myapp.general.maintenance_mode")  # bool → False
 ```
 
-Stored as `"1"` (True) or `"0"` (False) in the database.
+Stored as `"true"` (True) or `"false"` (False) in the database.
 
 **Use for:** feature flags, toggles, enable/disable switches.
 
@@ -175,7 +177,9 @@ environment = Field(
 config.get("myapp.general.environment")  # str → "production"
 ```
 
-> **Tip:** Always pair `SelectFrontendModel` with a `ChoiceValidator`. This ensures the stored value is always one of your valid choices, even if someone sets it programmatically via `config.set(...)`.
+::: tip
+Always pair `SelectFrontendModel` with a `ChoiceValidator`. This ensures the stored value is always one of your valid choices, even if someone sets it programmatically via `config.set(...)`.
+:::
 
 **Use for:** mode selection, theme selection, log level, any enumerated value.
 
