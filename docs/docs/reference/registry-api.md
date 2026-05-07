@@ -9,7 +9,7 @@ You rarely need to interact with the registry directly — the `config` accessor
 ## Importing the registry
 
 ```python
-from django_sysconfig.registry import registry
+from django_sysconfig.registry import config_registry
 ```
 
 This is the global singleton `ConfigRegistry` instance used by `django-sysconfig` internally.
@@ -38,7 +38,7 @@ class MyAppConfig:
 
 The decorator runs at import time (when the `sysconfig.py` module is loaded during autodiscovery). It:
 1. Introspects the decorated class for `Section` subclasses and their `Field` attributes.
-2. Registers the resolved schema with `registry`.
+2. Registers the resolved schema with `config_registry`.
 3. Creates `ConfigValue` database rows for all fields that have a `default` (via `get_or_create`).
 
 ---
@@ -99,71 +99,39 @@ site_name = Field(
 
 ## Registry introspection
 
-These methods are available on the `registry` singleton for tooling and introspection:
+These methods are available on the `config_registry` singleton:
 
-### `registry.get_apps()`
+### `config_registry.get_registered_apps()`
 
 Returns a list of all registered app labels.
 
 ```python
-from django_sysconfig.registry import registry
+from django_sysconfig.registry import config_registry
 
-registry.get_apps()
+config_registry.get_registered_apps()
 # ["billing", "myapp", "notifications"]
 ```
 
 ---
 
-### `registry.get_sections(app_label)`
+### `config_registry.get_config(app_label)`
 
-Returns the sections registered for a given app, as an ordered list.
+Returns the `AppConfigDefinition` for a given app, or `None` if the app has no registered config.
 
 ```python
-registry.get_sections("billing")
-# [<Section: general>, <Section: pricing>]
+config_def = config_registry.get_config("billing")
+# config_def.app_label → "billing"
+# config_def.get_sections() → [("general", <Section>), ("pricing", <Section>)]
+# config_def.get_field("pricing.tax_rate") → <Field: tax_rate>
 ```
 
 ---
 
-### `registry.get_fields(app_label, section_name)`
+### `config_registry.get_all_configs()`
 
-Returns the fields registered for a given section.
-
-```python
-registry.get_fields("billing", "pricing")
-# [<Field: tax_rate>, <Field: free_tier_limit>, <Field: trial_days>]
-```
-
----
-
-### `registry.get_field(path)`
-
-Returns the `Field` definition for a given dot-notation path.
+Returns a dict of all registered app configs keyed by app label.
 
 ```python
-field = registry.get_field("billing.pricing.tax_rate")
-field.label    # "Tax Rate"
-field.default  # Decimal("0.20")
-```
-
-**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`.
-
----
-
-## Writing a management command that inspects the schema
-
-```python
-from django.core.management.base import BaseCommand
-from django_sysconfig.registry import registry
-
-class Command(BaseCommand):
-    help = "List all registered configuration fields"
-
-    def handle(self, *args, **kwargs):
-        for app_label in registry.get_apps():
-            self.stdout.write(f"\n[{app_label}]")
-            for section in registry.get_sections(app_label):
-                self.stdout.write(f"  {section.label}")
-                for field in registry.get_fields(app_label, section.__name__.lower()):
-                    self.stdout.write(f"    {field.label} (default: {field.default!r})")
+all_configs = config_registry.get_all_configs()
+# {"billing": <AppConfigDefinition>, "myapp": <AppConfigDefinition>, ...}
 ```

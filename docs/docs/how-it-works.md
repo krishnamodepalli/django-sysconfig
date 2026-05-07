@@ -22,7 +22,7 @@ config.set("myapp.general.site_name", "Acme")
     └─ Validate value against field's validators
     └─ Serialize value using field's FrontendModel
     └─ Write to DB (INSERT or UPDATE)
-    └─ Invalidate cache entry
+    └─ Update cache entry with new value
     └─ Call on_save callback (if defined)
 ```
 
@@ -84,13 +84,12 @@ For example, `IntegerFrontendModel` serializes `100` as `"100"` and deserializes
 Every `config.get(...)` call goes through the cache layer before hitting the database. The cache key for each value is derived from its path.
 
 - **On read**: check the cache. If the value is there, deserialize and return it. If not, query the database, write the result to the cache, and return it.
-- **On write**: after saving to the database, the cache entry for that path is deleted (invalidated). The next read will populate it from the database.
-- **Cache entries have no expiry.** They are only invalidated explicitly, on write. This means your configuration reads are very fast in steady state.
+- **On write**: after saving to the database, the cache entry for that path is updated with the new value (via `transaction.on_commit`). The next read is served directly from cache.
+- **Cache entries have no expiry.** They are only updated on write. This means your configuration reads are very fast in steady state.
 
-The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. More info *[here](/guides/caching/#cache-backend-requirements)*.
+The cache uses whatever backend you've configured in `CACHES`. If you're running multiple processes (e.g., Gunicorn workers), make sure you're using a shared cache backend like Redis or Memcached — not the default `LocMemCache`, which is per-process. *[See Cache backend requirements](/guides/caching#cache-backend-requirements)*.
 
-<!-- DIAGRAM: Cache read flow: config.get → cache hit → return vs cache miss → DB → cache → return -->
-![](/assets/images/django_sysconfig_cache_read_flow.svg)
+![Cache read flow diagram](/assets/images/django_sysconfig_cache_read_flow.svg)
 
 ## 6. The accessor
 
@@ -124,6 +123,6 @@ The admin index page is patched with a small banner that links to `/admin/config
 | `ConfigRegistry` | Holds the schema in memory after startup                      |
 | `ConfigValue`  | Stores values in the database as serialized strings             |
 | `FrontendModel` | Handles serialization, deserialization, and UI rendering       |
-| Cache layer    | Wraps Django's cache framework, invalidated on every write      |
+| Cache layer    | Wraps Django's cache framework                                  |
 | `ConfigAccessor` | The public API your application code uses to read/write values |
 | Admin views    | Staff UI for editing values, built on top of the accessor       |

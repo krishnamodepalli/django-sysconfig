@@ -23,7 +23,7 @@ myproject/
 
 ## Step 1: Install and configure
 
-If you haven't done this yet, follow the [Quick Start](quickstart.md) steps 1–4 first. Come back here once migrations have run and the admin URL is wired up.
+If you haven't done this yet, follow the [Quick Start](quickstart.md) steps first. Come back here once migrations have run and the admin URL is wired up.
 
 ## Step 2: Define config for the `notifications` app
 
