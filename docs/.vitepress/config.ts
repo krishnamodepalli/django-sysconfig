@@ -1,4 +1,4 @@
-import { defineConfig } from "vitepress";
+import { defineConfig, HeadConfig } from "vitepress";
 
 export default defineConfig({
   lang: "en-US",
@@ -46,7 +46,7 @@ export default defineConfig({
 
   // ── Per-page <head> injection (dynamic SEO) ────────────────────────────────
   transformHead({ pageData, siteData }) {
-    const head: [string, Record<string, string>][] = [];
+    const head: HeadConfig[] = [];
 
     const pageTitle = pageData.frontmatter.title
       ? `${pageData.frontmatter.title} | django-sysconfig`
@@ -93,7 +93,7 @@ export default defineConfig({
     head.push([
       "script",
       { type: "application/ld+json" },
-      JSON.stringify(jsonLd) as unknown as string,
+      JSON.stringify(jsonLd),
     ]);
 
     return head;

@@ -32,7 +32,7 @@ Returns the typed value for the given path.
 
 - If a value has been saved to the database, that value is returned (deserialized to the correct Python type).
 - If no value is saved, the field's defined `default` is returned.
-- If `default` is passed and the field has no saved value and no field-level default, that fallback is returned. Invalid paths and unknown apps/fields always raise — `default` does not suppress them.
+- If `default` is passed and no field-level default, that fallback is returned. Invalid paths and unknown apps/fields always raise — `default` does not suppress them.
 
 ```python
 # Returns the saved value or the field's default
@@ -45,7 +45,7 @@ value = config.get("myapp.general.some_field", default=None)
 ```
 
 **Returns:** The deserialized value in its correct Python type.
-**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError` (unless `default` is provided for unregistered paths).
+**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`.
 
 ---
 

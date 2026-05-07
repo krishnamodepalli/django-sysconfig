@@ -123,6 +123,6 @@ The admin index page is patched with a small banner that links to `/admin/config
 | `ConfigRegistry` | Holds the schema in memory after startup                      |
 | `ConfigValue`  | Stores values in the database as serialized strings             |
 | `FrontendModel` | Handles serialization, deserialization, and UI rendering       |
-| Cache layer    | Wraps Django's cache framework, invalidated on every write      |
+| Cache layer    | Wraps Django's cache framework                                  |
 | `ConfigAccessor` | The public API your application code uses to read/write values |
 | Admin views    | Staff UI for editing values, built on top of the accessor       |
