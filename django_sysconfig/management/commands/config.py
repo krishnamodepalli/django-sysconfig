@@ -164,14 +164,10 @@ class Command(BaseCommand):
                     self.stdout.write(
                         self.style.WARNING("Dry run — no values will be saved")
                     )
-                    raise transaction.TransactionManagementError("dry-run rollback")
-                else:
-                    self.stdout.write(
-                        self.style.SUCCESS(f"✔ {path} updated successfully")
-                    )
+                    transaction.set_rollback(True)
+                    return
 
-        except transaction.TransactionManagementError:
-            pass
+                self.stdout.write(self.style.SUCCESS(f"✔ {path} updated successfully"))
 
         except ConfigValidationError as e:
             errors = "\n".join(f"  • {err}" for err in e.errors)
@@ -318,9 +314,7 @@ class Command(BaseCommand):
             try:
                 with transaction.atomic():
                     config.set_many(dict(paths), skip_on_save_callbacks=True)
-                    raise transaction.TransactionManagementError("dry-run rollback")
-            except transaction.TransactionManagementError:
-                pass
+                    transaction.set_rollback(True)
             except (ConfigValidationError, ConfigError) as e:
                 errors.append(str(e))
 
