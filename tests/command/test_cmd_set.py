@@ -100,6 +100,38 @@ class TestCmdSetValidation:
             run_set("testapp.general.max_items", 9999)
         assert config.get("testapp.general.max_items") == original
 
+    def test_raises_for_invalid_integer_input_without_writing_null(self):
+        from django_sysconfig.models import ConfigValue
+
+        row = ConfigValue.objects.get(
+            app_label="testapp",
+            path="general.max_items",
+        )
+        original = row.value
+
+        with pytest.raises(CommandError) as exc:
+            run_set("testapp.general.max_items", "3.14")
+
+        row.refresh_from_db()
+        assert "Invalid value for testapp.general.max_items" in str(exc.value)
+        assert row.value == original
+
+    def test_raises_for_invalid_decimal_input_without_writing_null(self):
+        from django_sysconfig.models import ConfigValue
+
+        row = ConfigValue.objects.get(
+            app_label="testapp",
+            path="general.price",
+        )
+        original = row.value
+
+        with pytest.raises(CommandError) as exc:
+            run_set("testapp.general.price", "not-a-decimal")
+
+        row.refresh_from_db()
+        assert "Invalid value for testapp.general.price" in str(exc.value)
+        assert row.value == original
+
 
 # ---------------------------------------------------------------------------
 # Error cases

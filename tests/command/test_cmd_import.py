@@ -208,6 +208,21 @@ class TestCmdImportDryRun:
             run_import(file=path, dry_run=True, force=True)
         assert config.get("testapp.general.max_items") == original
 
+    def test_dry_run_catches_invalid_frontend_value(self, config, tmp_json_file):
+        original = config.get("testapp.general.max_items")
+        data = {
+            "version": 1,
+            "config": {
+                "testapp": {"general": {"max_items": "3.14"}},
+            },
+        }
+        path = tmp_json_file(data)
+        with pytest.raises(CommandError) as exc:
+            run_import(file=path, dry_run=True, force=True)
+        assert "Dry run failed" in str(exc.value)
+        assert "3.14" in str(exc.value)
+        assert config.get("testapp.general.max_items") == original
+
     def test_dry_run_skips_confirmation_prompt(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         with patch("builtins.input") as mock_input:
@@ -345,6 +360,28 @@ class TestCmdImportAtomicity:
             run_import(file=path, force=True)
         assert "rolled back" in str(exc.value)
         assert config.get("testapp.general.site_name") == original_name
+
+    def test_all_rolled_back_on_invalid_frontend_value(self, config, tmp_json_file):
+        original_name = config.get("testapp.general.site_name")
+        original_items = config.get("testapp.general.max_items")
+        data = {
+            "version": 1,
+            "config": {
+                "testapp": {
+                    "general": {
+                        "site_name": "Should Not Stick",
+                        "max_items": "3.14",
+                    }
+                }
+            },
+        }
+        path = tmp_json_file(data)
+        with pytest.raises(CommandError) as exc:
+            run_import(file=path, force=True)
+        assert "rolled back" in str(exc.value)
+        assert "3.14" in str(exc.value)
+        assert config.get("testapp.general.site_name") == original_name
+        assert config.get("testapp.general.max_items") == original_items
 
 
 # ---------------------------------------------------------------------------

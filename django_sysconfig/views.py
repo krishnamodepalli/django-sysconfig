@@ -175,13 +175,17 @@ class ConfigAppDetailView(BaseConfigView):
                 if input_name not in changed_fields:
                     continue
 
-                # Get and process value
-                processed_value = self._get_processed_value(request, field, input_name)
-
                 # Use the accessor to set the value (dot notation)
                 full_path = f"{app_label}.{section_key}.{field_name}"
                 try:
+                    # Get and process value
+                    processed_value = self._get_processed_value(
+                        request, field, input_name
+                    )
                     config.set(full_path, processed_value)
+                except ValueError as e:
+                    messages.error(request, str(e))
+                    return redirect("django_sysconfig:app_detail", app_label=app_label)
                 except ConfigValidationError as e:
                     for error in e.errors:
                         messages.error(request, error)
