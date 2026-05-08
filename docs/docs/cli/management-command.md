@@ -46,7 +46,7 @@ The value is printed as a string. The underlying Python type (int, bool, Decimal
 Set a single config value from the command line.
 
 ```bash
-python manage.py config set <path> <value>
+python manage.py config set <path> <value> [--dry-run]
 ```
 
 **Arguments**
@@ -55,6 +55,12 @@ python manage.py config set <path> <value>
 |---|---|
 | `path` | Config path in `app.section.field` format |
 | `value` | The value to set, as a string — parsed by the field's frontend model |
+
+**Flags**
+
+| Flag | Description |
+|---|---|
+| `--dry-run` | Validate value without writing anything to the database |
 
 **Examples**
 
