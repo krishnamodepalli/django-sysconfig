@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+### Features
+- **testing**: Introduce `override_sysconfig` and `reset_to_defaults` testing utilities for full developer test isolation. Includes comprehensive `django-sysconfig` developer testing guide.
 
 ## v1.0.1 (2026-04-14)
 

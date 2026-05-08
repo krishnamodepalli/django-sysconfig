@@ -31,7 +31,6 @@ from django_sysconfig.registry import (
 
 
 class TestRegistrySingleton:
-
     def test_same_instance(self):
         assert ConfigRegistry() is ConfigRegistry()
 
@@ -56,7 +55,6 @@ class TestRegistrySingleton:
     ],
 )
 class TestAppLabelValidation:
-
     def test_raises_improperly_configured(self, bad_label):
         with pytest.raises(ImproperlyConfigured):
             config_registry.register(bad_label, type("Cfg", (), {}))
@@ -79,7 +77,6 @@ class TestAppLabelValidation:
     ],
 )
 class TestFieldNameValidation:
-
     def test_raises_improperly_configured(self, bad_name):
         with pytest.raises(ImproperlyConfigured):
             type("BadSection", (Section,), {bad_name: Field(StringFrontendModel)})
@@ -101,7 +98,6 @@ class TestFieldNameValidation:
     ],
 )
 class TestSectionNormalisation:
-
     def test_section_key_is_snake_case(self, class_name, expected_key):
         SectionCls = type(class_name, (Section,), {"label": "", "sort_order": 0})
         ConfigCls = type("Cfg", (), {class_name: SectionCls})
@@ -115,7 +111,6 @@ class TestSectionNormalisation:
 
 
 class TestFieldPaths:
-
     def test_field_paths_use_dot_notation(self):
         config_def = config_registry.get_config("testapp")
         for section_key, section in config_def.sections.items():
@@ -144,7 +139,6 @@ class TestFieldPaths:
 
 
 class TestDBRowCreation:
-
     def test_rows_created_for_all_fields(self):
         # testapp: 5 fields in General + 3 in Advanced
         assert ConfigValue.objects.filter(app_label="testapp").count() == 8
@@ -176,7 +170,6 @@ class TestDBRowCreation:
 
 
 class TestGetField:
-
     def test_returns_correct_field(self):
         config_def = config_registry.get_config("testapp")
         field = config_def.get_field("general.site_name")
@@ -212,7 +205,6 @@ class TestGetField:
 
 
 class TestSectionSortOrder:
-
     def test_sections_ordered_by_sort_order(self):
         config_def = config_registry.get_config("testapp")
         orders = [section.sort_order for _, section in config_def.get_sections()]

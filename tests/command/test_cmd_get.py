@@ -33,7 +33,6 @@ def run_get(path, **kwargs):
 
 
 class TestCmdGet:
-
     def test_returns_string_default(self):
         stdout, _ = run_get("testapp.general.site_name")
         assert stdout == "Test Site"
@@ -67,7 +66,6 @@ class TestCmdGet:
 
 
 class TestCmdGetErrors:
-
     def test_raises_for_invalid_path_format(self):
         with pytest.raises(CommandError):
             run_get("invalid")

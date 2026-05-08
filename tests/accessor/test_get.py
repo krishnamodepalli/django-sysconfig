@@ -28,7 +28,6 @@ from django_sysconfig.exceptions import (
 
 
 class TestGetDefaults:
-
     def test_returns_string_default(self, config):
         value = config.get("testapp.general.site_name")
         assert value == "Test Site"
@@ -64,7 +63,6 @@ class TestGetDefaults:
 
 
 class TestGetTypes:
-
     def test_integer_field_returns_int(
         self, config, django_capture_on_commit_callbacks
     ):
@@ -110,7 +108,6 @@ class TestGetTypes:
 
 
 class TestGetAfterSet:
-
     def test_returns_updated_value(self, config):
         config.set("testapp.general.max_items", 99)
         assert config.get("testapp.general.max_items") == 99
@@ -140,7 +137,6 @@ class TestGetAfterSet:
 
 
 class TestGetCache:
-
     def test_cache_is_populated_after_get(self, config):
         from django_sysconfig.cache import config_cache
 
@@ -193,7 +189,6 @@ class TestGetCache:
 
 
 class TestGetCallerDefault:
-
     def test_caller_default_not_used_when_field_has_default(self, config):
         # Field default is "Test Site", caller default should be ignored
         value = config.get("testapp.general.site_name", default="Fallback")
@@ -211,7 +206,6 @@ class TestGetCallerDefault:
 
 
 class TestGetErrors:
-
     def test_raises_for_invalid_path_format(self, config):
         with pytest.raises(InvalidPathError):
             config.get("invalid")

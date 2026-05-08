@@ -32,7 +32,6 @@ class _JSONEncoder(json.JSONEncoder):
 
 
 class Command(BaseCommand):
-
     help: str = "Interact with django-sysconfig configuration values"
 
     # -----------------------------------------------------------------------
@@ -163,8 +162,7 @@ class Command(BaseCommand):
 
         if not options["force"]:
             self._confirm(
-                f"This will reset '{path}' to its field default. "
-                "This cannot be undone."
+                f"This will reset '{path}' to its field default. This cannot be undone."
             )
 
         try:

@@ -89,7 +89,6 @@ def run_import(
 
 
 class TestCmdImportFile:
-
     def test_imports_from_file_successfully(self, config, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         run_import(file=path, force=True)
@@ -125,7 +124,6 @@ class TestCmdImportFile:
 
 
 class TestCmdImportStdin:
-
     def test_imports_from_stdin_successfully(self, config):
         run_import(stdin=True, force=True, stdin_data=VALID_IMPORT_DATA)
         assert config.get("testapp.general.site_name") == "Imported Site"
@@ -142,7 +140,6 @@ class TestCmdImportStdin:
 
 
 class TestCmdImportDryRun:
-
     def test_dry_run_passes_for_valid_file(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         stdout, _ = run_import(file=path, dry_run=True, force=True)
@@ -228,7 +225,6 @@ class TestCmdImportDryRun:
 
 
 class TestCmdImportConfirmation:
-
     def test_force_skips_prompt(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         with patch("builtins.input") as mock_input:
@@ -268,7 +264,6 @@ class TestCmdImportConfirmation:
 
 
 class TestCmdImportSkipCallbacks:
-
     def test_skip_callbacks_suppresses_on_save(
         self, config, registry, tmp_json_file, django_capture_on_commit_callbacks
     ):
@@ -326,7 +321,6 @@ class TestCmdImportSkipCallbacks:
 
 
 class TestCmdImportAtomicity:
-
     def test_all_rolled_back_on_validation_failure(self, config, tmp_json_file):
         original_name = config.get("testapp.general.site_name")
         data = {
@@ -353,7 +347,6 @@ class TestCmdImportAtomicity:
 
 
 class TestCmdImportStructureValidation:
-
     def test_raises_for_non_dict_app_value(self, tmp_json_file):
         path = tmp_json_file({"version": 1, "config": {"testapp": "not a dict"}})
         with pytest.raises(CommandError) as exc:
@@ -378,7 +371,6 @@ class TestCmdImportStructureValidation:
 
 
 class TestCmdImportErrors:
-
     def test_raises_when_both_stdin_and_file_provided(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         with pytest.raises(CommandError) as exc:
