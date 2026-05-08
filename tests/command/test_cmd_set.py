@@ -104,8 +104,9 @@ class TestCmdSetValidation:
 class TestCmdSetDryRun:
 
     def test_dry_run_doesnt_save(self, config):
-        run_set("testapp.general.max_items", 200, dry_run=True)
-        assert config.get("testapp.general.max_items") != 200
+        original = config.get("testapp.general.max_items")
+        run_set("testapp.general.max_items", original + 1, dry_run=True)
+        assert config.get("testapp.general.max_items") == original
 
     def test_dry_run_raises_invalid_path(self):
         with pytest.raises(CommandError):
