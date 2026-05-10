@@ -1,6 +1,50 @@
 # CHANGELOG
 
 
+## v1.0.1 (2026-04-14)
+
+### Bug Fixes
+
+- **registry**: Log warning instead of silently passing DB errors in _ensure_db_records
+  ([#77](https://github.com/krishnamodepalli/django-sysconfig/pull/77),
+  [`23ca282`](https://github.com/krishnamodepalli/django-sysconfig/commit/23ca2820cf5d4ccc453707d717c8b2e04ed86e69)) @PunyaKSirohi
+
+### Chores
+
+- Ignore CLAUDE.md
+  ([`117be43`](https://github.com/krishnamodepalli/django-sysconfig/commit/117be43d6fa5a70fe84d8897cb48224bc06e81f2)) @krishnamodepalli
+
+- Update pyproject to mark the project as Production/Stable
+  ([#67](https://github.com/krishnamodepalli/django-sysconfig/pull/67),
+  [`7329723`](https://github.com/krishnamodepalli/django-sysconfig/commit/73297237844501b75ab509fde2894024d0f856cd)) @krishnamodepalli
+
+### Continuous Integration
+
+- Add explicit permissions blocks to workflows
+  ([#81](https://github.com/krishnamodepalli/django-sysconfig/pull/81),
+  [`23baba1`](https://github.com/krishnamodepalli/django-sysconfig/commit/23baba1d0393b0397220bf2ed02e770abab0f8f9)) @krishnamodepalli
+
+### Documentation
+
+- Improve and fix docs, README, and community files
+  ([#66](https://github.com/krishnamodepalli/django-sysconfig/pull/66),
+  [`7d55197`](https://github.com/krishnamodepalli/django-sysconfig/commit/7d55197e5fb9d5032407efda54f6e596f42b8f60)) @krishnamodepalli
+
+- Restructure CONTRIBUTING.md and add Security section to README
+  ([#84](https://github.com/krishnamodepalli/django-sysconfig/pull/84),
+  [`7c00a10`](https://github.com/krishnamodepalli/django-sysconfig/commit/7c00a102118c5a3849809de907c237c8d76c5c21)) @krishnamodepalli
+
+- **contributing**: Clarify issue assignment workflow and PR guidelines
+  ([#80](https://github.com/krishnamodepalli/django-sysconfig/pull/80),
+  [`3d52570`](https://github.com/krishnamodepalli/django-sysconfig/commit/3d525701168fb9b7cdbc671da19c2a071abbeaab)) @krishnamodepalli
+
+### Refactoring
+
+- **registry**: Remove redundant __init_subclass__ from Section
+  ([#78](https://github.com/krishnamodepalli/django-sysconfig/pull/78),
+  [`4dfacd8`](https://github.com/krishnamodepalli/django-sysconfig/commit/4dfacd81d9e22b0045fa61acb73f8f36ef213530)) @PunyaKSirohi
+
+
 ## v1.0.0 (2026-03-25)
 
 ### Bug Fixes

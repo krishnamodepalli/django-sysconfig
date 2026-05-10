@@ -61,70 +61,13 @@ stripe_key = Field(
 
 ---
 
-## A more complex example
-
-A validator that checks multiple conditions and returns multiple error messages:
-
-```python
-import re
-from django_sysconfig.validators import BaseValidator
-
-class StrongPasswordValidator(BaseValidator):
-    """
-    Requires a value to be at least 12 characters, contain
-    an uppercase letter, a digit, and a special character.
-    """
-
-    def __call__(self, value) -> list[str]:
-        if not value:
-            return []  # defer to NotEmptyValidator if required
-
-        errors = []
-        if len(value) < 12:
-            errors.append("Must be at least 12 characters long.")
-        if not re.search(r"[A-Z]", value):
-            errors.append("Must contain at least one uppercase letter.")
-        if not re.search(r"\d", value):
-            errors.append("Must contain at least one digit.")
-        if not re.search(r"[!@#$%^&*()_+\-=\[\]{}|;':\",./<>?]", value):
-            errors.append("Must contain at least one special character.")
-        return errors
-```
-
----
-
-## A cross-field validator using `config`
-
-Sometimes you need to validate a value in context — for example, ensuring a "max" field is greater than a "min" field. You can read other config values inside a validator:
-
-```python
-from django_sysconfig.validators import BaseValidator
-from django_sysconfig.accessor import config
-
-class GreaterThanMinValidator(BaseValidator):
-    """Ensures this value is greater than myapp.pricing.min_price."""
-
-    default_message = "Max price must be greater than the current min price ({min_price})."
-
-    def __call__(self, value) -> list[str]:
-        try:
-            min_price = config.get("myapp.pricing.min_price")
-        except Exception:
-            return []  # can't validate without the other value
-
-        if value <= min_price:
-            return [self.default_message.format(min_price=min_price)]
-        return []
-```
-
----
-
 ## Reusing built-in validators
 
 You can compose your custom validator from existing built-in ones:
 
 ```python
-from django_sysconfig.validators import BaseValidator, UrlValidator, StartsWithValidator
+from django_sysconfig.validators import BaseValidator, UrlValidator
+from myapp.validators import StartsWithValidator  # defined earlier
 
 class HttpsUrlValidator(BaseValidator):
     """Must be a valid URL that uses the https scheme."""

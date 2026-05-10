@@ -6,7 +6,7 @@ title: Introduction
 
 ## What is django-sysconfig?
 
-`django-sysconfig` is a reusable Django app that gives your project a structured, database-backed configuration system — complete with typed fields, validation, caching, encryption, and a built-in admin UI.
+`django-sysconfig` is a Django app that gives your project a structured, database-backed configuration system — complete with typed fields, validation, caching, encryption, and a built-in admin UI.
 
 Think of it as a first-class home for all the settings in your app that need to be **editable at runtime** by non-developers: things like feature flags, email sender addresses, rate limits, third-party API keys, or a maintenance mode toggle.
 
@@ -39,6 +39,10 @@ The **accessor** (`config`) is the object you import in your application code to
 ### Frontend model
 
 The **frontend model** is the type system. It specifies how a value is serialized to the database, deserialized back to Python, and rendered in the admin UI. `django-sysconfig` ships with seven built-in types; you can write your own.
+
+## Caching
+
+This app uses [Django cache framework](https://docs.djangoproject.com/en/4.2/topics/cache/#django-s-cache-framework) for caching. We recommend configuring `RedisCache` or `PyMemCache` instead of `LocMemCache`. [See the caching guide](/guides/caching).
 
 ## How autodiscovery works
 

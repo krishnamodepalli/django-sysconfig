@@ -132,7 +132,7 @@ django-sysconfig/
 
 ## Submitting a pull request
 
-1. **Fork** the repository and create a branch from `master`:
+1. **Fork** the repository and create a branch from `develop`:
    ```bash
    git checkout -b fix/your-bug-description
    ```
@@ -145,7 +145,7 @@ django-sysconfig/
    pytest
    ```
 
-4. **Open a pull request** against `master` with a clear description of what you changed and why. Link the relevant issue if one exists.
+4. **Open a pull request** against `develop` with a clear description of what you changed and why. Link the relevant issue if one exists.
 
 5. A maintainer will review your PR. Please be responsive to feedback — PRs that go quiet for more than 30 days may be closed.
 
@@ -153,15 +153,15 @@ django-sysconfig/
 
 ## Commit message style
 
-Use short, imperative present-tense commit messages:
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
-Add JsonValidator
-Fix cache invalidation on set_many
-Update README installation steps
+```text
+feat(validators): add JsonValidator
+fix(accessor): correct cache invalidation on set_many
+docs(readme): update installation steps
 ```
 
-No need for a specific format beyond that. Just make it clear what the commit does.
+Format: `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`. Scope is optional but encouraged.
 
 ---
 

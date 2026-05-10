@@ -37,17 +37,17 @@ Three pieces:
 ```python
 class Advanced(Section):
     label = "Advanced Settings"
-    sort_order = 99  # shown last
+    sort_order = 99
 ```
 
 ## Field options
 
 | Parameter        | Type                     | Required | Description                                                         |
 | ---------------- | ------------------------ | -------- | ------------------------------------------------------------------- |
-| `frontend_model` | `type[BaseFrontendModel]`| Yes      | The field type class — determines Python type and UI widget. Full list [here](/reference/field-types/#overview)  |
+| `frontend_model` | `type[BaseFrontendModel]`| Yes      | The field type class — determines Python type and UI widget. [Full list of field types](/reference/field-types#overview)  |
 | `label`          | `str`                    | No       | Human-readable label shown in the admin UI                          |
 | `comment`        | `str`                    | No       | Help text below the input; HTML is allowed                          |
-| `default`        | `Any`                    | No       | Value used when no DB record exists                                 |
+| `default`        | `Any`                    | No       | Defulat value for the config.                                       |
 | `sort_order`     | `int`                    | No       | Display order within the section (lower = first)                    |
 | `validators`     | `list[BaseValidator]`    | No       | List of validators run before saving                                |
 | `on_save`        | `Callable`               | No       | Callback invoked after a value is written to the database           |

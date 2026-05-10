@@ -64,7 +64,7 @@ class ConfigAccessor:
             InvalidPathError: If path doesn't have exactly 3 parts
         """
         parts = path.split(".")
-        if len(parts) != 3:
+        if len(parts) != 3 or any(not part for part in parts):
             raise InvalidPathError(
                 path,
                 f"Invalid path '{path}'. Expected format: app.section.field",
@@ -85,7 +85,7 @@ class ConfigAccessor:
             InvalidPathError: If path doesn't have exactly 2 parts
         """
         parts = path.split(".")
-        if len(parts) != 2:
+        if len(parts) != 2 or any(not part for part in parts):
             raise InvalidPathError(
                 path,
                 f"Invalid path '{path}'. Expected format: app.section",
@@ -379,6 +379,12 @@ class ConfigAccessor:
 
         Returns:
             True if the field is registered, False otherwise
+
+        Raises:
+            InvalidPathError: If ``path`` is not a valid three-segment path.
+                A malformed path is a programmer error, not a "not found"
+                condition, and is left to propagate so callers can catch
+                bad path strings early.
         """
         try:
             app_label, section, field_name = self._parse_path(path)
@@ -387,7 +393,7 @@ class ConfigAccessor:
             self._get_field(app_label, section, field_name)
 
             return True
-        except (InvalidPathError, AppNotFoundError, FieldNotFoundError):
+        except (AppNotFoundError, FieldNotFoundError):
             return False
 
     def is_set(self, path: str) -> bool:

@@ -19,8 +19,10 @@ from django_sysconfig.exceptions import AppNotFoundError, InvalidPathError
 
 class TestExists:
     """
-    exists() returns True if the path is registered in the schema,
-    False otherwise. It never raises — all exceptions are swallowed.
+    exists() returns True if the path is registered in the schema, False if
+    the path is well-formed but the app/section/field is unknown. A malformed
+    path (not exactly three dotted segments) is a programmer error and
+    raises ``InvalidPathError`` so typos and bad inputs surface early.
     """
 
     def test_returns_true_for_registered_field(self, config):
@@ -49,23 +51,28 @@ class TestExists:
     def test_returns_false_for_unknown_app(self, config):
         assert config.exists("unknown_app.general.site_name") is False
 
-    def test_returns_false_for_invalid_path_format(self, config):
-        assert config.exists("invalid") is False
+    def test_raises_for_invalid_path_format(self, config):
+        with pytest.raises(InvalidPathError):
+            config.exists("invalid")
 
-    def test_returns_false_for_two_part_path(self, config):
-        assert config.exists("testapp.general") is False
+    def test_raises_for_two_part_path(self, config):
+        with pytest.raises(InvalidPathError):
+            config.exists("testapp.general")
 
-    def test_returns_false_for_empty_string(self, config):
-        assert config.exists("") is False
+    def test_raises_for_empty_string(self, config):
+        with pytest.raises(InvalidPathError):
+            config.exists("")
 
-    def test_does_not_raise_for_any_bad_path(self, config):
-        # exists() must never raise, regardless of input
-        bad_paths = ["", "x", "x.y", "x.y.z.w", "...", "testapp..field"]
-        for path in bad_paths:
-            try:
+    def test_raises_for_every_malformed_path(self, config):
+        # A malformed path is a programmer error — surface it, don't silence it.
+        for path in ["", "x", "x.y", "x.y.z.w", "...", "testapp..field"]:
+            with pytest.raises(InvalidPathError):
                 config.exists(path)
-            except Exception as e:
-                pytest.fail(f"exists({path!r}) raised unexpectedly: {e}")
+
+    def test_well_formed_unknown_path_still_returns_false(self, config):
+        # Three-segment paths whose app/section/field just aren't registered
+        # must stay a False result, not raise.
+        assert config.exists("ghost.none.missing") is False
 
 
 # ===========================================================================
@@ -83,8 +90,9 @@ class TestIsSet:
         config.set("testapp.general.max_items", 50)
         assert config.is_set("testapp.general.max_items") is True
 
-    def test_returns_false_for_invalid_path(self, config):
-        assert config.is_set("invalid") is False
+    def test_raises_for_invalid_path(self, config):
+        with pytest.raises(InvalidPathError):
+            config.is_set("invalid")
 
     def test_returns_false_for_unknown_field(self, config):
         assert config.is_set("testapp.general.nonexistent") is False

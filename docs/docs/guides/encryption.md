@@ -60,6 +60,7 @@ The admin UI **never exposes** the stored value of a secret field. Secret fields
 |---|---|
 | Set or update a secret | Type the new value and save |
 | Keep the existing value | Leave the field as-is and save — the encrypted value is preserved |
+| Remove the existing value | Remove the dummy placeholder in the input and save |
 
 :::warning
 Once a secret is saved, it cannot be retrieved through the admin UI. To verify or audit a stored secret, query the database directly (values are stored encrypted) or refer to your original source.
@@ -108,13 +109,13 @@ The export file contains **plaintext secrets**. Treat it like a credentials file
 **Step 3 — Re-import to re-encrypt everything under the new key:**
 
 ```bash
-python manage.py config import config_backup.json
+python manage.py config import --file config_backup.json
 ```
 
 You can validate the file first without writing anything using `--dry-run`:
 
 ```bash
-python manage.py config import config_backup.json --dry-run
+python manage.py config import --file config_backup.json --dry-run
 ```
 
 The import runs inside a single transaction — it either fully succeeds or rolls back entirely, leaving your config unchanged.

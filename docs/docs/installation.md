@@ -29,7 +29,7 @@ INSTALLED_APPS = [
 ```
 
 :::warning Why must it be first?
-Django loads admin templates from apps in `INSTALLED_APPS` order. `django-sysconfig` overrides the admin index template to add the **System Configuration** button. If it's not listed before `django.contrib.admin`, the standard admin templates load first and the button won't appear.
+Django loads admin templates from apps in `INSTALLED_APPS` order. `django-sysconfig` overrides the admin index template to add the **Manage System Configuration** button. If it's not listed before `django.contrib.admin`, the standard admin templates load first and the button won't appear.
 :::
 
 ## Wire up the URLs

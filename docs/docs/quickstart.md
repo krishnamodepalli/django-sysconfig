@@ -5,9 +5,9 @@ description: Get django-sysconfig running in your project in under five minutes.
 
 # Quick Start
 
-> **First time?** Start with [Installation](/installation) to add `django-sysconfig` to your project, run migrations, and wire up the admin URL. Come back here once that's done.
-
----
+::: info First time?
+Start with [Installation](/installation) to add `django-sysconfig` to your project, run migrations, and wire up the admin URL. Come back here once that's done.
+:::
 
 ## Define your config schema
 
@@ -72,7 +72,7 @@ Start your dev server and visit `/admin/config/`. Log in with any staff account.
 You'll see your app listed with all its sections and fields, pre-populated with defaults. Change a value and hit **Save** — it takes effect immediately, no redeploy needed.
 
 :::tip
-The Django admin index page has a **System Configuration** button at the top that links here directly.
+The Django admin index page has a "**Manage System Configuration**" button at the top that links here directly.
 
 ![Django admin index page with the System Configuration button visible](/assets/images/sysconfig-button.png)
 :::
@@ -86,5 +86,5 @@ From here, explore:
 - [Getting Started](/getting-started) — a real-world walkthrough with multiple apps and field types
 - [Defining Configuration](/guides/defining-config) — all field options, section options, and design tips
 - [Reading & Writing Values](/guides/reading-writing) — `set`, `set_many`, `section`, `all`, and more
-<!-- - [Field Types](/reference/field-types) — all seven types with examples
-- [Validators](/reference/validators) — all 20 built-in validators -->
+- [Field Types](/reference/field-types) — all seven types with examples
+- [Validators](/reference/validators) — all 20 built-in validators
