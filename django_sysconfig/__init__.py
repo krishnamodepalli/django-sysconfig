@@ -10,20 +10,20 @@
 from .exceptions import (
     AppNotFoundError,
     ConfigError,
+    ConfigValidationError,
     ConfigValueError,
     FieldNotFoundError,
     InvalidPathError,
 )
-from .registry import Section, register_config
 
 __all__ = [
-    "ConfigError",
+    "config",
     "AppNotFoundError",
+    "ConfigError",
+    "ConfigValidationError",
+    "ConfigValueError",
     "FieldNotFoundError",
     "InvalidPathError",
-    "ConfigValueError",
-    "Section",
-    "register_config",
 ]
 
 __version__ = "1.0.1"
