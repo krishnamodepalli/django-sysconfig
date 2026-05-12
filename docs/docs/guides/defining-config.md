@@ -6,16 +6,14 @@ Your configuration schema lives in `sysconfig.py` files — one per Django app t
 
 ```python
 # myapp/sysconfig.py
-from django_sysconfig.registry import register_config, Section, Field
-from django_sysconfig.frontend_models import StringFrontendModel
+from django_sysconfig import register_config, Section, fields
 
 @register_config("myapp")
 class MyAppConfig:
     class General(Section):
         label = "General Settings"
 
-        site_name = Field(
-            StringFrontendModel,
+        site_name = fields.String(
             label="Site Name",
             default="My App",
         )
@@ -23,9 +21,19 @@ class MyAppConfig:
 
 Three pieces:
 
-1. **`@register_config("app_label")`** — registers the class under the given label. Must be `snake_case` — raises `ImproperlyConfigured` on startup if not. The label becomes the first segment of every config path in this app (`myapp.general.site_name`).
+1. **`@register_config("app_label")`** — registers the class under the given label. Must be `snake_case`. The label becomes the first segment of every config path in this app (`myapp.general.site_name`).
 2. **Inner class extending `Section`** — a logical grouping of related fields. The class name is automatically converted to `snake_case` and becomes the second path segment (`PaymentSettings` → `myapp.payment_settings.*`).
-3. **`Field(...)` assignments** — individual configurable values. The attribute name must be `snake_case` — raises `ImproperlyConfigured` on startup if not. It becomes the third path segment (`myapp.general.site_name`).
+3. **Field assignments** — individual configurable values using `fields.<Type>`. The attribute name must be `snake_case`. It becomes the third path segment (`myapp.general.site_name`).
+
+### Fields vs. the Field Class
+
+Under the hood, every field in `django-sysconfig` is an instance of the `Field` class. The `fields` module provides pre-configured shorthands for all built-in types:
+
+- `fields.String(...)` is shorthand for `Field(StringFrontendModel, ...)`
+- `fields.Integer(...)` is shorthand for `Field(IntegerFrontendModel, ...)`
+- ...and so on.
+
+Using the `fields` module is the recommended way to define your schema as it is more concise and avoids importing multiple `FrontendModel` classes.
 
 ## Section options
 
@@ -56,23 +64,7 @@ class Advanced(Section):
 ## A complete example
 
 ```python
-from decimal import Decimal
-from django_sysconfig.registry import register_config, Section, Field
-from django_sysconfig.frontend_models import (
-    StringFrontendModel,
-    TextareaFrontendModel,
-    IntegerFrontendModel,
-    DecimalFrontendModel,
-    BooleanFrontendModel,
-    SelectFrontendModel,
-    SecretFrontendModel,
-)
-from django_sysconfig.validators import (
-    NotEmptyValidator,
-    EmailValidator,
-    RangeValidator,
-    ChoiceValidator,
-)
+from django_sysconfig import register_config, Section, fields, validators
 
 @register_config("store")
 class StoreConfig:
@@ -80,27 +72,24 @@ class StoreConfig:
         label = "General"
         sort_order = 10
 
-        store_name = Field(
-            StringFrontendModel,
+        store_name = fields.String(
             label="Store Name",
             default="My Store",
-            validators=[NotEmptyValidator()],
+            validators=[validators.NotEmptyValidator()],
         )
 
-        store_description = Field(
-            TextareaFrontendModel,
+        store_description = fields.Textarea(
             label="Store Description",
             comment="Shown on the About page. HTML allowed.",
             default="",
             sort_order=20,
         )
 
-        currency = Field(
-            SelectFrontendModel,
+        currency = fields.Select(
             label="Currency",
             default="usd",
             choices=[("usd", "USD"), ("eur", "EUR"), ("gbp", "GBP")],
-            validators=[ChoiceValidator(["usd", "eur", "gbp"])],
+            validators=[validators.ChoiceValidator(["usd", "eur", "gbp"])],
             sort_order=30,
         )
 
@@ -108,34 +97,30 @@ class StoreConfig:
         label = "Email"
         sort_order = 20
 
-        sender = Field(
-            StringFrontendModel,
+        sender = fields.String(
             label="Sender Address",
             default="shop@example.com",
-            validators=[NotEmptyValidator(), EmailValidator()],
+            validators=[validators.NotEmptyValidator(), validators.EmailValidator()],
         )
 
     class Payments(Section):
         label = "Payments"
         sort_order = 30
 
-        live_mode = Field(
-            BooleanFrontendModel,
+        live_mode = fields.Boolean(
             label="Live Mode",
             comment="<strong>Warning:</strong> enabling this processes real charges.",
             default=False,
         )
 
-        tax_rate = Field(
-            DecimalFrontendModel,
+        tax_rate = fields.Decimal(
             label="Tax Rate",
-            default=Decimal("0.20"),
-            step="0.001",
-            validators=[RangeValidator(min_value=Decimal("0"), max_value=Decimal("1"))],
+            default="0.20",
+            step="0.01",
+            validators=[validators.RangeValidator(min_value=Decimal("0"), max_value=Decimal("1"))],
         )
 
-        stripe_secret_key = Field(
-            SecretFrontendModel,
+        stripe_secret_key = fields.Secret(
             label="Stripe Secret Key",
             comment="Stored encrypted. Starts with <code>sk_</code>.",
         )
