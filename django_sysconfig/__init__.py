@@ -7,6 +7,7 @@
 # Note: Import `config` from `config.accessor` to avoid circular imports
 # during Django app initialization.
 
+from . import fields, validators
 from .exceptions import (
     AppNotFoundError,
     ConfigError,
@@ -15,9 +16,15 @@ from .exceptions import (
     FieldNotFoundError,
     InvalidPathError,
 )
+from .registry import Field, Section, register_config
 
 __all__ = [
     "config",
+    "fields",
+    "validators",
+    "Field",
+    "Section",
+    "register_config",
     "AppNotFoundError",
     "ConfigError",
     "ConfigValidationError",
