@@ -31,7 +31,7 @@ class MyAppConfig:
             label="Maintenance Mode",
             default=False
         )
-        max_items = Integer(
+        max_items = fields.Integer(
             label="Max Items Per User",
             default=100,
             validators=[validators.RangeValidator(min_value=1, max_value=10_000)],
