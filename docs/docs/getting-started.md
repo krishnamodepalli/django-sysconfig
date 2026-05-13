@@ -102,7 +102,7 @@ class BillingConfig:
             comment="As a decimal, e.g. 0.20 for 20%.",
             default=0.20,
             step="0.001",
-            validators=[validators.RangeValidator(min_value=Decimal("0"), max_value=Decimal("1"))],
+            validators=[validators.RangeValidator(min_value=0, max_value=1)],
         )
 
         free_tier_limit = fields.Field(
