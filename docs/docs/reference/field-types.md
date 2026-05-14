@@ -4,6 +4,8 @@ Field types (called `FrontendModel` classes internally) control three things: th
 
 The recommended way to define fields is using the `django_sysconfig.fields` module.
 
+The following examples show how we can create a field only. Directly using it in your code will not create the config. A field must be a child attribute of a `Section` class which must be directly wrapped inside the app config class registered with `register_config`. Check [Defining Config](/guides/defining-config) for creating your app config.
+
 ---
 
 ## Overview

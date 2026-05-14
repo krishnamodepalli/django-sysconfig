@@ -27,6 +27,8 @@ If you haven't done this yet, follow the [Quick Start](quickstart.md) steps firs
 
 ## Step 2: Define config for the `notifications` app
 
+The following is the new & **recommended** way of defining your app's config. The old way is described after that.
+
 ```python
 # notifications/sysconfig.py
 from django_sysconfig import register_config, Section, fields, validators
@@ -61,7 +63,7 @@ class NotificationsConfig:
         )
 ```
 
-This is the new and **recommended** way of creating configuration with the fields. The below is an example of old way of creating fields, which is still supported. This is how you will use any custom Fields created by yourself.
+The below is an example of old way of creating fields, which is still supported. This is how you will use any custom `Field`'s created by yourself.
 
 ```python
 maintenance_mode = Field(BooleanFrontendModel, label="Maintenance Mode", default=False)
@@ -77,7 +79,7 @@ A few things to notice:
 
 ```python
 # billing/sysconfig.py
-from django_sysconfig.registry import register_config, Section, fields, validators
+from django_sysconfig import register_config, Section, fields, validators
 
 @register_config("billing")
 class BillingConfig:
@@ -100,7 +102,7 @@ class BillingConfig:
             DecimalFrontendModel,
             label="Tax Rate",
             comment="As a decimal, e.g. 0.20 for 20%.",
-            default=0.20,
+            default="0.20",
             step="0.001",
             validators=[validators.RangeValidator(min_value=0, max_value=1)],
         )

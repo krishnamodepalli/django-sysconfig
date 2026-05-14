@@ -70,8 +70,7 @@ While built-in types use the concise `fields.<Type>` shorthand, custom types are
 ```python
 import datetime
 from myapp.field_types import DateFrontendModel
-from django_sysconfig import register_config, Section
-from django_sysconfig.registry import Field # Import the base Field class
+from django_sysconfig import register_config, Section, Field # Import the base Field class
 
 @register_config("events")
 class EventsConfig:

@@ -64,7 +64,8 @@ class Advanced(Section):
 ## A complete example
 
 ```python
-from django_sysconfig import register_config, Section, fields, validators
+from django_sysconfig import register_config, Section, Field, fields, validators
+from django_sysconfig.frontend_model import StringFrontendModel
 
 @register_config("store")
 class StoreConfig:
@@ -77,6 +78,13 @@ class StoreConfig:
             default="My Store",
             validators=[validators.NotEmptyValidator()],
         )
+        # Or the old way as:
+        # store_name = Field(
+        #   StringFrontendModel,
+        #   label="Store Name",
+        #   default="My Store",
+        #   validators=[validators.NotEmptyValidator()],
+        # )
 
         store_description = fields.Textarea(
             label="Store Description",
