@@ -101,6 +101,24 @@ class TestCmdSetValidation:
         assert config.get("testapp.general.max_items") == original
 
 
+class TestCmdSetDryRun:
+
+    def test_dry_run_doesnt_save(self, config):
+        original = config.get("testapp.general.max_items")
+        run_set("testapp.general.max_items", original + 1, dry_run=True)
+        assert config.get("testapp.general.max_items") == original
+
+    def test_dry_run_raises_invalid_path(self):
+        with pytest.raises(CommandError):
+            run_set("invalid.path", 200, dry_run=True)
+
+    def test_dry_run_raises_on_validation_fail(self):
+        with pytest.raises(CommandError):
+            run_set("testapp.general.site_name", "", dry_run=True)
+        with pytest.raises(CommandError):
+            run_set("testapp.general.max_items", 1002, dry_run=True)
+
+
 # ---------------------------------------------------------------------------
 # Error cases
 # ---------------------------------------------------------------------------

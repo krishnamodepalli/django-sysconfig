@@ -30,6 +30,14 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+__all__ = [
+    "Field",
+    "Section",
+    "ConfigRegistry",
+    "config_registry",
+    "register_config",
+]
+
 import django.db
 from django.core.exceptions import ImproperlyConfigured
 

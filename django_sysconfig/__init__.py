@@ -7,20 +7,30 @@
 # Note: Import `config` from `config.accessor` to avoid circular imports
 # during Django app initialization.
 
+from . import fields, validators
 from .exceptions import (
     AppNotFoundError,
     ConfigError,
+    ConfigValidationError,
     ConfigValueError,
     FieldNotFoundError,
     InvalidPathError,
 )
+from .registry import Field, Section, register_config
 
 __all__ = [
-    "ConfigError",
+    "config",
+    "fields",
+    "validators",
+    "Field",
+    "Section",
+    "register_config",
     "AppNotFoundError",
+    "ConfigError",
+    "ConfigValidationError",
+    "ConfigValueError",
     "FieldNotFoundError",
     "InvalidPathError",
-    "ConfigValueError",
 ]
 
 __version__ = "1.0.2"

@@ -15,33 +15,26 @@ Create a `sysconfig.py` file inside any installed Django app:
 
 ```python
 # myapp/sysconfig.py
-from django_sysconfig.registry import register_config, Section, Field
-from django_sysconfig.frontend_models import BooleanFrontendModel, StringFrontendModel, IntegerFrontendModel
-from django_sysconfig.validators import NotEmptyValidator, RangeValidator
+from django_sysconfig import register_config, Section, fields, validators
 
 @register_config("myapp")
 class MyAppConfig:
     class General(Section):
         label = "General Settings"
 
-        site_name = Field(
-            StringFrontendModel,
+        site_name = fields.String(
             label="Site Name",
             default="My App",
-            validators=[NotEmptyValidator()],
+            validators=[validators.NotEmptyValidator()]
         )
-
-        maintenance_mode = Field(
-            BooleanFrontendModel,
+        maintenance_mode = fields.Boolean(
             label="Maintenance Mode",
-            default=False,
+            default=False
         )
-
-        max_items = Field(
-            IntegerFrontendModel,
+        max_items = fields.Integer(
             label="Max Items Per User",
             default=100,
-            validators=[RangeValidator(min_value=1, max_value=10_000)],
+            validators=[validators.RangeValidator(min_value=1, max_value=10_000)],
         )
 ```
 
@@ -52,7 +45,7 @@ Django autodiscovers this file on startup — no registration needed beyond the 
 ## Read values in your code
 
 ```python
-from django_sysconfig.accessor import config
+from django_sysconfig import config
 
 site_name   = config.get("myapp.general.site_name")        # str  → "My App"
 maintenance = config.get("myapp.general.maintenance_mode") # bool → False

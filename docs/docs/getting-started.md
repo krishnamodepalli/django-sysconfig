@@ -27,20 +27,11 @@ If you haven't done this yet, follow the [Quick Start](quickstart.md) steps firs
 
 ## Step 2: Define config for the `notifications` app
 
+The following is the new & **recommended** way of defining your app's config. The old way is described after that.
+
 ```python
 # notifications/sysconfig.py
-from django_sysconfig.registry import register_config, Section, Field
-from django_sysconfig.frontend_models import (
-    StringFrontendModel,
-    BooleanFrontendModel,
-    SelectFrontendModel,
-    SecretFrontendModel,
-)
-from django_sysconfig.validators import (
-    NotEmptyValidator,
-    EmailValidator,
-    ChoiceValidator,
-)
+from django_sysconfig import register_config, Section, fields, validators
 
 @register_config("notifications")
 class NotificationsConfig:
@@ -48,61 +39,47 @@ class NotificationsConfig:
         label = "Email Settings"
         sort_order = 10
 
-        sender_address = Field(
-            StringFrontendModel,
+        sender_address = fields.String(
             label="Sender Address",
             comment="The From: address on all outgoing emails.",
             default="no-reply@example.com",
-            validators=[NotEmptyValidator(), EmailValidator()],
+            validators=[validators.NotEmptyValidator(), validators.EmailValidator()],
         )
-
-        format = Field(
-            SelectFrontendModel,
+        format = fields.Select(
             label="Email Format",
             default="html",
             choices=[("html", "HTML"), ("text", "Plain Text")],
-            validators=[ChoiceValidator(["html", "text"])],
+            validators=[validators.ChoiceValidator(["html", "text"])],
         )
 
     class Sms(Section):
         label = "SMS Settings"
         sort_order = 20
 
-        enabled = Field(
-            BooleanFrontendModel,
-            label="Enable SMS Notifications",
-            default=False,
-        )
-
-        twilio_api_key = Field(
-            SecretFrontendModel,
+        enabled = fields.Boolean(label="Enable SMS Notifications", default=False)
+        twilio_api_key = fields.Secret(
             label="Twilio API Key",
             comment="Stored encrypted. Never displayed after saving.",
         )
 ```
 
+The below is an example of old way of creating fields, which is still supported. This is how you will use any custom `Field`'s created by yourself.
+
+```python
+maintenance_mode = Field(BooleanFrontendModel, label="Maintenance Mode", default=False)
+```
+
 A few things to notice:
 
 - **Multiple sections** — `Email` and `Sms` are separate sections within the same app. They'll appear as distinct groupings in the admin UI.
-- **`SelectFrontendModel`** requires a `choices` kwarg — a list of `(value, label)` tuples, same as Django's own choice fields.
-- **`SecretFrontendModel`** encrypts the value at rest. The admin UI will never display the stored value after it's been saved.
+- **`Select`** requires a `choices` kwarg — a list of `(value, label)` tuples, same as Django's own choice fields.
+- **`Secret`** encrypts the value at rest. The admin UI will never display the stored value after it's been saved.
 
 ## Step 3: Define config for the `billing` app
 
 ```python
 # billing/sysconfig.py
-from decimal import Decimal
-from django_sysconfig.registry import register_config, Section, Field
-from django_sysconfig.frontend_models import (
-    BooleanFrontendModel,
-    DecimalFrontendModel,
-    IntegerFrontendModel,
-)
-from django_sysconfig.validators import (
-    RangeValidator,
-    NonNegativeValidator,
-    PositiveValidator,
-)
+from django_sysconfig import register_config, Section, fields, validators
 
 @register_config("billing")
 class BillingConfig:
@@ -110,7 +87,7 @@ class BillingConfig:
         label = "General"
         sort_order = 10
 
-        live_mode = Field(
+        live_mode = fields.Field(
             BooleanFrontendModel,
             label="Live Mode",
             comment="When disabled, all charges are simulated.",
@@ -121,27 +98,27 @@ class BillingConfig:
         label = "Pricing"
         sort_order = 20
 
-        tax_rate = Field(
+        tax_rate = fields.Field(
             DecimalFrontendModel,
             label="Tax Rate",
             comment="As a decimal, e.g. 0.20 for 20%.",
-            default=Decimal("0.20"),
+            default="0.20",
             step="0.001",
-            validators=[RangeValidator(min_value=Decimal("0"), max_value=Decimal("1"))],
+            validators=[validators.RangeValidator(min_value=0, max_value=1)],
         )
 
-        free_tier_limit = Field(
+        free_tier_limit = fields.Field(
             IntegerFrontendModel,
             label="Free Tier Item Limit",
             default=10,
-            validators=[PositiveValidator()],
+            validators=[validators.PositiveValidator()],
         )
 
-        trial_days = Field(
+        trial_days = fields.Field(
             IntegerFrontendModel,
             label="Trial Period (days)",
             default=14,
-            validators=[NonNegativeValidator()],
+            validators=[validators.NonNegativeValidator()],
         )
 ```
 
