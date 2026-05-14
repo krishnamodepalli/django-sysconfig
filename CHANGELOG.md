@@ -1,6 +1,59 @@
 # CHANGELOG
 
 
+## v1.1.0 (2026-05-14)
+
+### Documentation
+
+- Update docs for feat/fields-shorthand branch
+  ([#99](https://github.com/krishnamodepalli/django-sysconfig/pull/99),
+  [`7e75e6e`](https://github.com/krishnamodepalli/django-sysconfig/commit/7e75e6ecfdcf1542a27ba464a125ef52b4170007))
+
+### Features
+
+- Add `--dry-run` flag for `config set` sub-command
+  ([#98](https://github.com/krishnamodepalli/django-sysconfig/pull/98),
+  [`3f2fb0a`](https://github.com/krishnamodepalli/django-sysconfig/commit/3f2fb0a8309737b4d871ea6fe526dc4bacef666e))
+
+* feat: Add --dry-run flag for `config set` sub-command
+
+* docs: Update docs for `config set` command with `--dry-run` flag
+
+* tests: Update tests for `config set` subcommand `--dry-run` flag
+
+* tests: Fix tests to correctly set dry_run for config_set dry-run tests
+
+* refactor: Use `set_rollback` instead of throwing TransactionManagementError
+
+changes: - The commands `config set` and `config import` both have a `--dry-run` flag. To catch this
+  flag, the TransactionManagementError is previously used. From Django 4.2
+  `transaction.set_rollback()` is preferred for the same behavior, we shifted to that in this commit
+
+* tests: refactor test_case `test_dry_run_doesnt_save` in test_cmd_set.py
+
+- **fields**: Add typed field shorthands
+  ([#86](https://github.com/krishnamodepalli/django-sysconfig/pull/86),
+  [`6b2403f`](https://github.com/krishnamodepalli/django-sysconfig/commit/6b2403f32ebb6ea50ba3b0bcd7a40c357cb04647))
+
+* feat(fields): add typed field shorthands using functools.partial
+
+* feat(init): re-export Section and register_config from package root
+
+* style(fields): add __all__ to define public API surface
+
+* refactor: add __all__ to public API modules
+
+* refactor: Add `config` and all exceptions in the __init__.py
+
+* chore: Add fields and validators in __init__.py:__all__
+
+* docs: Update docs for shorthand fields
+
+* docs: fix typos in docs
+
+* docs: Update docs according to the fields shorthand
+
+
 ## v1.0.2 (2026-05-07)
 
 ### Bug Fixes
