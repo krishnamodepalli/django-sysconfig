@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import transaction
 
 from django_sysconfig.accessor import config
 from django_sysconfig.exceptions import ConfigError, ConfigValidationError
@@ -51,6 +52,11 @@ class Command(BaseCommand):
         set_parser = subparsers.add_parser("set", help="Set a configuration value")
         set_parser.add_argument("path", help="Config path in app.section.field format")
         set_parser.add_argument("value", help="Value to set")
+        set_parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Validate the input value without saving into database",
+        )
 
         # --- reset ---
         reset_parser = subparsers.add_parser(
@@ -141,14 +147,27 @@ class Command(BaseCommand):
         """Parse and persist a single config value."""
         path = options["path"]
         raw = options["value"]
+        dry_run = options["dry_run"]
 
         try:
             app_label, section, field_name = config._parse_path(path)
             field = config._get_field(app_label, section, field_name)
             parsed = field.get_frontend_model_instance().get_value(raw)
 
-            config.set(path, parsed)
-            self.stdout.write(self.style.SUCCESS(f"✔ {path} updated successfully"))
+            with transaction.atomic():
+                config.set(path, parsed)
+
+                if dry_run:
+                    self.stdout.write(
+                        self.style.SUCCESS(f"✔ Validation passed for '{path}'")
+                    )
+                    self.stdout.write(
+                        self.style.WARNING("Dry run — no values will be saved")
+                    )
+                    transaction.set_rollback(True)
+                    return
+
+                self.stdout.write(self.style.SUCCESS(f"✔ {path} updated successfully"))
 
         except ConfigValidationError as e:
             errors = "\n".join(f"  • {err}" for err in e.errors)
@@ -290,15 +309,12 @@ class Command(BaseCommand):
             # rolled back — this runs path resolution, frontend-model coercion,
             # serialization, and field validators, so a dry-run failure means the
             # real import would also fail.
-            from django.db import transaction
 
             errors = []
             try:
                 with transaction.atomic():
                     config.set_many(dict(paths), skip_on_save_callbacks=True)
-                    raise transaction.TransactionManagementError("dry-run rollback")
-            except transaction.TransactionManagementError:
-                pass
+                    transaction.set_rollback(True)
             except (ConfigValidationError, ConfigError) as e:
                 errors.append(str(e))
 
