@@ -2,6 +2,17 @@
 Custom exceptions for the config app.
 """
 
+__all__ = [
+    "ConfigError",
+    "ConfigNotFoundError",
+    "AppNotFoundError",
+    "SectionNotFoundError",
+    "FieldNotFoundError",
+    "InvalidPathError",
+    "ConfigValueError",
+    "ConfigValidationError",
+]
+
 
 class ConfigError(Exception):
     """Base exception for all config-related errors."""

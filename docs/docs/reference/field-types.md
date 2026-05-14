@@ -2,33 +2,32 @@
 
 Field types (called `FrontendModel` classes internally) control three things: the Python type returned by `config.get(...)`, how values are serialized to and from the database, and the UI widget rendered in the admin.
 
-All field type classes live in `django_sysconfig.frontend_models`.
+The recommended way to define fields is using the `django_sysconfig.fields` module.
 
 ---
 
 ## Overview
 
-| Class                    | Python type | Admin widget           | DB storage format     |
-| ------------------------ | ----------- | ---------------------- | --------------------- |
-| `StringFrontendModel`    | `str`       | Text input             | String as-is          |
-| `TextareaFrontendModel`  | `str`       | Textarea               | String as-is          |
-| `IntegerFrontendModel`   | `int`       | Number input           | `str(int)`            |
-| `DecimalFrontendModel`   | `Decimal`   | Number input with step | `str(Decimal(...))`   |
-| `BooleanFrontendModel`   | `bool`      | Checkbox               | `"true"` or `"false"` |
-| `SelectFrontendModel`    | `str`       | Dropdown select        | Selected value string |
-| `SecretFrontendModel`    | `str`       | Password input (masked)| Fernet-encrypted token |
+| Helper                   | FrontendModel Class      | Python type | Admin widget           |
+| ------------------------ | ------------------------ | ----------- | ---------------------- |
+| `fields.String`          | `StringFrontendModel`    | `str`       | Text input             |
+| `fields.Textarea`        | `TextareaFrontendModel`  | `str`       | Textarea               |
+| `fields.Integer`         | `IntegerFrontendModel`   | `int`       | Number input           |
+| `fields.Decimal`         | `DecimalFrontendModel`   | `Decimal`   | Number input with step |
+| `fields.Boolean`         | `BooleanFrontendModel`   | `bool`      | Checkbox               |
+| `fields.Select`          | `SelectFrontendModel`    | `str`       | Dropdown select        |
+| `fields.Secret`          | `SecretFrontendModel`    | `str`       | Password input (masked)|
 
 ---
 
-## StringFrontendModel
+## fields.String
 
 A single-line text input. Returns a `str`.
 
 ```python
-from django_sysconfig.frontend_models import StringFrontendModel
+from django_sysconfig import fields
 
-site_name = Field(
-    StringFrontendModel,
+site_name = fields.String(
     label="Site Name",
     default="My App",
 )
@@ -43,15 +42,14 @@ config.get("myapp.general.site_name")  # str → "My App"
 
 ---
 
-## TextareaFrontendModel
+## fields.Textarea
 
 A multi-line text area. Returns a `str`. Useful for longer text like descriptions, templates, or snippets.
 
 ```python
-from django_sysconfig.frontend_models import TextareaFrontendModel
+from django_sysconfig import fields
 
-welcome_message = Field(
-    TextareaFrontendModel,
+welcome_message = fields.Textarea(
     label="Welcome Message",
     comment="Shown on the dashboard. HTML is allowed.",
     default="Welcome to our platform.",
@@ -67,18 +65,17 @@ config.get("myapp.general.welcome_message")  # str (may contain newlines)
 
 ---
 
-## IntegerFrontendModel
+## fields.Integer
 
 A number input. Returns a Python `int`.
 
 ```python
-from django_sysconfig.frontend_models import IntegerFrontendModel
+from django_sysconfig import fields, validators
 
-max_items = Field(
-    IntegerFrontendModel,
+max_items = fields.Integer(
     label="Max Items Per User",
     default=100,
-    validators=[RangeValidator(min_value=1, max_value=10_000)],
+    validators=[validators.RangeValidator(min_value=1, max_value=10_000)],
 )
 ```
 
@@ -91,21 +88,20 @@ config.get("myapp.general.max_items")  # int → 100
 
 ---
 
-## DecimalFrontendModel
+## fields.Decimal
 
 A number input with configurable step precision. Returns a Python `Decimal`.
 
 ```python
 from decimal import Decimal
-from django_sysconfig.frontend_models import DecimalFrontendModel
+from django_sysconfig import fields, validators
 
-tax_rate = Field(
-    DecimalFrontendModel,
+tax_rate = fields.Decimal(
     label="Tax Rate",
     comment="As a decimal. For example, 0.20 represents 20%.",
     default=Decimal("0.20"),
     step="0.001",   # controls the HTML input step attribute
-    validators=[RangeValidator(min_value=Decimal("0"), max_value=Decimal("1"))],
+    validators=[validators.RangeValidator(min_value=Decimal("0"), max_value=Decimal("1"))],
 )
 ```
 
@@ -124,15 +120,14 @@ Floating-point arithmetic is imprecise for financial calculations. `Decimal("0.1
 
 ---
 
-## BooleanFrontendModel
+## fields.Boolean
 
 A toggle button. Returns a Python `bool`.
 
 ```python
-from django_sysconfig.frontend_models import BooleanFrontendModel
+from django_sysconfig import fields
 
-maintenance_mode = Field(
-    BooleanFrontendModel,
+maintenance_mode = fields.Boolean(
     label="Maintenance Mode",
     comment="When enabled, the site returns 503 to all visitors.",
     default=False,
@@ -150,17 +145,16 @@ Stored as `"true"` (True) or `"false"` (False) in the database.
 
 ---
 
-## SelectFrontendModel
+## fields.Select
 
 A dropdown select. Returns a `str` — the *value* of the selected choice (not the display label).
 
 Requires a `choices` kwarg: a list of `(value, display_label)` tuples.
 
 ```python
-from django_sysconfig.frontend_models import SelectFrontendModel
+from django_sysconfig import fields, validators
 
-environment = Field(
-    SelectFrontendModel,
+environment = fields.Select(
     label="Environment",
     default="production",
     choices=[
@@ -168,7 +162,7 @@ environment = Field(
         ("staging", "Staging"),
         ("production", "Production"),
     ],
-    validators=[ChoiceValidator(["development", "staging", "production"])],
+    validators=[validators.ChoiceValidator(["development", "staging", "production"])],
 )
 ```
 
@@ -178,22 +172,21 @@ config.get("myapp.general.environment")  # str → "production"
 ```
 
 ::: tip
-Always pair `SelectFrontendModel` with a `ChoiceValidator`. This ensures the stored value is always one of your valid choices, even if someone sets it programmatically via `config.set(...)`.
+Always pair a select field with a `ChoiceValidator`. This ensures the stored value is always one of your valid choices, even if someone sets it programmatically via `config.set(...)`.
 :::
 
 **Use for:** mode selection, theme selection, log level, any enumerated value.
 
 ---
 
-## SecretFrontendModel
+## fields.Secret
 
 A password-style input. Stores the value **encrypted at rest** using Fernet symmetric encryption. Returns a plaintext `str` when read.
 
 ```python
-from django_sysconfig.frontend_models import SecretFrontendModel
+from django_sysconfig import fields
 
-api_key = Field(
-    SecretFrontendModel,
+api_key = fields.Secret(
     label="Third-Party API Key",
     comment="Stored encrypted. Never displayed after saving.",
 )
@@ -219,18 +212,20 @@ For details on the encryption scheme and key rotation, see the [Encryption guide
 ## Using multiple field types together
 
 ```python
+from decimal import Decimal
+from django_sysconfig import register_config, Section, fields, validators
+
 @register_config("email")
 class EmailConfig:
     class Smtp(Section):
         label = "SMTP Settings"
 
-        host = Field(StringFrontendModel, label="Host", default="smtp.example.com")
-        port = Field(IntegerFrontendModel, label="Port", default=587, validators=[PortValidator()])
-        use_tls = Field(BooleanFrontendModel, label="Use TLS", default=True)
-        username = Field(StringFrontendModel, label="Username", default="")
-        password = Field(SecretFrontendModel, label="Password")
-        timeout = Field(
-            DecimalFrontendModel,
+        host = fields.String(label="Host", default="smtp.example.com")
+        port = fields.Integer(label="Port", default=587, validators=[validators.PortValidator()])
+        use_tls = fields.Boolean(label="Use TLS", default=True)
+        username = fields.String(label="Username", default="")
+        password = fields.Secret(label="Password")
+        timeout = fields.Decimal(
             label="Timeout (seconds)",
             default=Decimal("30.0"),
             step="0.5",
