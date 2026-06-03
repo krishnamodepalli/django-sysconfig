@@ -193,10 +193,10 @@ class ConfigAccessor:
         if value is not config_cache.NOT_FOUND:
             return value
 
-        if default is not None:
-            return default
+        if field.default is not None:
+            return field.default
 
-        return field.default
+        return default
 
     def set(self, path: str | Field, value: Any) -> None:
         """
