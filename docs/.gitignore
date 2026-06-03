@@ -4,3 +4,8 @@ node_modules/
 # Artifacts
 dist/
 build/
+dist-engine/
+
+# VitePress cache
+.vitepress/cache/
+.vitepress/.temp/

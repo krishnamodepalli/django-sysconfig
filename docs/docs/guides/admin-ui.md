@@ -17,7 +17,9 @@ urlpatterns = [
 ]
 ```
 
-> **Important:** The config path must come *before* `path("admin/", ...)`. Django matches patterns in order, and the default admin would otherwise swallow the `/admin/config/` URL.
+::: warning
+The config path must come *before* `path("admin/", ...)`. Django matches patterns in order, and the default admin would otherwise swallow the `/admin/config/` URL.
+:::
 
 ## Access control
 

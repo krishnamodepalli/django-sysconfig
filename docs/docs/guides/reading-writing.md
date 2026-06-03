@@ -14,7 +14,9 @@ All paths use **dot notation** with exactly three parts: `app_label.section.fiel
 
 This **lazy loads** the value.
 
-Returns the value for the given path. If the field has no saved value in the database, the field's defined default is returned. You can also supply a fallback for unregistered paths.
+Returns the value for the given path. If the field has no saved value in the database, the field's defined default is returned. If the field has no default either, `default` is returned.
+
+Invalid paths and unknown apps or fields always raise an exception — `default` does not suppress them.
 
 ```python
 # Returns the saved value, or the field's default if none is saved
@@ -23,8 +25,8 @@ max_items = config.get("myapp.general.max_items")   # int
 live_mode = config.get("billing.general.live_mode") # bool
 tax_rate  = config.get("billing.pricing.tax_rate")  # Decimal
 
-# Supply a fallback for unknown/unregistered paths (no exception raised)
-value = config.get("myapp.general.unknown_field", default=42)
+# Fallback for a registered field that has no saved value and no field default
+value = config.get("myapp.general.some_field", default=42)
 ```
 
 Values are **typed** — you get the correct Python type back without any casting. An `IntegerFrontendModel` field always returns an `int`. A `BooleanFrontendModel` field always returns a `bool`. A `DecimalFrontendModel` field always returns a `Decimal`.
@@ -95,7 +97,7 @@ This is useful for "onboarding" flows where you want to detect whether a require
 
 ### `config.set(path, value)`
 
-Saves a single value to the database, invalidates the cache, and fires the `on_save` callback if one is defined.
+Saves a single value to the database, updates the cache, and fires the `on_save` callback if one is defined.
 
 ```python
 config.set("myapp.general.site_name", "Acme Corp")
@@ -135,7 +137,8 @@ All exceptions inherit from `ConfigError`, so you can catch the base class if yo
 | `InvalidPathError` | The path doesn't have exactly three dot-separated parts         |
 | `AppNotFoundError` | No configuration is registered for the given app label          |
 | `FieldNotFoundError` | The section or field doesn't exist in the registered schema   |
-| `ConfigValueError` | A value fails validation, or can't be serialized for the field type |
+| `ConfigValidationError` | A value fails one or more field validators                  |
+| `ConfigValueError` | A value can't be serialized for the given field type                |
 
 ```python
 from django_sysconfig.exceptions import ConfigError, FieldNotFoundError

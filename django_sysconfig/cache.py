@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any
 
 from django.core.cache import cache
 
@@ -9,9 +9,9 @@ class ConfigCache:
     # Made a class attribute for public access
     NOT_FOUND = object()
 
-    _instance: Self | None = None
+    _instance: "ConfigCache | None" = None
 
-    def __new__(cls) -> Self:
+    def __new__(cls) -> "ConfigCache":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
