@@ -27,6 +27,8 @@ Usage:
 from collections.abc import Callable
 from typing import Any
 
+from django.db import transaction
+
 from .cache import config_cache
 from .exceptions import (
     AppNotFoundError,
@@ -49,6 +51,8 @@ class ConfigAccessor:
         - core.site.site_name
         - core.api.rate_limit
     """
+
+    StringOrField = str | Field
 
     def _parse_path(self, path: str) -> tuple[str, str, str]:
         """
@@ -156,9 +160,10 @@ class ConfigAccessor:
             config_cache.set(path, config_value.value)
             return self._deserialize(field, config_value.value)
         except ConfigValue.DoesNotExist:
+            config_cache.set(path, None)
             return config_cache.NOT_FOUND
 
-    def get(self, path: str | Field, default: Any = None) -> Any:
+    def get(self, path: StringOrField, default: Any = None) -> Any:
         """
         Get a configuration value.
 
@@ -181,13 +186,7 @@ class ConfigAccessor:
             FieldNotFoundError: If field doesn't exist (always raised)
         """
 
-        if isinstance(path, str):
-            app_label, section, field_name = self._parse_path(path)
-            field = self._get_field(app_label, section, field_name)
-        elif isinstance(path, Field):
-            field = path
-        else:
-            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+        field = self._resolve_field_ref(path)
 
         value = self._get_raw(field)
         if value is not config_cache.NOT_FOUND:
@@ -198,7 +197,7 @@ class ConfigAccessor:
 
         return default
 
-    def set(self, path: str | Field, value: Any) -> None:
+    def set(self, path: StringOrField, value: Any) -> None:
         """
         Set a configuration value.
 
@@ -215,15 +214,7 @@ class ConfigAccessor:
             FieldNotFoundError: If field doesn't exist
             ConfigValueError: If value cannot be serialized
         """
-        from django.db import transaction
-
-        if isinstance(path, str):
-            app_label, section, field_name = self._parse_path(path)
-            field = self._get_field(app_label, section, field_name)
-        elif isinstance(path, Field):
-            field = path
-        else:
-            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+        field = self._resolve_field_ref(path)
 
         with transaction.atomic():
             cache_refresh, callbacks = self._set_value_internal(field, value)
@@ -231,7 +222,7 @@ class ConfigAccessor:
             transaction.on_commit(callbacks)
 
     def set_many(
-        self, values: dict[str | Field, Any], skip_on_save_callbacks: bool = False
+        self, values: dict[StringOrField, Any], skip_on_save_callbacks: bool = False
     ) -> int:
         """
         Set multiple configuration values at once.
@@ -257,8 +248,6 @@ class ConfigAccessor:
             ConfigValueError: If any value cannot be serialized.
             ConfigValidationError: If any value fails field validation.
         """
-        from django.db import transaction
-
         with transaction.atomic():
             callbacks_to_register = []
 
@@ -411,7 +400,7 @@ class ConfigAccessor:
         all_config = self.all(app_label)
         return all_config.get(section_key, {})
 
-    def exists(self, path: str | Field) -> bool:
+    def exists(self, path: StringOrField) -> bool:
         """
         Check if a configuration path exists (is registered).
 
@@ -454,7 +443,7 @@ class ConfigAccessor:
         except (AppNotFoundError, FieldNotFoundError):
             return False
 
-    def is_set(self, path: str | Field) -> bool:
+    def is_set(self, path: StringOrField) -> bool:
         """
         Check if a configuration value has been explicitly set in the database.
 
@@ -464,27 +453,22 @@ class ConfigAccessor:
         Returns:
             True if value exists in database with a non-empty value, False if using default
         """
-        if isinstance(path, Field):
-            field = path
-            app_label = field._app_label
-            db_path = field.path
-        else:
-            if not self.exists(path):
-                return False
-            app_label, section, field_name = self._parse_path(path)
-            db_path = self._to_db_path(section, field_name)
+        try:
+            field = self._resolve_field_ref(path)
+        except (AppNotFoundError, FieldNotFoundError):
+            return False
 
         try:
             config_value = ConfigValue.objects.get(
-                app_label=app_label,
-                path=db_path,
+                app_label=field._app_label,
+                path=field.path,
             )
             # Check if value is not None and not empty string
             return config_value.value is not None and config_value.value != ""
         except ConfigValue.DoesNotExist:
             return False
 
-    def reset(self, path: str | Field) -> None:
+    def reset(self, path: StringOrField) -> None:
         """
         Reset a configuration value to its field default.
 
@@ -499,13 +483,30 @@ class ConfigAccessor:
             AppNotFoundError: If app has no registered config
             FieldNotFoundError: If field doesn't exist
         """
-        if isinstance(path, Field):
-            field = path
-        else:
-            app_label, section, field_name = self._parse_path(path)
-            field = self._get_field(app_label, section, field_name)
+        field = self._resolve_field_ref(path)
 
         self.set(field, field.default)
+
+    def _resolve_field_ref(self, path: StringOrField) -> Field:
+        """
+        Resolves a Field object from stringified field path or the field itself
+
+        Args:
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
+
+        Returns:
+            Field: Field resolved from the path
+        """
+
+        if isinstance(path, str):
+            app_label, section, field_name = self._parse_path(path)
+            field = self._get_field(app_label, section, field_name)
+        elif isinstance(path, Field):
+            field = path
+        else:
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+
+        return field
 
 
 # Global config accessor instance
