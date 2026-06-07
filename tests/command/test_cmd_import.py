@@ -415,6 +415,13 @@ class TestCmdImportErrors:
             run_import(file=str(bad_file), force=True)
         assert "Invalid JSON" in str(exc.value)
 
+    def test_raises_for_non_object_json(self, tmp_path):
+        bad_file = tmp_path / "bad.json"
+        bad_file.write_text("[1, 2, 3]")
+        with pytest.raises(CommandError) as exc:
+            run_import(file=str(bad_file), force=True)
+        assert "Invalid JSON" in str(exc.value)
+
     def test_raises_for_empty_config_data(self, tmp_json_file):
         path = tmp_json_file({"version": 1, "config": {}})
         with pytest.raises(CommandError) as exc:
