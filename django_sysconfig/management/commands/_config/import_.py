@@ -22,6 +22,12 @@ def handle_import(command, **options):
         raise CommandError("Provide a file path via --file/-i or use --stdin")
     if file_path and not file_path.endswith(".json"):
         raise CommandError("Input file must have a .json extension")
+    if use_stdin and not force and not dry_run:
+        raise CommandError(
+            "--stdin reads from a non-interactive pipe, so there is no way to "
+            "prompt for confirmation. Re-run with --force to acknowledge that "
+            "this will override current configuration values."
+        )
 
     # 2. Load
     data = load_json(command, file_path, use_stdin)

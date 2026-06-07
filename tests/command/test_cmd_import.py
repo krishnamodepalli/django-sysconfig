@@ -379,6 +379,14 @@ class TestCmdImportStructureValidation:
 
 class TestCmdImportErrors:
 
+    def test_raises_when_stdin_used_without_force(self):
+        with pytest.raises(CommandError) as exc:
+            run_import(stdin=True, force=False, stdin_data=VALID_IMPORT_DATA)
+        assert "--force" in str(exc.value)
+
+    def test_stdin_without_force_is_allowed_with_dry_run(self, config):
+        run_import(stdin=True, force=False, dry_run=True, stdin_data=VALID_IMPORT_DATA)
+
     def test_raises_when_both_stdin_and_file_provided(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         with pytest.raises(CommandError) as exc:
