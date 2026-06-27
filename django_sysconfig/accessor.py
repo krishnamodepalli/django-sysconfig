@@ -122,7 +122,7 @@ class ConfigAccessor:
     def _deserialize(self, field: Field, raw_value: str | None) -> Any:
         """Deserialize a raw database value using the field's frontend model."""
         if raw_value is None:
-            return field.default
+            return None  # stored null is null — field default is resolved in get()
 
         # Special handling for SecretFrontendModel - decrypt the value
         from .frontend_models import SecretFrontendModel
@@ -160,7 +160,6 @@ class ConfigAccessor:
             config_cache.set(path, config_value.value)
             return self._deserialize(field, config_value.value)
         except ConfigValue.DoesNotExist:
-            config_cache.set(path, None)
             return config_cache.NOT_FOUND
 
     def get(self, path: StringOrField, default: Any = None) -> Any:
@@ -188,13 +187,24 @@ class ConfigAccessor:
 
         field = self._resolve_field_ref(path)
 
-        value = self._get_raw(field)
-        if value is not config_cache.NOT_FOUND:
-            return value
+        # 1. Stored value (DB or cache) — highest precedence
+        #    Covers both explicit values and explicitly stored nulls.
+        stored = self._get_raw(field)
+        if stored is not config_cache.NOT_FOUND:
+            return stored
 
+        # 2. Field-level default — defined in the Field declaration
+        #    Cache the serialized form so future reads skip the DB entirely.
         if field.default is not None:
+            serialized = field.get_frontend_model_instance().serialize_value(
+                field.default
+            )
+            if serialized is not None:
+                config_cache.set(field.full_path, serialized)
             return field.default
 
+        # 3. Caller-supplied fallback — lowest precedence, never cached
+        #    Not a field property, so it must not bleed into other callers.
         return default
 
     def set(self, path: StringOrField, value: Any) -> None:
@@ -226,7 +236,6 @@ class ConfigAccessor:
     ) -> int:
         """
         Set multiple configuration values at once.
-
         All writes are performed within a single transaction. If any write fails,
         the entire batch is rolled back. on_save callbacks are fired sequentially
         only after the transaction commits successfully.
