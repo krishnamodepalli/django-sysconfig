@@ -138,25 +138,19 @@ class ConfigAccessor:
         frontend_model = field.get_frontend_model_instance(value)
         return frontend_model.serialize_value(value)
 
-    def _get_raw(self, field: Field) -> Any:
-        """Fetch and deserialize a field's value from cache or DB. Returns NOT_FOUND if absent."""
+    def _fetch_value(self, field: Field) -> Any:
+        """Fetch and deserialize a field's stored value from cache or DB. Returns NOT_FOUND if absent."""
         path = field.full_path
 
         cached_value = config_cache.get(path)
         if cached_value is not config_cache.NOT_FOUND:
-            # Cache hit - deserialize the raw value
             return self._deserialize(field, cached_value)
-
-        # Cache miss - query database
-        db_path = field.path
-        app_label = field._app_label
 
         try:
             config_value = ConfigValue.objects.get(
-                app_label=app_label,
-                path=db_path,
+                app_label=field._app_label,
+                path=field.path,
             )
-            # Cache the raw database value
             config_cache.set(path, config_value.value)
             return self._deserialize(field, config_value.value)
         except ConfigValue.DoesNotExist:
@@ -189,7 +183,7 @@ class ConfigAccessor:
 
         # 1. Stored value (DB or cache) — highest precedence
         #    Covers both explicit values and explicitly stored nulls.
-        stored = self._get_raw(field)
+        stored = self._fetch_value(field)
         if stored is not config_cache.NOT_FOUND:
             return stored
 
@@ -403,14 +397,13 @@ class ConfigAccessor:
         """
         if isinstance(section, str):
             app_label, section_key = self._parse_app_section(section)
+            all_config = self.all(app_label)
+            return all_config.get(section_key, {})
         elif isinstance(section, type) and issubclass(section, Section):
-            app_label = section._app_label
-            section_key = section._section_name
+            all_config = self.all(section._app)
+            return all_config.get(section._section_name, {})
         else:
             raise TypeError(f"Expected str or Section, got {type(section).__name__}")
-
-        all_config = self.all(app_label)
-        return all_config.get(section_key, {})
 
     def exists(self, path: StringOrField) -> bool:
         """
