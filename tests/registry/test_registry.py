@@ -146,8 +146,8 @@ class TestFieldPaths:
 class TestDBRowCreation:
 
     def test_rows_created_for_all_fields(self):
-        # testapp: 5 fields in General + 3 in Advanced
-        assert ConfigValue.objects.filter(app_label="testapp").count() == 8
+        # testapp: 6 fields in General + 3 in Advanced
+        assert ConfigValue.objects.filter(app_label="testapp").count() == 9
 
     def test_row_path_uses_dot_notation(self):
         for row in ConfigValue.objects.filter(app_label="testapp"):

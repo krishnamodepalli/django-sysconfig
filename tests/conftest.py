@@ -70,6 +70,10 @@ def make_test_config():
                 default=10,
                 validators=[RangeValidator(min_value=1, max_value=1000)],
             )
+            no_default = Field(
+                StringFrontendModel,
+                label="No Default",
+            )
             price = Field(
                 DecimalFrontendModel,
                 label="Price",
