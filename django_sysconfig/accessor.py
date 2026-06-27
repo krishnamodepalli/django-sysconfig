@@ -261,15 +261,12 @@ class ConfigAccessor:
             callbacks_to_register = []
 
             for path, value in values.items():
-                if isinstance(path, str):
-                    app_label, section, field_name = self._parse_path(path)
-                    field = self._get_field(app_label, section, field_name)
-                elif isinstance(path, Field):
-                    field = path
-                else:
+                try:
+                    field = self._resolve_field_ref(path)
+                except TypeError:
                     raise TypeError(
                         f"Expected dict[str | Field, Any], got dict[{type(path).__name__}, Any]"
-                    )
+                    ) from None
 
                 cache_refresh_callback, on_save_callback = self._set_value_internal(
                     field, value
@@ -364,8 +361,12 @@ class ConfigAccessor:
             config_def = config_registry.get_config(app)
             if not config_def:
                 raise AppNotFoundError(app)
-        else:
+        elif isinstance(app, AppConfigDefinition):
             config_def = app
+        else:
+            raise TypeError(
+                f"Expected str or AppConfigDefinition, got {type(app).__name__}"
+            )
 
         # Fetch all stored values
         stored = {
@@ -402,9 +403,11 @@ class ConfigAccessor:
         """
         if isinstance(section, str):
             app_label, section_key = self._parse_app_section(section)
-        else:
+        elif isinstance(section, type) and issubclass(section, Section):
             app_label = section._app_label
             section_key = section._section_name
+        else:
+            raise TypeError(f"Expected str or Section, got {type(section).__name__}")
 
         all_config = self.all(app_label)
         return all_config.get(section_key, {})
@@ -462,17 +465,19 @@ class ConfigAccessor:
         Returns:
             True if value exists in database with a non-empty value, False if using default
         """
-        try:
-            field = self._resolve_field_ref(path)
-        except (AppNotFoundError, FieldNotFoundError):
+        if not isinstance(path, (str, Field)):
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+
+        # InvalidPathError propagates for malformed strings; unregistered paths return False
+        if not self.exists(path):
             return False
 
+        field = self._resolve_field_ref(path)
         try:
             config_value = ConfigValue.objects.get(
                 app_label=field._app_label,
                 path=field.path,
             )
-            # Check if value is not None and not empty string
             return config_value.value is not None and config_value.value != ""
         except ConfigValue.DoesNotExist:
             return False
