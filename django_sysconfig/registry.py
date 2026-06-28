@@ -310,6 +310,17 @@ class ConfigRegistry:
         """Get the configuration definition for an app."""
         return self._configs.get(app_label)
 
+    def get_field(self, full_path: str) -> Field | None:
+        """Get a field by its full path (e.g., 'myapp.general.site_name')."""
+        parts = full_path.split(".")
+        if len(parts) != 3:
+            return None
+        app_label, section, field_name = parts
+        config_def = self._configs.get(app_label)
+        if not config_def:
+            return None
+        return config_def.get_field(f"{section}.{field_name}")
+
     def get_all_configs(self) -> dict[str, AppConfigDefinition]:
         """Get all registered configurations."""
         return self._configs.copy()
