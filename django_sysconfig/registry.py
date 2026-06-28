@@ -141,7 +141,9 @@ class SectionMeta(type):
                 value.name = key
                 fields[key] = value
 
-        namespace["_fields"] = fields
+        namespace["_fields"] = dict(
+            sorted(fields.items(), key=lambda x: (x[1].sort_order, x[0]))
+        )
         return super().__new__(mcs, name, bases, namespace)
 
 
@@ -167,7 +169,7 @@ class Section(metaclass=SectionMeta):
     @classmethod
     def get_fields(cls) -> dict[str, Field]:
         """Return all fields in this section, sorted by sort_order."""
-        return dict(sorted(cls._fields.items(), key=lambda x: (x[1].sort_order, x[0])))
+        return cls._fields
 
 
 class AppConfigDefinition:
