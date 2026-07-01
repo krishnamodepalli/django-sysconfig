@@ -71,7 +71,7 @@ Raised when the first segment of the path (the app label) has no registered conf
 
 **Triggers:**
 - `config.get("nonexistent_app.general.field")`
-- `config.all("nonexistent_app")`
+- `config.set("nonexistent_app.general.field", "value")`
 
 ```python
 from django_sysconfig.exceptions import AppNotFoundError
