@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandParser
 from ._config.export import handle_export
 from ._config.get import handle_get
 from ._config.import_ import handle_import
+from ._config.options import add_dry_run, add_legacy_force, add_skip_prompt
 from ._config.reset import handle_reset
 from ._config.set import handle_set
 
@@ -22,11 +23,7 @@ class Command(BaseCommand):
         set_parser = subparsers.add_parser("set", help="Set a configuration value")
         set_parser.add_argument("path", help="Config path in app.section.field format")
         set_parser.add_argument("value", help="Value to set")
-        set_parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="Validate the input value without saving into database",
-        )
+        add_dry_run(set_parser)
 
         # --- reset ---
         reset_parser = subparsers.add_parser(
@@ -35,9 +32,7 @@ class Command(BaseCommand):
         reset_parser.add_argument(
             "path", help="Config path in app.section.field format"
         )
-        reset_parser.add_argument(
-            "-f", "--force", action="store_true", help="Skip the confirmation prompt"
-        )
+        add_legacy_force(reset_parser)
 
         # --- export ---
         export_parser = subparsers.add_parser(
@@ -67,23 +62,14 @@ class Command(BaseCommand):
             action="store_true",
             help="Read JSON from stdin instead of a file",
         )
-        import_parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="Validate the input config data without saving any values",
-        )
+        add_dry_run(import_parser)
         import_parser.add_argument(
             "-S",
             "--skip-on-save-callbacks",
             action="store_true",
             help="Skip on_save callbacks for all fields in this import batch.",
         )
-        import_parser.add_argument(
-            "-f",
-            "--force",
-            action="store_true",
-            help="Skip the confirmation prompt",
-        )
+        add_skip_prompt(import_parser)
 
     def handle(self, *args, **options):
         handlers = {

@@ -242,6 +242,21 @@ class TestCmdImportConfirmation:
             )
             mock_input.assert_not_called()
 
+    def test_no_input_skips_prompt(self, tmp_json_file):
+        # --no-input is the canonical alias of --force
+        path = tmp_json_file(VALID_IMPORT_DATA)
+        with patch("builtins.input") as mock_input:
+            stdout = StringIO()
+            call_command(
+                "config",
+                "import",
+                "--file",
+                path,
+                "--no-input",
+                stdout=stdout,
+            )
+            mock_input.assert_not_called()
+
     def test_proceeds_on_y(self, config, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         run_import(file=path, force=False, user_input="y")

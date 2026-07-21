@@ -25,8 +25,8 @@ def handle_import(command, **options):
     if use_stdin and not force and not dry_run:
         raise CommandError(
             "--stdin reads from a non-interactive pipe, so there is no way to "
-            "prompt for confirmation. Re-run with --force to acknowledge that "
-            "this will override current configuration values."
+            "prompt for confirmation. Re-run with --no-input (or --force) to "
+            "acknowledge that this will override current configuration values."
         )
 
     # 2. Load
@@ -66,7 +66,7 @@ def handle_import(command, **options):
         for field, value in fields.items()
     ]
 
-    # 4. Confirm (skipped for dry-run and --force)
+    # 4. Confirm (skipped for dry-run and --no-input/--force)
     if not dry_run and not force:
         source = "stdin" if use_stdin else file_path
         confirm(
