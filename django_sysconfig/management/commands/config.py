@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandParser
 from ._config.export import handle_export
 from ._config.get import handle_get
 from ._config.import_ import handle_import
-from ._config.options import add_dry_run, add_legacy_force, add_skip_prompt
+from ._config.options import add_dry_run, add_skip_prompt
 from ._config.reset import handle_reset
 from ._config.set import handle_set
 
@@ -32,7 +32,7 @@ class Command(BaseCommand):
         reset_parser.add_argument(
             "path", help="Config path in app.section.field format"
         )
-        add_legacy_force(reset_parser)
+        add_skip_prompt(reset_parser)
 
         # --- export ---
         export_parser = subparsers.add_parser(

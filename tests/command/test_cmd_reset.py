@@ -2,9 +2,11 @@
 Tests for: python manage.py config reset <path>
 
 Covers:
-- Resets value to field default (single-path op — no confirmation prompt)
-- reset never prompts, regardless of interactivity
-- --force is accepted but deprecated (no-op) and warns on stderr
+- Resets value to field default
+- Prompts for confirmation, proceeds on y
+- Prompts for confirmation, aborts on n / empty input
+- --no-input skips the confirmation prompt
+- --force still skips the prompt but emits a DeprecationWarning
 - Success message written to stdout
 - CommandError for unknown path
 - CommandError for invalid path format
@@ -22,17 +24,18 @@ from django.core.management.base import CommandError
 # ---------------------------------------------------------------------------
 
 
-def run_reset(path, **kwargs):
+def run_reset(path, user_input="y", **kwargs):
     stdout = StringIO()
     stderr = StringIO()
-    call_command(
-        "config",
-        "reset",
-        path,
-        stdout=stdout,
-        stderr=stderr,
-        **kwargs,
-    )
+    with patch("builtins.input", return_value=user_input):
+        call_command(
+            "config",
+            "reset",
+            path,
+            stdout=stdout,
+            stderr=stderr,
+            **kwargs,
+        )
     return stdout.getvalue().strip(), stderr.getvalue().strip()
 
 
@@ -69,35 +72,70 @@ class TestCmdReset:
 
 
 # ---------------------------------------------------------------------------
-# No confirmation prompt (confirmation is reserved for bulk ops)
+# Confirmation prompt
 # ---------------------------------------------------------------------------
 
 
-class TestCmdResetNoPrompt:
+class TestCmdResetConfirmation:
 
-    def test_reset_never_prompts(self, config):
+    def test_proceeds_on_y(self, config):
+        config.set("testapp.general.max_items", 999)
+        run_reset("testapp.general.max_items", user_input="y")
+        assert config.get("testapp.general.max_items") == 10
+
+    def test_aborts_on_n(self, config):
+        config.set("testapp.general.max_items", 999)
+        with pytest.raises(CommandError):
+            run_reset("testapp.general.max_items", user_input="n")
+        assert config.get("testapp.general.max_items") == 999
+
+    def test_aborts_on_empty_input(self, config):
+        config.set("testapp.general.max_items", 999)
+        with pytest.raises(CommandError):
+            run_reset("testapp.general.max_items", user_input="")
+        assert config.get("testapp.general.max_items") == 999
+
+    def test_no_input_skips_prompt(self, config):
         config.set("testapp.general.max_items", 999)
         with patch("builtins.input") as mock_input:
             stdout = StringIO()
-            call_command("config", "reset", "testapp.general.max_items", stdout=stdout)
+            call_command(
+                "config",
+                "reset",
+                "testapp.general.max_items",
+                no_input=True,
+                stdout=stdout,
+            )
             mock_input.assert_not_called()
         assert config.get("testapp.general.max_items") == 10
 
 
 # ---------------------------------------------------------------------------
-# Deprecated --force flag (backward-compatible no-op)
+# Deprecated --force flag (still works, warns)
 # ---------------------------------------------------------------------------
 
 
 class TestCmdResetForceDeprecation:
 
-    def test_force_still_accepted(self, config):
+    def test_force_still_skips_prompt(self, config):
         config.set("testapp.general.max_items", 999)
-        run_reset("testapp.general.max_items", force=True)
+        with patch("builtins.input") as mock_input:
+            stdout = StringIO()
+            stderr = StringIO()
+            call_command(
+                "config",
+                "reset",
+                "testapp.general.max_items",
+                force=True,
+                stdout=stdout,
+                stderr=stderr,
+            )
+            mock_input.assert_not_called()
         assert config.get("testapp.general.max_items") == 10
 
     def test_force_emits_deprecation_warning(self, config):
-        _, stderr = run_reset("testapp.general.max_items", force=True)
+        with pytest.warns(DeprecationWarning, match="--no-input"):
+            _, stderr = run_reset("testapp.general.max_items", force=True)
         assert "deprecated" in stderr.lower()
 
 
@@ -110,12 +148,12 @@ class TestCmdResetErrors:
 
     def test_raises_for_invalid_path_format(self):
         with pytest.raises(CommandError):
-            run_reset("invalid")
+            run_reset("invalid", no_input=True)
 
     def test_raises_for_unknown_app(self):
         with pytest.raises(CommandError):
-            run_reset("unknown_app.general.max_items")
+            run_reset("unknown_app.general.max_items", no_input=True)
 
     def test_raises_for_unknown_field(self):
         with pytest.raises(CommandError):
-            run_reset("testapp.general.unknown_field")
+            run_reset("testapp.general.unknown_field", no_input=True)

@@ -5,6 +5,7 @@ from django_sysconfig.accessor import config
 from django_sysconfig.exceptions import ConfigError, ConfigValidationError
 
 from .common import confirm, load_json
+from .options import resolve_skip_prompt
 
 
 def handle_import(command, **options):
@@ -12,7 +13,7 @@ def handle_import(command, **options):
     dry_run = options["dry_run"]
     use_stdin = options["stdin"]
     skip_callbacks = options["skip_on_save_callbacks"]
-    force = options["force"]
+    skip_prompt = resolve_skip_prompt(command, options)
     file_path = options.get("file")
 
     # 1. Validate args
@@ -22,12 +23,6 @@ def handle_import(command, **options):
         raise CommandError("Provide a file path via --file/-i or use --stdin")
     if file_path and not file_path.endswith(".json"):
         raise CommandError("Input file must have a .json extension")
-    if use_stdin and not force and not dry_run:
-        raise CommandError(
-            "--stdin reads from a non-interactive pipe, so there is no way to "
-            "prompt for confirmation. Re-run with --no-input (or --force) to "
-            "acknowledge that this will override current configuration values."
-        )
 
     # 2. Load
     data = load_json(command, file_path, use_stdin)
@@ -66,12 +61,16 @@ def handle_import(command, **options):
         for field, value in fields.items()
     ]
 
-    # 4. Confirm (skipped for dry-run and --no-input/--force)
-    if not dry_run and not force:
-        source = "stdin" if use_stdin else file_path
+    # 4. Confirm.
+    #
+    # Skipped for dry-run, for --no-input/--force, and when reading from stdin.
+    # load_json() has already drained sys.stdin by this point, so prompting
+    # would hit an exhausted stream and raise EOFError; a piped stdin is
+    # non-interactive by definition, so there is nobody to ask.
+    if not dry_run and not skip_prompt and not use_stdin:
         confirm(
             command,
-            f"This will override current configuration values from '{source}'. "
+            f"This will override current configuration values from '{file_path}'. "
             "This cannot be undone.",
         )
 

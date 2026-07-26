@@ -56,6 +56,7 @@ def run_import(
     stdin=False,
     dry_run=False,
     force=False,
+    no_input=False,
     skip_callbacks=False,
     user_input="y",
     stdin_data=None,
@@ -67,6 +68,7 @@ def run_import(
         "stderr": stderr,
         "dry_run": dry_run,
         "force": force,
+        "no_input": no_input,
         "skip_on_save_callbacks": skip_callbacks,
         "stdin": stdin,
     }
@@ -257,6 +259,26 @@ class TestCmdImportConfirmation:
             )
             mock_input.assert_not_called()
 
+    def test_stdin_skips_prompt_without_any_flag(self, config):
+        # A piped stdin is non-interactive and load_json() has already drained
+        # it, so import must not attempt to prompt.
+        with patch("builtins.input") as mock_input:
+            run_import(stdin=True, stdin_data=VALID_IMPORT_DATA)
+            mock_input.assert_not_called()
+        assert config.get("testapp.general.site_name") == "Imported Site"
+
+    def test_force_emits_deprecation_warning(self, tmp_json_file):
+        path = tmp_json_file(VALID_IMPORT_DATA)
+        with pytest.warns(DeprecationWarning, match="--no-input"):
+            _, stderr = run_import(file=path, force=True)
+        assert "deprecated" in stderr.lower()
+
+    def test_no_input_emits_no_deprecation_warning(self, tmp_json_file, recwarn):
+        path = tmp_json_file(VALID_IMPORT_DATA)
+        _, stderr = run_import(file=path, no_input=True)
+        assert not [w for w in recwarn if w.category is DeprecationWarning]
+        assert "deprecated" not in stderr.lower()
+
     def test_proceeds_on_y(self, config, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
         run_import(file=path, force=False, user_input="y")
@@ -393,14 +415,6 @@ class TestCmdImportStructureValidation:
 
 
 class TestCmdImportErrors:
-
-    def test_raises_when_stdin_used_without_force(self):
-        with pytest.raises(CommandError) as exc:
-            run_import(stdin=True, force=False, stdin_data=VALID_IMPORT_DATA)
-        assert "--force" in str(exc.value)
-
-    def test_stdin_without_force_is_allowed_with_dry_run(self, config):
-        run_import(stdin=True, force=False, dry_run=True, stdin_data=VALID_IMPORT_DATA)
 
     def test_raises_when_both_stdin_and_file_provided(self, tmp_json_file):
         path = tmp_json_file(VALID_IMPORT_DATA)
