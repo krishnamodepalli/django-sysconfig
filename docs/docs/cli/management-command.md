@@ -83,7 +83,7 @@ The value is never echoed back in the success message — this is intentional so
 Reset a config value back to its [field default](/guides/defining-config#always-set-a-default).
 
 ```bash
-python manage.py config reset <path>
+python manage.py config reset <path> [--no-input]
 ```
 
 **Arguments**
@@ -92,16 +92,26 @@ python manage.py config reset <path>
 |---|---|
 | `path` | Config path in `app.section.field` format |
 
+**Flags**
+
+| Flag | Description |
+|---|---|
+| `--no-input`, `--noinput` | Skip the confirmation prompt |
+
 **Examples**
 
 ```bash
+# With confirmation prompt
 python manage.py config reset myapp.general.maintenance_mode
+
+# Skip the prompt (scripts, CI)
+python manage.py config reset myapp.general.maintenance_mode --no-input
 ```
 
-`reset` targets a single path and applies immediately — it does not prompt for confirmation. This cannot be undone.
+Without `--no-input`, you will be asked to confirm before the reset takes effect. This cannot be undone.
 
-:::note
-`reset` no longer prompts for confirmation, so the old `--force` flag is deprecated. It is still accepted for backward compatibility but has no effect and will be removed in a future release.
+:::warning Deprecated: `-f` / `--force`
+`-f`/`--force` still works as an alias of `--no-input`, but it is deprecated and emits a `DeprecationWarning`. It will be removed in v2. Use `--no-input` instead.
 :::
 
 ---
@@ -184,7 +194,11 @@ python manage.py config import [--file <path>] [--stdin] [--dry-run] [--no-input
 
 `--file` and `--stdin` are mutually exclusive. One of them must be provided.
 
-Because a piped stdin cannot be prompted for confirmation, `--stdin` requires either `--no-input` (to acknowledge that current values will be overridden) or `--dry-run` (validate only). Running `--stdin` without one of these raises an error.
+A piped stdin is non-interactive by definition, so `--stdin` never prompts for confirmation — no extra flag is needed.
+
+:::warning Deprecated: `-f` / `--force`
+`-f`/`--force` still works as an alias of `--no-input`, but it is deprecated and emits a `DeprecationWarning`. It will be removed in v2. Use `--no-input` instead.
+:::
 
 **Examples**
 
@@ -192,8 +206,8 @@ Because a piped stdin cannot be prompted for confirmation, `--stdin` requires ei
 # Import from a file
 python manage.py config import --file config_export.json
 
-# Import from stdin (--no-input required, since stdin can't be confirmed interactively)
-cat config_export.json | python manage.py config import --stdin --no-input
+# Import from stdin (no confirmation prompt — stdin is non-interactive)
+cat config_export.json | python manage.py config import --stdin
 
 # Validate without writing
 python manage.py config import --file config_export.json --dry-run
