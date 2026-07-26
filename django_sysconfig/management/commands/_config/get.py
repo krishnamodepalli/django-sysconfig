@@ -1,6 +1,7 @@
 from django.core.management.base import CommandError
 
-from django_sysconfig import ConfigError, config
+from django_sysconfig.accessor import config
+from django_sysconfig.exceptions import ConfigError
 
 from .base import SubCommand
 
