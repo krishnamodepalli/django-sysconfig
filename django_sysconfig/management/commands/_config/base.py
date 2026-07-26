@@ -17,9 +17,15 @@ class SubCommand(ABC):
     name: str
     help: str = ""
 
-    @abstractmethod
-    def add_arguments(self, parser: CommandParser) -> None:
-        """Declare this subcommand's positional arguments and flags."""
+    def add_arguments(self, parser: CommandParser) -> None:  # noqa: B027
+        """Declare this subcommand's positional arguments and flags.
+
+        Optional — a subcommand may legitimately take no arguments at all.
+        Mirrors ``BaseCommand.add_arguments``, which is likewise a no-op.
+
+        The empty body is deliberate, so B027 (missing ``@abstractmethod``)
+        is silenced: that rule exists to catch a *forgotten* decorator.
+        """
 
     @abstractmethod
     def handle(self, command: BaseCommand, **options) -> None:
