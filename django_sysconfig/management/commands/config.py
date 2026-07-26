@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandParser
 
-from ._config.export import handle_export
+from ._config.export import ExportCommand
 from ._config.get import GetCommand
 from ._config.import_ import handle_import
 from ._config.options import add_dry_run, add_skip_prompt
@@ -11,7 +11,7 @@ from ._config.set import SetCommand
 # and its handler. The remaining subcommands below are still declared inline
 # and dispatched through LEGACY_HANDLERS; they are being converted one at a
 # time, after which both this comment and LEGACY_HANDLERS disappear.
-SUBCOMMANDS = (GetCommand(), SetCommand(), ResetCommand())
+SUBCOMMANDS = (GetCommand(), SetCommand(), ResetCommand(), ExportCommand())
 _BY_NAME = {sub.name: sub for sub in SUBCOMMANDS}
 
 
@@ -24,20 +24,6 @@ class Command(BaseCommand):
 
         for sub in SUBCOMMANDS:
             sub.add_arguments(subparsers.add_parser(sub.name, help=sub.help))
-
-        # --- export ---
-        export_parser = subparsers.add_parser(
-            "export", help="Export configuration values to a JSON file"
-        )
-        export_parser.add_argument(
-            "app", nargs="?", help="App label to export (exports all apps if omitted)"
-        )
-        export_parser.add_argument(
-            "--output",
-            "-o",
-            default="config_export.json",
-            help="Output file path (default: config_export.json)",
-        )
 
         # --- import ---
         import_parser = subparsers.add_parser(
@@ -75,6 +61,5 @@ class Command(BaseCommand):
 
 # Not-yet-migrated subcommands. Shrinks to empty as each one moves to a class.
 LEGACY_HANDLERS = {
-    "export": handle_export,
     "import": handle_import,
 }
