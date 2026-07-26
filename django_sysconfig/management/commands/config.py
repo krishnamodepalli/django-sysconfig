@@ -4,14 +4,14 @@ from ._config.export import handle_export
 from ._config.get import GetCommand
 from ._config.import_ import handle_import
 from ._config.options import add_dry_run, add_skip_prompt
-from ._config.reset import handle_reset
+from ._config.reset import ResetCommand
 from ._config.set import SetCommand
 
 # Subcommands migrated to the SubCommand class form. Each owns both its flags
 # and its handler. The remaining subcommands below are still declared inline
 # and dispatched through LEGACY_HANDLERS; they are being converted one at a
 # time, after which both this comment and LEGACY_HANDLERS disappear.
-SUBCOMMANDS = (GetCommand(), SetCommand())
+SUBCOMMANDS = (GetCommand(), SetCommand(), ResetCommand())
 _BY_NAME = {sub.name: sub for sub in SUBCOMMANDS}
 
 
@@ -24,15 +24,6 @@ class Command(BaseCommand):
 
         for sub in SUBCOMMANDS:
             sub.add_arguments(subparsers.add_parser(sub.name, help=sub.help))
-
-        # --- reset ---
-        reset_parser = subparsers.add_parser(
-            "reset", help="Reset a configuration value to its field default"
-        )
-        reset_parser.add_argument(
-            "path", help="Config path in app.section.field format"
-        )
-        add_skip_prompt(reset_parser)
 
         # --- export ---
         export_parser = subparsers.add_parser(
@@ -84,7 +75,6 @@ class Command(BaseCommand):
 
 # Not-yet-migrated subcommands. Shrinks to empty as each one moves to a class.
 LEGACY_HANDLERS = {
-    "reset": handle_reset,
     "export": handle_export,
     "import": handle_import,
 }
