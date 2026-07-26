@@ -1,11 +1,18 @@
 from django.core.management.base import BaseCommand, CommandParser
 
 from ._config.export import handle_export
-from ._config.get import handle_get
+from ._config.get import GetCommand
 from ._config.import_ import handle_import
 from ._config.options import add_dry_run, add_skip_prompt
 from ._config.reset import handle_reset
 from ._config.set import handle_set
+
+# Subcommands migrated to the SubCommand class form. Each owns both its flags
+# and its handler. The remaining subcommands below are still declared inline
+# and dispatched through LEGACY_HANDLERS; they are being converted one at a
+# time, after which both this comment and LEGACY_HANDLERS disappear.
+SUBCOMMANDS = (GetCommand(),)
+_BY_NAME = {sub.name: sub for sub in SUBCOMMANDS}
 
 
 class Command(BaseCommand):
@@ -15,9 +22,8 @@ class Command(BaseCommand):
         subparsers = parser.add_subparsers(dest="subcommand", metavar="subcommand")
         subparsers.required = True
 
-        # --- get ---
-        get_parser = subparsers.add_parser("get", help="Get a configuration value")
-        get_parser.add_argument("path", help="Config path in app.section.field format")
+        for sub in SUBCOMMANDS:
+            sub.add_arguments(subparsers.add_parser(sub.name, help=sub.help))
 
         # --- set ---
         set_parser = subparsers.add_parser("set", help="Set a configuration value")
@@ -72,11 +78,20 @@ class Command(BaseCommand):
         add_skip_prompt(import_parser)
 
     def handle(self, *args, **options):
-        handlers = {
-            "get": handle_get,
-            "set": handle_set,
-            "reset": handle_reset,
-            "export": handle_export,
-            "import": handle_import,
-        }
-        handlers[options["subcommand"]](self, **options)
+        name = options["subcommand"]
+
+        sub = _BY_NAME.get(name)
+        if sub is not None:
+            sub.handle(self, **options)
+            return
+
+        LEGACY_HANDLERS[name](self, **options)
+
+
+# Not-yet-migrated subcommands. Shrinks to empty as each one moves to a class.
+LEGACY_HANDLERS = {
+    "set": handle_set,
+    "reset": handle_reset,
+    "export": handle_export,
+    "import": handle_import,
+}
