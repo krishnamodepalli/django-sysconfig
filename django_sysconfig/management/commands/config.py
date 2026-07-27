@@ -27,7 +27,7 @@ class Command(BaseCommand):
         subparsers.required = True
 
         for sub in SUBCOMMANDS:
-            sub.add_arguments(subparsers.add_parser(sub.name, help=sub.help))
+            sub.register(subparsers)
 
     def handle(self, *args, **options):
         _BY_NAME[options["subcommand"]].handle(self, **options)
