@@ -65,6 +65,9 @@ class Field:
         label: str = "",
         comment: str = "",
         default: Any = None,
+        hidden: bool = False,
+        disabled: bool = False,
+        restrict_update: bool = False,
         sort_order: int = 0,
         validators: "list[BaseValidator] | None" = None,
         on_save: "Callable[[str, Any, Any], None] | None" = None,
@@ -96,6 +99,9 @@ class Field:
         self.validators = validators or []
         self.on_save = on_save
         self.extra = kwargs
+        self.hidden = hidden
+        self.disabled = disabled
+        self.restrict_update = restrict_update
 
         # These will be set by the registry during registration
         self.name: str = ""
