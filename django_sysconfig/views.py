@@ -13,7 +13,7 @@ from django.views import View
 from .accessor import config
 from .exceptions import ConfigValidationError
 from .models import ConfigValue
-from .registry import config_registry
+from .registry import AppConfigDefinition, config_registry
 
 
 class BaseConfigView(View):
@@ -214,7 +214,9 @@ class ConfigAppDetailView(BaseConfigView):
         frontend_model = field.get_frontend_model_instance()
         return frontend_model.get_value(raw_value)
 
-    def _build_sections_data(self, app_label: str, config_def) -> list[dict]:
+    def _build_sections_data(
+        self, app_label: str, config_def: AppConfigDefinition
+    ) -> list[dict]:
         """Build the sections data structure for the template."""
         # Fetch all stored values for this app
         stored_values = {
@@ -226,6 +228,9 @@ class ConfigAppDetailView(BaseConfigView):
             fields_data = []
 
             for field_name, field in section.get_fields().items():
+                if field.hidden:
+                    continue
+
                 # DB path uses dot notation
                 db_path = f"{section_key}.{field_name}"
 
