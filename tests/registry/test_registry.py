@@ -231,3 +231,26 @@ class TestSectionSortOrder:
         config_def = AppConfigDefinition("dummy_app", Cfg)
         keys = [key for key, _ in config_def.get_sections()]
         assert keys == ["alpha", "beta"]
+
+
+# ---------------------------------------------------------------------------
+# get_fields() immutability
+# ---------------------------------------------------------------------------
+
+
+class TestGetFieldsImmutability:
+
+    def test_mutating_returned_dict_does_not_affect_registry(self):
+        config_def = config_registry.get_config("testapp")
+        section = config_def.sections["general"]
+
+        fields = section.get_fields()
+        fields["injected"] = Field(StringFrontendModel)
+
+        assert "injected" not in section.get_fields()
+
+    def test_returns_new_dict_each_call(self):
+        config_def = config_registry.get_config("testapp")
+        section = config_def.sections["general"]
+
+        assert section.get_fields() is not section.get_fields()

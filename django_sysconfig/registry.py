@@ -169,7 +169,7 @@ class Section(metaclass=SectionMeta):
     @classmethod
     def get_fields(cls) -> dict[str, Field]:
         """Return all fields in this section, sorted by sort_order."""
-        return cls._fields
+        return cls._fields.copy()
 
 
 class AppConfigDefinition:

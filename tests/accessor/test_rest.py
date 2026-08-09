@@ -74,6 +74,10 @@ class TestExists:
         # must stay a False result, not raise.
         assert config.exists("ghost.none.missing") is False
 
+    def test_raises_type_error_for_invalid_type(self, config):
+        with pytest.raises(TypeError):
+            config.exists(123)
+
 
 # ===========================================================================
 # is_set()
@@ -183,6 +187,28 @@ class TestAll:
         config.set("testapp.general.site_name", "Second")
         result = config.all("testapp")
         assert result["general"]["site_name"] == "Second"
+
+    def test_missing_row_falls_back_to_field_default(self, config):
+        from django_sysconfig.models import ConfigValue
+
+        # A field with a real default but no DB row at all (not even a null
+        # row) must still resolve to its field default, same as get().
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.max_items"
+        ).delete()
+        result = config.all("testapp")
+        assert result["general"]["max_items"] == 10
+
+    def test_stored_null_still_wins_over_field_default(self, config):
+        from django_sysconfig.models import ConfigValue
+
+        # An explicitly stored null (row present, value=None) must stay None
+        # and not be confused with a missing row.
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.max_items"
+        ).update(value=None)
+        result = config.all("testapp")
+        assert result["general"]["max_items"] is None
 
 
 # ===========================================================================
@@ -303,3 +329,33 @@ class TestResetWithField:
         config.set("testapp.general.max_items", 999)
         config.reset(field)
         assert config.get("testapp.general.max_items") == field.default
+
+    def test_no_default_field_clears_stored_value(self, config, registry):
+        from django_sysconfig.models import ConfigValue
+
+        # Reset on a field with no default must delete the row, not write a
+        # null — a stored null would otherwise outrank the caller's default.
+        field = registry.get_config("testapp").sections["general"].no_default
+        config.set(field, "explicit value")
+        config.reset(field)
+
+        assert not ConfigValue.objects.filter(
+            app_label="testapp", path="general.no_default"
+        ).exists()
+        assert config.get(field, default="fallback") == "fallback"
+
+    def test_no_default_field_reset_fires_on_save_with_none(
+        self, config, registry, django_capture_on_commit_callbacks
+    ):
+        from unittest.mock import MagicMock
+
+        field = registry.get_config("testapp").sections["general"].no_default
+        callback = MagicMock()
+        field.on_save = callback
+
+        with django_capture_on_commit_callbacks(execute=True):
+            config.set(field, "explicit value")
+        with django_capture_on_commit_callbacks(execute=True):
+            config.reset(field)
+
+        callback.assert_called_with(field.full_path, None, "explicit value")

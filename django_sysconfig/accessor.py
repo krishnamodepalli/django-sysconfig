@@ -374,8 +374,11 @@ class ConfigAccessor:
 
             for field_name, field in section_class.get_fields().items():
                 db_path = self._to_db_path(section_key, field_name)
-                raw_value = stored.get(db_path)
-                section_data[field_name] = self._deserialize(field, raw_value)
+                if db_path in stored:
+                    section_data[field_name] = self._deserialize(field, stored[db_path])
+                else:
+                    # No row at all — fall back to the field default
+                    section_data[field_name] = field.default
 
             result[section_key] = section_data
 
@@ -421,6 +424,9 @@ class ConfigAccessor:
                 condition, and is left to propagate so callers can catch
                 bad path strings early.
         """
+        if not isinstance(path, (str, Field)):
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+
         if isinstance(path, Field):
             app_label = path._app_label
             section = path._section_name
@@ -433,6 +439,8 @@ class ConfigAccessor:
             if section not in app_config.sections:
                 return False
 
+            # TODO: registry lookup here is O(n) over the section's fields —
+            # switch to an identity-keyed field index for O(1) once one exists.
             if path not in app_config.sections[section].get_fields().values():
                 return False
 
@@ -492,7 +500,42 @@ class ConfigAccessor:
         """
         field = self._resolve_field_ref(path)
 
-        self.set(field, field.default)
+        if field.default is None:
+            # No default to write back — clear the stored value entirely so
+            # get() falls through to the caller-supplied default instead of
+            # a persisted null "winning" as if it had been explicitly set.
+            self._clear_value(field)
+        else:
+            self.set(field, field.default)
+
+    def _clear_value(self, field: Field) -> None:
+        """Delete a field's stored value so get() falls through to defaults."""
+        with transaction.atomic():
+            old_value = None
+            if field.on_save:
+                try:
+                    existing = ConfigValue.objects.get(
+                        app_label=field._app_label, path=field.path
+                    )
+                    old_value = self._deserialize(field, existing.value)
+                except ConfigValue.DoesNotExist:
+                    old_value = field.default
+
+            ConfigValue.objects.filter(
+                app_label=field._app_label, path=field.path
+            ).delete()
+
+            path = field.full_path
+
+            def on_commit_cache_clear():
+                config_cache.invalidate(path)
+
+            def on_commit_callback():
+                if field.on_save:
+                    field.on_save(path, None, old_value)
+
+            transaction.on_commit(on_commit_cache_clear)
+            transaction.on_commit(on_commit_callback)
 
     def _resolve_field_ref(self, path: StringOrField) -> Field:
         """
