@@ -1,48 +1,274 @@
 # CHANGELOG
 
 
+## v1.1.0 (2026-05-14)
+
+### Documentation
+
+- Update docs for feat/fields-shorthand branch
+  ([#99](https://github.com/krishnamodepalli/django-sysconfig/pull/99),
+  [`7e75e6e`](https://github.com/krishnamodepalli/django-sysconfig/commit/7e75e6ecfdcf1542a27ba464a125ef52b4170007))
+
+### Features
+
+- Add `--dry-run` flag for `config set` sub-command
+  ([#98](https://github.com/krishnamodepalli/django-sysconfig/pull/98),
+  [`3f2fb0a`](https://github.com/krishnamodepalli/django-sysconfig/commit/3f2fb0a8309737b4d871ea6fe526dc4bacef666e))
+
+* feat: Add --dry-run flag for `config set` sub-command
+
+* docs: Update docs for `config set` command with `--dry-run` flag
+
+* tests: Update tests for `config set` subcommand `--dry-run` flag
+
+* tests: Fix tests to correctly set dry_run for config_set dry-run tests
+
+* refactor: Use `set_rollback` instead of throwing TransactionManagementError
+
+changes: - The commands `config set` and `config import` both have a `--dry-run` flag. To catch this
+  flag, the TransactionManagementError is previously used. From Django 4.2
+  `transaction.set_rollback()` is preferred for the same behavior, we shifted to that in this commit
+
+* tests: refactor test_case `test_dry_run_doesnt_save` in test_cmd_set.py
+
+- **fields**: Add typed field shorthands
+  ([#86](https://github.com/krishnamodepalli/django-sysconfig/pull/86),
+  [`6b2403f`](https://github.com/krishnamodepalli/django-sysconfig/commit/6b2403f32ebb6ea50ba3b0bcd7a40c357cb04647))
+
+* feat(fields): add typed field shorthands using functools.partial
+
+* feat(init): re-export Section and register_config from package root
+
+* style(fields): add __all__ to define public API surface
+
+* refactor: add __all__ to public API modules
+
+* refactor: Add `config` and all exceptions in the __init__.py
+
+* chore: Add fields and validators in __init__.py:__all__
+
+* docs: Update docs for shorthand fields
+
+* docs: fix typos in docs
+
+* docs: Update docs according to the fields shorthand
+
+
+## v1.0.2 (2026-05-07)
+
+### Bug Fixes
+
+- **accessor**: Let exists() propagate InvalidPathError
+  ([#89](https://github.com/krishnamodepalli/django-sysconfig/pull/89),
+  [`aef108d`](https://github.com/krishnamodepalli/django-sysconfig/commit/aef108db9dfc93a328330411239189051c05c81d))
+
+* fix(accessor): let exists() propagate InvalidPathError
+
+Closes #71.
+
+ConfigAccessor.exists() previously caught InvalidPathError alongside AppNotFoundError and
+  FieldNotFoundError, returning False for all three. That hid programmer errors: a malformed path
+  (wrong number of segments) was indistinguishable from a well-formed path whose app/section/field
+  simply was not registered.
+
+- `config.exists("myapp.general")` two segments, programmer error -
+  `config.exists("myapp.general.missing")` three segments, just not registered
+
+Both returned False with no way for the caller to tell which.
+
+InvalidPathError is now allowed to propagate, matching the behaviour of get() and set() on malformed
+  paths. AppNotFoundError and FieldNotFoundError continue to produce False, so existing lookup-style
+  callers keep working.
+
+Tests: the TestExists suite in tests/accessor/test_rest.py previously asserted that exists() never
+  raises and returned False for every bad path. Those three cases are now asserted to raise
+  InvalidPathError, and a new test_well_formed_unknown_path_still_returns_false pins the
+  false-not-raise contract for three-segment-but-unregistered paths.
+
+* fix(accessor): tighten _parse_path empty-segment validation
+
+_parse_path and _parse_app_section now reject paths with any empty segment (e.g. "testapp..field",
+  ".section.field"), matching the contract that a malformed path is a programmer error. Updates the
+  is_set test to expect InvalidPathError instead of False, matching exists()'s propagate-not-swallow
+  contract.
+
+---------
+
+Co-authored-by: Matt Van Horn <455140+mvanhorn@users.noreply.github.com>
+
+### Chores
+
+- Add python 3.10 & 3.14 support
+  ([#91](https://github.com/krishnamodepalli/django-sysconfig/pull/91),
+  [`1bb445e`](https://github.com/krishnamodepalli/django-sysconfig/commit/1bb445e20116229f8c5438d902dd837592672c1f))
+
+- chore: Add support for python 3.10 & 3.14 in pyproject.toml - test: Update test matrix in github
+  ci to support py 3.10 & 3.14 - fix: add Python 3.10 compatibility for typing & datetime - chore:
+  Update black & ruff base python version to 3.10 - fix: Use 3.10 compatible UTC from datetime -
+  docs: Update min python version required from 3.11 to 3.10
+
+- Remove `docs/upgrade` from documentation workflow
+  ([`ac5210a`](https://github.com/krishnamodepalli/django-sysconfig/commit/ac5210a1405a0f71460e037c7d7bdd4d7e769acf))
+
+- **CHANGELOG**: Update CHANGELOG for V1.0.1
+  ([`005c142`](https://github.com/krishnamodepalli/django-sysconfig/commit/005c1427a6683f2b3933c2b97ef58d9bf5dd279f))
+
+### Continuous Integration
+
+- Allow tests CI actions to run for PRs on master, develop
+  ([`188e207`](https://github.com/krishnamodepalli/django-sysconfig/commit/188e20756ec2c6bb30861d109d8ec72774b48c3d))
+
+### Documentation
+
+- Move from custom docs builder to VitePress
+  ([#93](https://github.com/krishnamodepalli/django-sysconfig/pull/93),
+  [`22d1f6b`](https://github.com/krishnamodepalli/django-sysconfig/commit/22d1f6b5c575098b3d29fea845da2a4286300374))
+
+* docs: migrate to VitePress with full SEO and pnpm
+
+Replaces the custom TypeScript builder with VitePress. Sets up config with cleanUrls, sitemap,
+  per-page og/twitter/JSON-LD head injection, local search, PyPI social link, and GitHub edit links.
+  Converts blockquote tips/warnings to VitePress containers, moves public assets inside srcDir,
+  fixes dead anchor links, and switches the package manager to pnpm.
+
+* chore(docs): remove legacy custom builder artifacts
+
+Deletes the old TypeScript doc engine (src/, assets/, docs.config.js, tsconfig.json, README.md).
+  Fixes edit link branch to develop, corrects PyPI icon title, and disables line numbers.
+
+* docs: add missing inline links and uncomment field-types/validators references
+
+* docs: fix broken links, wrong singleton name, cache description, and contributing guide
+
+* docs: fix factual errors found by cross-checking source code
+
+- BooleanFrontendModel serializes to 'true'/'false', not '1'/'0' - config.get(default=...) does not
+  suppress unknown-path errors - ConfigValidationError (not ConfigValueError) raised on validation
+  failure - registry-api methods corrected to match actual ConfigRegistry API - config.set() updates
+  cache, does not invalidate it
+
+* docs: Update docs introduction & defining-config page
+
+* docs: Update docs, fix incorrect documentations, etc
+
+* fix: remove changelog from docs navbar
+
+* ci: setup docs github workflow for vitepress deployment
+
+* fix: Use pnpm instead of npm in docs workflow
+
+* ci: correctly setup pnpm in docs workflow
+
+* chore: update .gitignore and index.md docs page
+
+* refactor(docs): Update footer copyright year in docs
+
+* docs: Fix PR comments on #93
+
+* docs: Fix PR comments 2 on #93
+
+### Refactoring
+
+- **admin**: Replace short_description with @admin.display decorator
+  ([#79](https://github.com/krishnamodepalli/django-sysconfig/pull/79),
+  [`66e2a76`](https://github.com/krishnamodepalli/django-sysconfig/commit/66e2a76d0ebff6d2c266e7eae41faecbda1c928d))
+
+
 ## v1.0.1 (2026-04-14)
 
 ### Bug Fixes
 
 - **registry**: Log warning instead of silently passing DB errors in _ensure_db_records
   ([#77](https://github.com/krishnamodepalli/django-sysconfig/pull/77),
-  [`23ca282`](https://github.com/krishnamodepalli/django-sysconfig/commit/23ca2820cf5d4ccc453707d717c8b2e04ed86e69)) @PunyaKSirohi
+  [`23ca282`](https://github.com/krishnamodepalli/django-sysconfig/commit/23ca2820cf5d4ccc453707d717c8b2e04ed86e69))
+
+* refactor(admin): replace short_description with @admin.display decorator
+
+* fix(registry): log warning instead of silently passing DB errors in _ensure_db_records
+
+* Revert "refactor(admin): replace short_description with @admin.display decorator"
+
+This reverts commit c18daafe438ba7f25850386b9e962c97073d13f2.
 
 ### Chores
 
 - Ignore CLAUDE.md
-  ([`117be43`](https://github.com/krishnamodepalli/django-sysconfig/commit/117be43d6fa5a70fe84d8897cb48224bc06e81f2)) @krishnamodepalli
+  ([`117be43`](https://github.com/krishnamodepalli/django-sysconfig/commit/117be43d6fa5a70fe84d8897cb48224bc06e81f2))
 
 - Update pyproject to mark the project as Production/Stable
   ([#67](https://github.com/krishnamodepalli/django-sysconfig/pull/67),
-  [`7329723`](https://github.com/krishnamodepalli/django-sysconfig/commit/73297237844501b75ab509fde2894024d0f856cd)) @krishnamodepalli
+  [`7329723`](https://github.com/krishnamodepalli/django-sysconfig/commit/73297237844501b75ab509fde2894024d0f856cd))
 
 ### Continuous Integration
 
 - Add explicit permissions blocks to workflows
   ([#81](https://github.com/krishnamodepalli/django-sysconfig/pull/81),
-  [`23baba1`](https://github.com/krishnamodepalli/django-sysconfig/commit/23baba1d0393b0397220bf2ed02e770abab0f8f9)) @krishnamodepalli
+  [`23baba1`](https://github.com/krishnamodepalli/django-sysconfig/commit/23baba1d0393b0397220bf2ed02e770abab0f8f9))
 
 ### Documentation
 
 - Improve and fix docs, README, and community files
   ([#66](https://github.com/krishnamodepalli/django-sysconfig/pull/66),
-  [`7d55197`](https://github.com/krishnamodepalli/django-sysconfig/commit/7d55197e5fb9d5032407efda54f6e596f42b8f60)) @krishnamodepalli
+  [`7d55197`](https://github.com/krishnamodepalli/django-sysconfig/commit/7d55197e5fb9d5032407efda54f6e596f42b8f60))
+
+* docs: remove Magento references, fix broken links, slim README
+
+- Replace 'Magento-style' with 'schema-driven, database-backed runtime configuration' across
+  pyproject.toml, docs.config.js, index.md, introduction.md - Slim README down to badge + GIF +
+  minimal install + link to docs - Fix broken /cli/management-commands slug (plural) →
+  management-command in encryption.md and on-save-callbacks.md - Replace dead reference/ links in
+  getting-started.md with live guide links
+
+* docs: fix the navigation issues with sidebar and links
+
+* docs: Improve docs, update README
+
+* docs: Update CONTRIBUTING.md file
+
+* chore: Add issue templates for github issues
+
+* docs: Update pyproject.toml with Documentation & Changelog URLs
+
+* docs: Remove non-existing pages in documentation
+
+* docs: Improve docs generation code
 
 - Restructure CONTRIBUTING.md and add Security section to README
   ([#84](https://github.com/krishnamodepalli/django-sysconfig/pull/84),
-  [`7c00a10`](https://github.com/krishnamodepalli/django-sysconfig/commit/7c00a102118c5a3849809de907c237c8d76c5c21)) @krishnamodepalli
+  [`7c00a10`](https://github.com/krishnamodepalli/django-sysconfig/commit/7c00a102118c5a3849809de907c237c8d76c5c21))
+
+* docs(contribution): Improve `CONTRIBUTING.md`
+
+* docs(contributing): Specify to assign a maintainer as reviewer in PRs
+
+* docs(contributing): clarify PR template usage and reviewer assignment
+
+* docs(contributing): use GitHub Security Advisories for vulnerability reporting
+
+* docs(contributing): Update CONTRIBUTING.md
+
+* docs: Improve README & CONTRIBUTING files
 
 - **contributing**: Clarify issue assignment workflow and PR guidelines
   ([#80](https://github.com/krishnamodepalli/django-sysconfig/pull/80),
-  [`3d52570`](https://github.com/krishnamodepalli/django-sysconfig/commit/3d525701168fb9b7cdbc671da19c2a071abbeaab)) @krishnamodepalli
+  [`3d52570`](https://github.com/krishnamodepalli/django-sysconfig/commit/3d525701168fb9b7cdbc671da19c2a071abbeaab))
+
+- Specify to assign a maintainer as reviewer in PRs - Clarify PR template usage and reviewer
+  assignment - Add GitHub Security Advisories for vulnerability reporting
 
 ### Refactoring
 
 - **registry**: Remove redundant __init_subclass__ from Section
   ([#78](https://github.com/krishnamodepalli/django-sysconfig/pull/78),
-  [`4dfacd8`](https://github.com/krishnamodepalli/django-sysconfig/commit/4dfacd81d9e22b0045fa61acb73f8f36ef213530)) @PunyaKSirohi
+  [`4dfacd8`](https://github.com/krishnamodepalli/django-sysconfig/commit/4dfacd81d9e22b0045fa61acb73f8f36ef213530))
+
+* refactor(admin): replace short_description with @admin.display decorator
+
+* refactor(registry): remove redundant __init_subclass__ from Section, rely solely on SectionMeta
+
+* Revert "refactor(admin): replace short_description with @admin.display decorator"
+
+This reverts commit c18daafe438ba7f25850386b9e962c97073d13f2.
 
 
 ## v1.0.0 (2026-03-25)

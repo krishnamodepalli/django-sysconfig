@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-sysconfig"
-version = "1.0.1"
+version = "1.1.0"
 description = "Schema-driven, database-backed runtime configuration app for Django"
 readme = "README.md"
 license = { text = "MIT" }
@@ -52,6 +52,7 @@ Repository = "https://github.com/krishnamodepalli/django-sysconfig"
 Issues = "https://github.com/krishnamodepalli/django-sysconfig/issues"
 Documentation = "https://krishnamodepalli.github.io/django-sysconfig/"
 Changelog = "https://github.com/krishnamodepalli/django-sysconfig/blob/master/CHANGELOG.md"
+
 
 [tool.hatch.build.targets.wheel]
 packages = ["django_sysconfig"]
