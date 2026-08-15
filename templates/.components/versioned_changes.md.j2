@@ -1,0 +1,14 @@
+{#  EXAMPLE:
+
+## [1.3.0] - 2026-08-15
+
+{{ change_sections }}
+
+#}{{
+"## [%s] - %s\n" | format(
+  release.version,
+  release.tagged_date.strftime("%Y-%m-%d")
+)
+}}{%  set commit_objects = release["elements"] | dictsort
+%}{%  include "changes.md.j2"
+-%}

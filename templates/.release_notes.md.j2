@@ -1,0 +1,41 @@
+{#  EXAMPLE:
+
+## [1.3.0] - 2026-08-15
+
+### Added
+
+- Add new feature (#10, [`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
+
+---
+
+**Detailed Changes**: [v1.2.0...v1.3.0](https://domain.com/namespace/repo/compare/v1.2.0...v1.3.0)
+
+#}{#  # Set line width to 1000 to avoid wrapping as GitHub will handle it
+#}{%  set max_line_width = max_line_width | default(1000)
+%}{%  set hanging_indent = hanging_indent | default(2)
+%}{%  set releases = context.history.released.values() | list
+%}{%  set curr_release_index = releases.index(release)
+%}{#
+#}{%  if mask_initial_release and curr_release_index == releases | length - 1
+%}{#    # On a first release, generate our special message
+#}{%    include ".components/first_release.md.j2"
+%}{%  else
+%}{#    # Not the first release so generate notes normally
+#}{%    include ".components/versioned_changes.md.j2"
+-%}{#
+#}{%    set prev_release_index = curr_release_index + 1
+%}{#
+#}{%    if 'compare_url' is filter and prev_release_index < releases | length
+%}{%      set prev_version_tag = releases[prev_release_index].version.as_tag()
+%}{%      set new_version_tag = release.version.as_tag()
+%}{%      set version_compare_url = prev_version_tag | compare_url(new_version_tag)
+%}{%      set detailed_changes_link = '[{}...{}]({})'.format(
+            prev_version_tag, new_version_tag, version_compare_url
+          )
+%}{{      "\n"
+}}{{      "---\n"
+}}{{      "\n"
+}}{{      "**Detailed Changes**: %s" | format(detailed_changes_link)
+}}{%    endif
+%}{%  endif
+%}

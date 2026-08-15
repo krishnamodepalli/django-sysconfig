@@ -98,6 +98,7 @@ tag_format = "v{version}"
 
 [tool.semantic_release.changelog]
 file = "CHANGELOG.md"
+template_dir = "templates"
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = ["feat", "fix", "perf", "docs", "refactor", "test", "build", "ci", "chore", "revert"]

@@ -1,0 +1,16 @@
+{#
+    Entry point. Chooses full init vs. incremental update the same way
+    semantic-release's built-in conventional template does.
+#}{%  set insertion_flag = ctx.changelog_insertion_flag
+%}{%  set unreleased_commits = ctx.history.unreleased | dictsort
+%}{%  set releases = ctx.history.released.values() | list
+%}{#
+#}{%  if ctx.changelog_mode == "init"
+%}{%    include ".components/changelog_init.md.j2"
+%}{#
+#}{%  elif ctx.changelog_mode == "update"
+%}{%    set prev_changelog_file = ctx.prev_changelog_file
+%}{%    include ".components/changelog_update.md.j2"
+%}{#
+#}{%  endif
+%}

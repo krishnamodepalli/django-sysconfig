@@ -1,0 +1,13 @@
+{#  EXAMPLE:
+
+## [1.0.0] - 2026-08-15
+
+- Initial Release
+
+#}{{
+"## [%s] - %s\n" | format(
+    release.version,
+    release.tagged_date.strftime("%Y-%m-%d")
+)
+}}
+- Initial Release
