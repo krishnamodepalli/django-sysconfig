@@ -1,11 +1,22 @@
 from django.core.management.base import BaseCommand, CommandParser
 
-from ._config.export import handle_export
-from ._config.get import handle_get
-from ._config.import_ import handle_import
-from ._config.options import add_dry_run, add_skip_prompt
-from ._config.reset import handle_reset
-from ._config.set import handle_set
+from ._config.export import ExportCommand
+from ._config.get import GetCommand
+from ._config.import_ import ImportCommand
+from ._config.reset import ResetCommand
+from ._config.set import SetCommand
+
+# Every subcommand owns both its flags and its handler. Adding one means
+# writing a SubCommand subclass and listing it here — this module does not
+# otherwise grow.
+SUBCOMMANDS = (
+    GetCommand(),
+    SetCommand(),
+    ResetCommand(),
+    ExportCommand(),
+    ImportCommand(),
+)
+_BY_NAME = {sub.name: sub for sub in SUBCOMMANDS}
 
 
 class Command(BaseCommand):
@@ -15,68 +26,8 @@ class Command(BaseCommand):
         subparsers = parser.add_subparsers(dest="subcommand", metavar="subcommand")
         subparsers.required = True
 
-        # --- get ---
-        get_parser = subparsers.add_parser("get", help="Get a configuration value")
-        get_parser.add_argument("path", help="Config path in app.section.field format")
-
-        # --- set ---
-        set_parser = subparsers.add_parser("set", help="Set a configuration value")
-        set_parser.add_argument("path", help="Config path in app.section.field format")
-        set_parser.add_argument("value", help="Value to set")
-        add_dry_run(set_parser)
-
-        # --- reset ---
-        reset_parser = subparsers.add_parser(
-            "reset", help="Reset a configuration value to its field default"
-        )
-        reset_parser.add_argument(
-            "path", help="Config path in app.section.field format"
-        )
-        add_skip_prompt(reset_parser)
-
-        # --- export ---
-        export_parser = subparsers.add_parser(
-            "export", help="Export configuration values to a JSON file"
-        )
-        export_parser.add_argument(
-            "app", nargs="?", help="App label to export (exports all apps if omitted)"
-        )
-        export_parser.add_argument(
-            "--output",
-            "-o",
-            default="config_export.json",
-            help="Output file path (default: config_export.json)",
-        )
-
-        # --- import ---
-        import_parser = subparsers.add_parser(
-            "import", help="Import configuration values from a JSON file"
-        )
-        import_parser.add_argument(
-            "--file",
-            "-i",
-            help="Input file path (.json)",
-        )
-        import_parser.add_argument(
-            "--stdin",
-            action="store_true",
-            help="Read JSON from stdin instead of a file",
-        )
-        add_dry_run(import_parser)
-        import_parser.add_argument(
-            "-S",
-            "--skip-on-save-callbacks",
-            action="store_true",
-            help="Skip on_save callbacks for all fields in this import batch.",
-        )
-        add_skip_prompt(import_parser)
+        for sub in SUBCOMMANDS:
+            sub.register(subparsers)
 
     def handle(self, *args, **options):
-        handlers = {
-            "get": handle_get,
-            "set": handle_set,
-            "reset": handle_reset,
-            "export": handle_export,
-            "import": handle_import,
-        }
-        handlers[options["subcommand"]](self, **options)
+        _BY_NAME[options["subcommand"]].handle(self, **options)
