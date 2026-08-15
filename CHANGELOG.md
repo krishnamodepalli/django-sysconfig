@@ -1,57 +1,230 @@
 # CHANGELOG
 
 
-## v1.1.0 (2026-05-14)
+## v1.2.0 (2026-08-15)
 
 ### Documentation
 
-- Update docs for feat/fields-shorthand branch
-  ([#99](https://github.com/krishnamodepalli/django-sysconfig/pull/99),
-  [`7e75e6e`](https://github.com/krishnamodepalli/django-sysconfig/commit/7e75e6ecfdcf1542a27ba464a125ef52b4170007))
+- **accessor**: Slim public API surface to get, set, set_many, is_set
+  ([#102](https://github.com/krishnamodepalli/django-sysconfig/pull/102),
+  [`e31259f`](https://github.com/krishnamodepalli/django-sysconfig/commit/e31259f147d9edecbc596f897bd3b850c96f68f4))
+
+* docs: Update docs for accessor public API
+
+* docs: remove unadvertised accessor methods from all doc files
+
+Remove references to config.all(), config.section(), config.exists(), and config.reset() from
+  accessor-api.md, configuration.md, faq.md, and exceptions.md.
+
+* ci: Ignore ci workflow for docs only PRs
 
 ### Features
 
-- Add `--dry-run` flag for `config set` sub-command
-  ([#98](https://github.com/krishnamodepalli/django-sysconfig/pull/98),
-  [`3f2fb0a`](https://github.com/krishnamodepalli/django-sysconfig/commit/3f2fb0a8309737b4d871ea6fe526dc4bacef666e))
+- **accessor**: Add Field param support for all accessor methods
+  ([#87](https://github.com/krishnamodepalli/django-sysconfig/pull/87),
+  [`7f83a9a`](https://github.com/krishnamodepalli/django-sysconfig/commit/7f83a9a962fc79c6c73b80621744d10b1221fb91))
 
-* feat: Add --dry-run flag for `config set` sub-command
+* feat(accessor): Support typed fields for accessor get and set
 
-* docs: Update docs for `config set` command with `--dry-run` flag
+changes: - previously `config.get('todo.general.max_todos')` is supported, which is very vulnerable
+  to a string typo. - Add support for `config.get(TodoConfig.General.max_todos)` which supported by
+  IDE intellisence decreasing typo issues
 
-* tests: Update tests for `config set` subcommand `--dry-run` flag
+* tests(accessor): Update on_save callback tests
 
-* tests: Fix tests to correctly set dry_run for config_set dry-run tests
+* feat: Add else block for testing type in get & set in accessor
 
-* refactor: Use `set_rollback` instead of throwing TransactionManagementError
+* tests(accessor): Add tests for typed accessor get & set methods
 
-changes: - The commands `config set` and `config import` both have a `--dry-run` flag. To catch this
-  flag, the TransactionManagementError is previously used. From Django 4.2
-  `transaction.set_rollback()` is preferred for the same behavior, we shifted to that in this commit
+* feat: Add Field param support for set_many
 
-* tests: refactor test_case `test_dry_run_doesnt_save` in test_cmd_set.py
+* feat(accessor): Support Field param for exists, is_set, reset methods in accessor
 
-- **fields**: Add typed field shorthands
-  ([#86](https://github.com/krishnamodepalli/django-sysconfig/pull/86),
-  [`6b2403f`](https://github.com/krishnamodepalli/django-sysconfig/commit/6b2403f32ebb6ea50ba3b0bcd7a40c357cb04647))
+* test(accessor): Add tests for accessor for added support of Field param
 
-* feat(fields): add typed field shorthands using functools.partial
+* feat: Update `all` & `section` methods in accessor to allow typed args
 
-* feat(init): re-export Section and register_config from package root
+* refactor: Rename _section to _section_name in Field
 
-* style(fields): add __all__ to define public API surface
+* fix(accessor): fix ConfigValue filter issue
 
-* refactor: add __all__ to public API modules
+* fix: Field `default` should have more preference over config.get `default`
 
-* refactor: Add `config` and all exceptions in the __init__.py
+changes: - The code before gave more priority for the field default than the get method default. But
+  the new code overrode in this branch. So reverting it.
 
-* chore: Add fields and validators in __init__.py:__all__
+* refactor(accessor): add type StringOrField & add method to resolve Field from path
 
-* docs: Update docs for shorthand fields
+* fix: caching issue for getter when no defaults given
 
-* docs: fix typos in docs
+* test: Update tests for the accessor get
 
-* docs: Update docs according to the fields shorthand
+* fix(accessor): Fix minor issues. all, section, is_set
+
+* fix(accessor): Use typed accessor at places & rename the _get_raw to _fetch_value
+
+* perf: Improve section.get_fields() performance
+
+* feat: Add get_field() method for registry
+
+* docs: Update docs for typed accessor
+
+* fix(accessor): correct default precedence and clearing in typed accessor
+
+- all()/section() no longer conflate a missing DB row with an explicit stored null; missing rows now
+  fall back to the field default, same precedence as get(). - Section.get_fields() returns a copy so
+  callers can't mutate the shared registry dict. - exists() raises TypeError for non-str/non-Field
+  input instead of a bare AttributeError. - reset() now deletes the stored value when a field has no
+  default, instead of writing a null row that would outrank the caller's default on later get()
+  calls.
+
+- **command**: Add --no-input and modularise the config command
+  ([#101](https://github.com/krishnamodepalli/django-sysconfig/pull/101),
+  [`db45bba`](https://github.com/krishnamodepalli/django-sysconfig/commit/db45bbaaf0851e9ec5b1ce12a52ca061e7cc9f3a))
+
+* refactor(command): Refactor config command into multiple files
+
+* fix: --stdin now requires --force in `config import` command
+
+* fix: `config import` now only accepts json object `{}`
+
+* feat(command): confirm only on bulk ops; add --no-input to import
+
+Confirmation is now reserved for bulk operations. 'reset' targets a single path and no longer
+  prompts; its -f/--force flag is kept as a deprecated no-op for backward compatibility and warns
+  when used.
+
+'import' gains --no-input/--noinput as the canonical, Django-idiomatic skip-prompt flag; -f/--force
+  remains as a backward-compatible alias.
+
+Shared flag registration is factored into _config/options.py (add_dry_run, add_skip_prompt,
+  add_legacy_force) so repeated flags are declared once.
+
+* docs(cli): document --no-input and reset's no-prompt behavior
+
+Update the config command reference for the bulk-only confirmation model: reset no longer prompts
+  (with a --force deprecation note), and import documents --no-input/--noinput in place of --force
+  across flags, examples, and workflows.
+
+* fix(command): restore reset prompt and drop the --stdin force requirement
+
+Two behaviour changes had crept into this branch that broke existing usage:
+
+- `reset` stopped prompting for confirmation entirely, so an irreversible reset ran unattended and
+  `--force` silently became a no-op. - `import --stdin` started hard-erroring unless `--force` or
+  `--dry-run` was passed, breaking `cat cfg.json | manage.py config import --stdin`.
+
+`reset` prompts again unless the prompt is explicitly skipped. `import` skips the prompt when
+  reading from stdin: load_json() has already drained the stream, and a pipe is non-interactive by
+  definition, so there is nobody to ask. This fixes the original EOFError without requiring a new
+  flag from callers.
+
+`--no-input`/`--noinput` is now the canonical way to skip either prompt, and both subcommands share
+  add_skip_prompt(); add_legacy_force() is gone. `-f`/`--force` still works but emits a
+  DeprecationWarning and is hidden from --help, ready for removal in v2. The two spellings
+  deliberately use separate argparse dests so the deprecated one can be detected: a single aliased
+  argument cannot tell them apart, and a custom argparse Action would not fire under call_command(),
+  which is how the tests and most programmatic callers invoke the command.
+
+* docs(cli): document --no-input and the deprecated --force alias
+
+`reset` prompts for confirmation again unless `--no-input` is passed, and piped `--stdin` imports no
+  longer need a companion flag. Both subcommands carry a deprecation note for `-f`/`--force`, which
+  stays a working alias until v2.
+
+### Refactoring
+
+- **command**: Give each config subcommand its own SubCommand class
+  ([#103](https://github.com/krishnamodepalli/django-sysconfig/pull/103),
+  [`fc83ea9`](https://github.com/krishnamodepalli/django-sysconfig/commit/fc83ea92ad18798015099a0c9f37af7f115bed31))
+
+* refactor(command): add a SubCommand base for config subcommands
+
+Flags for a `config` subcommand are currently declared in config.py while the code reading them
+  lives in _config/*.py, so the two can drift apart with nothing to catch it — renaming a flag
+  surfaces as a runtime KeyError in one subcommand rather than a failure at import or test time.
+
+SubCommand pairs `add_arguments` and `handle` on one class so a flag sits next to its consumer. It
+  is an ABC rather than a Protocol so a missing method raises TypeError at instantiation; since
+  subcommands are built at module import, that fires the moment Django loads the command.
+
+Nothing uses it yet — subcommands are converted one at a time.
+
+* refactor(command): convert config get to the SubCommand class form
+
+`get` is the smallest subcommand and has a single positional argument, so it exercises the class
+  wiring end to end at the lowest risk.
+
+handle_get's body moves verbatim into GetCommand.handle; only the def line and its indentation
+  change. config.py grows a SUBCOMMANDS tuple that owns the migrated subcommands and falls back to
+  LEGACY_HANDLERS for the four still declared inline. Both shrink to nothing as the rest are
+  converted.
+
+No test changed, which is the proof this is a pure move.
+
+* refactor(command): convert config set to the SubCommand class form
+
+handle_set's body moves verbatim into SetCommand.handle. The --dry-run flag now sits three lines
+  above the options["dry_run"] that reads it.
+
+* refactor(command): convert config reset to the SubCommand class form
+
+handle_reset's body moves into ResetCommand.handle. The confirmation message is split across two
+  adjacent string literals to fit the line length under the extra indentation; the concatenated
+  result is identical.
+
+add_skip_prompt now sits directly above the resolve_skip_prompt call that consumes it, which is the
+  pairing this refactor exists to create.
+
+* refactor(command): convert config export to the SubCommand class form
+
+handle_export's body moves into ExportCommand.handle. Re-indenting pushed one write() call past the
+  line limit, so black reflowed it; the diff is larger than the other conversions for that reason
+  alone.
+
+* refactor(command): convert config import to the SubCommand class form
+
+handle_import's body moves into ImportCommand.handle, bringing its five flags next to the
+  options[...] reads that consume them. This was the subcommand the split hurt most: --file,
+  --stdin, --dry-run, --skip-on-save-callbacks and --no-input were declared roughly sixty lines away
+  in config.py from the code reading them.
+
+With the last handler converted, config.py drops LEGACY_HANDLERS and the inline parser declarations
+  and is now a registry plus a two-line dispatch.
+
+* refactor(command): make SubCommand.add_arguments concrete
+
+Marking it abstract forced every subcommand to define it, but a subcommand with no flags is
+  legitimate, so the decorator only bought boilerplate. It also diverged from both relevant
+  precedents: Django's BaseCommand declares add_arguments as a no-op and reserves the requirement
+  for handle, and this codebase's own ABCs (BaseValidator, BaseFrontendModel) give attributes
+  concrete defaults and mark only the behavioural method abstract.
+
+handle stays abstract, which is where the enforcement is worth having: SUBCOMMANDS instantiates at
+  import, so a missing handle raises TypeError when Django loads the command rather than when a user
+  runs it.
+
+B027 is silenced with a rationale; that rule targets a forgotten @abstractmethod, and here the empty
+  body is the intended contract.
+
+All five existing subcommands already define add_arguments, so nothing else changes and no test
+  moves.
+
+* refactor(command): import config and ConfigError from their own modules in get
+
+get.py was the only module in _config/ importing from the django_sysconfig package root; the other
+  four import config from .accessor and exceptions from .exceptions. Both forms resolve to the same
+  objects, so this is behaviour-neutral.
+
+Beyond consistency, the package header explicitly directs callers to import config from
+  django_sysconfig.accessor to avoid circular imports during Django app initialisation. The root
+  import only worked via the lazy __getattr__ shim in __init__.py, which management commands —
+  loaded during app init — should not be leaning on.
+
+* refactor: refactor config command help text usage
+
+
+## v1.1.0 (2026-05-14)
 
 
 ## v1.0.2 (2026-05-07)
@@ -96,7 +269,23 @@ _parse_path and _parse_app_section now reject paths with any empty segment (e.g.
 
 Co-authored-by: Matt Van Horn <455140+mvanhorn@users.noreply.github.com>
 
+- **deps**: Pin pytest-django below 4.13 to restore Django 4.2 support
+  ([#107](https://github.com/krishnamodepalli/django-sysconfig/pull/107),
+  [`f480aa5`](https://github.com/krishnamodepalli/django-sysconfig/commit/f480aa5e11e122a59cb5d7c903b53d060dab1a43))
+
+pytest-django 4.13.0 references TestCase._pre_setup_ran_eagerly, an attribute Django only added in
+  5.0+. Since pytest-django was unpinned (>=4.8), CI silently picked up 4.13.0 and every test on the
+  Django 4.2 matrix legs started failing at collection with:
+
+AttributeError: type object 'PytestDjangoTestCase' has no attribute '_pre_setup_ran_eagerly'
+
+Verified locally: 4.12.0 passes the full suite on Django 4.2, 5.2, and 6.0; 4.13.0 fails on Django
+  4.2 the same way CI does.
+
 ### Chores
+
+- Add django-stubs as dev dependency
+  ([`9d91135`](https://github.com/krishnamodepalli/django-sysconfig/commit/9d911350c8c2286d5c2a58800654e98d7def1235))
 
 - Add python 3.10 & 3.14 support
   ([#91](https://github.com/krishnamodepalli/django-sysconfig/pull/91),
@@ -166,6 +355,54 @@ Deletes the old TypeScript doc engine (src/, assets/, docs.config.js, tsconfig.j
 * docs: Fix PR comments on #93
 
 * docs: Fix PR comments 2 on #93
+
+- Update docs for feat/fields-shorthand branch
+  ([#99](https://github.com/krishnamodepalli/django-sysconfig/pull/99),
+  [`7e75e6e`](https://github.com/krishnamodepalli/django-sysconfig/commit/7e75e6ecfdcf1542a27ba464a125ef52b4170007))
+
+### Features
+
+- Add `--dry-run` flag for `config set` sub-command
+  ([#98](https://github.com/krishnamodepalli/django-sysconfig/pull/98),
+  [`3f2fb0a`](https://github.com/krishnamodepalli/django-sysconfig/commit/3f2fb0a8309737b4d871ea6fe526dc4bacef666e))
+
+* feat: Add --dry-run flag for `config set` sub-command
+
+* docs: Update docs for `config set` command with `--dry-run` flag
+
+* tests: Update tests for `config set` subcommand `--dry-run` flag
+
+* tests: Fix tests to correctly set dry_run for config_set dry-run tests
+
+* refactor: Use `set_rollback` instead of throwing TransactionManagementError
+
+changes: - The commands `config set` and `config import` both have a `--dry-run` flag. To catch this
+  flag, the TransactionManagementError is previously used. From Django 4.2
+  `transaction.set_rollback()` is preferred for the same behavior, we shifted to that in this commit
+
+* tests: refactor test_case `test_dry_run_doesnt_save` in test_cmd_set.py
+
+- **fields**: Add typed field shorthands
+  ([#86](https://github.com/krishnamodepalli/django-sysconfig/pull/86),
+  [`6b2403f`](https://github.com/krishnamodepalli/django-sysconfig/commit/6b2403f32ebb6ea50ba3b0bcd7a40c357cb04647))
+
+* feat(fields): add typed field shorthands using functools.partial
+
+* feat(init): re-export Section and register_config from package root
+
+* style(fields): add __all__ to define public API surface
+
+* refactor: add __all__ to public API modules
+
+* refactor: Add `config` and all exceptions in the __init__.py
+
+* chore: Add fields and validators in __init__.py:__all__
+
+* docs: Update docs for shorthand fields
+
+* docs: fix typos in docs
+
+* docs: Update docs according to the fields shorthand
 
 ### Refactoring
 
