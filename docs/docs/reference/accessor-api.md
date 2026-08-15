@@ -12,15 +12,12 @@ It's a module-level singleton — import it anywhere, use it everywhere.
 
 ## Path notation
 
-All methods that accept a `path` argument use **dot notation** with exactly three segments:
+All methods accept a path in one of two forms:
 
-```
-app_label.section.field
-```
+- **String path** — dot notation with exactly three segments: `"app_label.section.field"`
+- **Field reference** — a `Field` instance from your config class (see [reading-writing guide](/guides/reading-writing#typed-field-api))
 
-For example: `"billing.pricing.tax_rate"`, `"myapp.general.site_name"`.
-
-If the path doesn't have exactly three dot-separated parts, `InvalidPathError` is raised.
+If a string path doesn't have exactly three dot-separated parts, `InvalidPathError` is raised.
 
 ---
 
@@ -46,54 +43,6 @@ value = config.get("myapp.general.some_field", default=None)
 
 **Returns:** The deserialized value in its correct Python type.
 **Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`.
-
----
-
-### `config.all(app_label)`
-
-Returns all configuration values for an entire app as a nested dictionary.
-
-```python
-config.all("billing")
-# {
-#   "general": {"live_mode": False},
-#   "pricing": {"tax_rate": Decimal("0.20"), "trial_days": 14},
-# }
-```
-
-**Returns:** `dict[str, dict[str, Any]]` — `{section_name: {field_name: value}}`
-**Raises:** `AppNotFoundError` if `app_label` has no registered config.
-
----
-
-### `config.section(path)`
-
-Returns all configuration values for a single section as a flat dictionary.
-
-The `path` here is two segments: `app_label.section`.
-
-```python
-config.section("billing.pricing")
-# {"tax_rate": Decimal("0.20"), "trial_days": 14, "free_tier_limit": 10}
-```
-
-**Returns:** `dict[str, Any]` — `{field_name: value}`
-**Raises:** `InvalidPathError`, `AppNotFoundError`, `FieldNotFoundError`.
-
----
-
-### `config.exists(path)`
-
-Returns `True` if the given path is registered in the schema (i.e., the app, section, and field all exist in code). Does not query the database.
-
-```python
-config.exists("myapp.general.site_name")    # True
-config.exists("myapp.general.nonexistent")  # False
-config.exists("no_such_app.x.y")            # False
-```
-
-**Returns:** `bool`
-**Raises:** Nothing — returns `False` for any invalid or unknown path.
 
 ---
 

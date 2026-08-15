@@ -40,71 +40,18 @@ Values are **typed** — you get the correct Python type back without any castin
 
 Reads are served from the cache when available, so repeated calls in the same request are fast.
 
-### `config.all(app)`
-
-This **eager loads** all the sections and fields in the specified app. Returns all configuration values for an entire app, as a nested dictionary keyed by section, then field name.
-
-Accepts either an app label string or an `AppConfigDefinition` instance.
-
-:::warning
-The returned dictionary includes **plaintext (decrypted) values for all secret fields**. Avoid logging, serializing, or exposing this output — treat it with the same care as raw credentials.
-:::
-
-```python
-billing_config = config.all("billing")
-# {
-#   "general": {
-#     "live_mode": False,
-#   },
-#   "pricing": {
-#     "tax_rate": Decimal("0.20"),
-#     "free_tier_limit": 10,
-#     "trial_days": 14,
-#   }
-# }
-```
-
-### `config.section(section)`
-
-This **eager loads** all the fields in the specified section. Returns all configuration values for a single section, as a flat dictionary keyed by field name.
-
-Accepts either a two-part string path (`"app.section"`) or a `Section` subclass directly.
-
-:::warning
-The returned dictionary includes **plaintext (decrypted) values for all secret fields**. Avoid logging, serializing, or exposing this output — treat it with the same care as raw credentials.
-:::
-
-```python
-pricing = config.section("billing.pricing")
-# {
-#   "tax_rate": Decimal("0.20"),
-#   "free_tier_limit": 10,
-#   "trial_days": 14,
-# }
-```
-
-### `config.exists(path)`
-
-Returns `True` if the path is registered in the schema (i.e., a field with that path exists in code). Does not check the database. Accepts a string path or a `Field` instance.
-
-```python
-config.exists("myapp.general.site_name")          # True
-config.exists("myapp.general.no_such_key")        # False
-config.exists(MyAppConfig.General.site_name)      # True
-```
-
 ### `config.is_set(path)`
 
-Returns `True` if the field has a value other than empty string or `NULL` in the database. Accepts a string path or a `Field` instance.
+Returns `True` if the field has a value explicitly saved in the database (non-null, non-empty). Accepts a string path or a `Field` instance.
 
 ```python
-config.is_set("myapp.general.site_name")    # False if a default is not set. True if set.
+config.is_set("myapp.general.api_key")          # False — nothing saved yet
 # ... after saving a value via the admin UI or config.set(...) ...
-config.is_set("myapp.general.site_name")    # True
-config.is_set(MyAppConfig.General.site_name) # same, via Field reference
+config.is_set("myapp.general.api_key")          # True
+config.is_set(MyAppConfig.General.api_key)      # same, via Field reference
 ```
 
-This is useful for "onboarding" flows where you want to detect whether a required configuration step has been completed.
+This is useful for onboarding flows where you need to detect whether a required configuration step has been completed.
 
 ## Writing values
 
@@ -180,11 +127,9 @@ After registration, every `Field` carries these runtime attributes set by the re
 ```python
 from myapp.sysconfig import MyAppConfig
 
-# All methods accept Field in place of a string path
-value    = config.get(MyAppConfig.General.max_items)
+value  = config.get(MyAppConfig.General.max_items)
+is_set = config.is_set(MyAppConfig.General.max_items)
 config.set(MyAppConfig.General.max_items, 500)
-is_set   = config.is_set(MyAppConfig.General.max_items)
-exists   = config.exists(MyAppConfig.General.max_items)
 
 # set_many accepts mixed keys
 config.set_many({
@@ -217,7 +162,7 @@ All exceptions inherit from `ConfigError`, so you can catch the base class if yo
 | `AppNotFoundError` | No configuration is registered for the given app label          |
 | `FieldNotFoundError` | The section or field doesn't exist in the registered schema   |
 | `ConfigValidationError` | A value fails one or more field validators                  |
-| `ConfigValueError` | A value can't be serialized for the given field type                |
+| `ConfigValueError` | A value can't be serialized for the given field type            |
 
 ```python
 from django_sysconfig.exceptions import ConfigError, FieldNotFoundError
@@ -271,15 +216,10 @@ class Command(BaseCommand):
         # ...
 ```
 
-### Using `config.all()` or `config.section()` in a template context processor
+### Onboarding check
 
 ```python
-def sysconfig_context(request):
-    return {"site_config": config.section("myapp.general")}
-```
-
-Then in your template:
-
-```html
-<title>{{ site_config.site_name }}</title>
+def check_setup(request):
+    if not config.is_set("myapp.general.api_key"):
+        messages.warning(request, "API key is not configured.")
 ```

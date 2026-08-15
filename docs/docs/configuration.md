@@ -54,8 +54,8 @@ unknown = config.get("myapp.general.unknown", default="fallback")
 # Update a value
 config.set("myapp.general.site_name", "New Site Name")
 
-# Check if a config exists
-if config.exists("myapp.general.site_name"):
+# Check if a value has been explicitly saved
+if config.is_set("myapp.general.site_name"):
     ...
 ```
 
