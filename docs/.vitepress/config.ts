@@ -204,7 +204,7 @@ export default defineConfig({
 
     editLink: {
       pattern:
-        "https://github.com/krishnamodepalli/django-sysconfig/edit/develop/docs/docs/:path",
+        "https://github.com/krishnamodepalli/django-sysconfig/edit/master/docs/docs/:path",
       text: "Edit this page on GitHub",
     },
 
