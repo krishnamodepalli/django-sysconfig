@@ -73,14 +73,14 @@ The most common cause is a typo in the path. Double-check:
 - The section name matches the class name (lowercased)
 - The field name matches the attribute name (lowercased)
 
-You can verify the path is registered:
+You can verify the path is reachable by reading it in the Django shell:
 
 ```python
 from django_sysconfig.accessor import config
-config.exists("myapp.general.site_name")  # should be True
+config.get("myapp.general.site_name")  # raises FieldNotFoundError if not registered
 ```
 
-If it returns `False`, the path isn't registered — re-check your `sysconfig.py`.
+If it raises `FieldNotFoundError`, the path isn't registered — re-check your `sysconfig.py`.
 
 ---
 

@@ -27,6 +27,8 @@ Usage:
 from collections.abc import Callable
 from typing import Any
 
+from django.db import transaction
+
 from .cache import config_cache
 from .exceptions import (
     AppNotFoundError,
@@ -36,7 +38,7 @@ from .exceptions import (
     InvalidPathError,
 )
 from .models import ConfigValue
-from .registry import Field, config_registry
+from .registry import AppConfigDefinition, Field, Section, config_registry
 
 
 class ConfigAccessor:
@@ -49,6 +51,8 @@ class ConfigAccessor:
         - core.site.site_name
         - core.api.rate_limit
     """
+
+    StringOrField = str | Field
 
     def _parse_path(self, path: str) -> tuple[str, str, str]:
         """
@@ -118,7 +122,7 @@ class ConfigAccessor:
     def _deserialize(self, field: Field, raw_value: str | None) -> Any:
         """Deserialize a raw database value using the field's frontend model."""
         if raw_value is None:
-            return field.default
+            return None  # stored null is null — field default is resolved in get()
 
         # Special handling for SecretFrontendModel - decrypt the value
         from .frontend_models import SecretFrontendModel
@@ -134,7 +138,25 @@ class ConfigAccessor:
         frontend_model = field.get_frontend_model_instance(value)
         return frontend_model.serialize_value(value)
 
-    def get(self, path: str, default: Any = None) -> Any:
+    def _fetch_value(self, field: Field) -> Any:
+        """Fetch and deserialize a field's stored value from cache or DB. Returns NOT_FOUND if absent."""
+        path = field.full_path
+
+        cached_value = config_cache.get(path)
+        if cached_value is not config_cache.NOT_FOUND:
+            return self._deserialize(field, cached_value)
+
+        try:
+            config_value = ConfigValue.objects.get(
+                app_label=field._app_label,
+                path=field.path,
+            )
+            config_cache.set(path, config_value.value)
+            return self._deserialize(field, config_value.value)
+        except ConfigValue.DoesNotExist:
+            return config_cache.NOT_FOUND
+
+    def get(self, path: StringOrField, default: Any = None) -> Any:
         """
         Get a configuration value.
 
@@ -156,39 +178,30 @@ class ConfigAccessor:
             AppNotFoundError: If app has no registered config (always raised)
             FieldNotFoundError: If field doesn't exist (always raised)
         """
-        app_label, section, field_name = self._parse_path(path)
-        field = self._get_field(app_label, section, field_name)
 
-        # First check cache
-        cached_value = config_cache.get(path)
-        if cached_value is not config_cache.NOT_FOUND:
-            # Cache hit - deserialize the raw value
-            return self._deserialize(field, cached_value)
+        field = self._resolve_field_ref(path)
 
-        # Cache miss - query database
-        db_path = self._to_db_path(section, field_name)
+        # 1. Stored value (DB or cache) — highest precedence
+        #    Covers both explicit values and explicitly stored nulls.
+        stored = self._fetch_value(field)
+        if stored is not config_cache.NOT_FOUND:
+            return stored
 
-        try:
-            config_value = ConfigValue.objects.get(
-                app_label=app_label,
-                path=db_path,
+        # 2. Field-level default — defined in the Field declaration
+        #    Cache the serialized form so future reads skip the DB entirely.
+        if field.default is not None:
+            serialized = field.get_frontend_model_instance().serialize_value(
+                field.default
             )
-            # Cache the raw database value
-            config_cache.set(path, config_value.value)
-            return self._deserialize(field, config_value.value)
-        except ConfigValue.DoesNotExist:
-            # No DB value - use field default if available
-            if field.default is not None:
-                # Serialize and cache the default value
-                frontend_model = field.get_frontend_model_instance()
-                serialized_default = frontend_model.serialize_value(field.default)
-                config_cache.set(path, serialized_default)
-                return field.default
-            # Field has no default - return caller's fallback (None by default)
-            config_cache.set(path, None)
-            return default
+            if serialized is not None:
+                config_cache.set(field.full_path, serialized)
+            return field.default
 
-    def set(self, path: str, value: Any) -> None:
+        # 3. Caller-supplied fallback — lowest precedence, never cached
+        #    Not a field property, so it must not bleed into other callers.
+        return default
+
+    def set(self, path: StringOrField, value: Any) -> None:
         """
         Set a configuration value.
 
@@ -205,25 +218,24 @@ class ConfigAccessor:
             FieldNotFoundError: If field doesn't exist
             ConfigValueError: If value cannot be serialized
         """
-        from django.db import transaction
+        field = self._resolve_field_ref(path)
 
         with transaction.atomic():
-            cache_refresh, callbacks = self._set_value_internal(path, value)
+            cache_refresh, callbacks = self._set_value_internal(field, value)
             transaction.on_commit(cache_refresh)
             transaction.on_commit(callbacks)
 
     def set_many(
-        self, values: dict[str, Any], skip_on_save_callbacks: bool = False
+        self, values: dict[StringOrField, Any], skip_on_save_callbacks: bool = False
     ) -> int:
         """
         Set multiple configuration values at once.
-
         All writes are performed within a single transaction. If any write fails,
         the entire batch is rolled back. on_save callbacks are fired sequentially
         only after the transaction commits successfully.
 
         Args:
-            values (dict[str, Any]): Dict mapping full paths to values.
+            values (dict[str | Field, Any]): Dict mapping full paths to values.
             skip_on_save_callbacks (bool): If True, on_save callbacks are suppressed
                 for all fields in this batch. Useful for bulk imports or environment
                 cloning where side effects are undesirable. Defaults to False.
@@ -235,17 +247,23 @@ class ConfigAccessor:
             InvalidPathError: If any path format is invalid.
             AppNotFoundError: If any app has no registered config.
             FieldNotFoundError: If any field does not exist.
+            TypeError: If given argument is not a valid dict[str | Field, Any]
             ConfigValueError: If any value cannot be serialized.
             ConfigValidationError: If any value fails field validation.
         """
-        from django.db import transaction
-
         with transaction.atomic():
             callbacks_to_register = []
 
             for path, value in values.items():
+                try:
+                    field = self._resolve_field_ref(path)
+                except TypeError:
+                    raise TypeError(
+                        f"Expected dict[str | Field, Any], got dict[{type(path).__name__}, Any]"
+                    ) from None
+
                 cache_refresh_callback, on_save_callback = self._set_value_internal(
-                    path, value
+                    field, value
                 )
                 transaction.on_commit(cache_refresh_callback)
 
@@ -258,7 +276,9 @@ class ConfigAccessor:
         return len(values)
 
     def _set_value_internal(
-        self, path: str, value: Any
+        self,
+        field: Field,
+        value: Any,
     ) -> tuple[Callable[[], None], Callable[[], None]]:
         """
         Internal implementation of setting a configuration value.
@@ -271,8 +291,9 @@ class ConfigAccessor:
         Both callbacks must only be executed after the transaction commits
         successfully to ensure cache always reflects durable DB state.
         """
-        app_label, section, field_name = self._parse_path(path)
-        field = self._get_field(app_label, section, field_name)
+        path = field.full_path
+        app_label = field._app_label
+        field_name = field.name
 
         # Run field validators before doing anything else.
         if field.validators:
@@ -288,7 +309,7 @@ class ConfigAccessor:
         except Exception as e:
             raise ConfigValueError(path, value, str(e)) from e
 
-        db_path = self._to_db_path(section, field_name)
+        db_path = field.path
 
         # Fetch old value before the write so on_save receives the previous state.
         old_value = None
@@ -317,7 +338,7 @@ class ConfigAccessor:
 
         return on_commit_cache_refresh, on_commit_callback
 
-    def all(self, app_label: str) -> dict[str, dict[str, Any]]:
+    def all(self, app: str | AppConfigDefinition) -> dict[str, dict[str, Any]]:
         """
         Get all configuration values for an app.
 
@@ -330,13 +351,21 @@ class ConfigAccessor:
         Raises:
             AppNotFoundError: If app has no registered config
         """
-        config_def = config_registry.get_config(app_label)
-        if not config_def:
-            raise AppNotFoundError(app_label)
+        if isinstance(app, str):
+            config_def = config_registry.get_config(app)
+            if not config_def:
+                raise AppNotFoundError(app)
+        elif isinstance(app, AppConfigDefinition):
+            config_def = app
+        else:
+            raise TypeError(
+                f"Expected str or AppConfigDefinition, got {type(app).__name__}"
+            )
 
         # Fetch all stored values
         stored = {
-            cv.path: cv.value for cv in ConfigValue.objects.filter(app_label=app_label)
+            cv.path: cv.value
+            for cv in ConfigValue.objects.filter(app_label=config_def.app_label)
         }
 
         result = {}
@@ -345,14 +374,17 @@ class ConfigAccessor:
 
             for field_name, field in section_class.get_fields().items():
                 db_path = self._to_db_path(section_key, field_name)
-                raw_value = stored.get(db_path)
-                section_data[field_name] = self._deserialize(field, raw_value)
+                if db_path in stored:
+                    section_data[field_name] = self._deserialize(field, stored[db_path])
+                else:
+                    # No row at all — fall back to the field default
+                    section_data[field_name] = field.default
 
             result[section_key] = section_data
 
         return result
 
-    def section(self, path: str) -> dict[str, Any]:
+    def section(self, section: str | Section) -> dict[str, Any]:
         """
         Get all configuration values for a specific section.
 
@@ -366,16 +398,22 @@ class ConfigAccessor:
             InvalidPathError: If path format is invalid
             AppNotFoundError: If app has no registered config
         """
-        app_label, section = self._parse_app_section(path)
-        all_config = self.all(app_label)
-        return all_config.get(section, {})
+        if isinstance(section, str):
+            app_label, section_key = self._parse_app_section(section)
+            all_config = self.all(app_label)
+            return all_config.get(section_key, {})
+        elif isinstance(section, type) and issubclass(section, Section):
+            all_config = self.all(section._app)
+            return all_config.get(section._section_name, {})
+        else:
+            raise TypeError(f"Expected str or Section, got {type(section).__name__}")
 
-    def exists(self, path: str) -> bool:
+    def exists(self, path: StringOrField) -> bool:
         """
         Check if a configuration path exists (is registered).
 
         Args:
-            path: Full path like 'todo.general.max_todos_per_user'
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
 
         Returns:
             True if the field is registered, False otherwise
@@ -386,6 +424,28 @@ class ConfigAccessor:
                 condition, and is left to propagate so callers can catch
                 bad path strings early.
         """
+        if not isinstance(path, (str, Field)):
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+
+        if isinstance(path, Field):
+            app_label = path._app_label
+            section = path._section_name
+
+            app_config = config_registry.get_config(app_label)
+
+            if not isinstance(app_config, AppConfigDefinition):
+                return False
+
+            if section not in app_config.sections:
+                return False
+
+            # TODO: registry lookup here is O(n) over the section's fields —
+            # switch to an identity-keyed field index for O(1) once one exists.
+            if path not in app_config.sections[section].get_fields().values():
+                return False
+
+            return True
+
         try:
             app_label, section, field_name = self._parse_path(path)
 
@@ -396,33 +456,34 @@ class ConfigAccessor:
         except (AppNotFoundError, FieldNotFoundError):
             return False
 
-    def is_set(self, path: str) -> bool:
+    def is_set(self, path: StringOrField) -> bool:
         """
         Check if a configuration value has been explicitly set in the database.
 
         Args:
-            path: Full path like 'todo.general.max_todos_per_user'
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
 
         Returns:
             True if value exists in database with a non-empty value, False if using default
         """
+        if not isinstance(path, (str, Field)):
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+
+        # InvalidPathError propagates for malformed strings; unregistered paths return False
         if not self.exists(path):
             return False
 
-        app_label, section, field_name = self._parse_path(path)
-        db_path = self._to_db_path(section, field_name)
-
+        field = self._resolve_field_ref(path)
         try:
             config_value = ConfigValue.objects.get(
-                app_label=app_label,
-                path=db_path,
+                app_label=field._app_label,
+                path=field.path,
             )
-            # Check if value is not None and not empty string
             return config_value.value is not None and config_value.value != ""
         except ConfigValue.DoesNotExist:
             return False
 
-    def reset(self, path: str) -> None:
+    def reset(self, path: StringOrField) -> None:
         """
         Reset a configuration value to its field default.
 
@@ -430,17 +491,72 @@ class ConfigAccessor:
         set() path — handles serialization, cache refresh, and on_save dispatch.
 
         Args:
-            path: Full path like 'todo.general.max_todos_per_user'
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
 
         Raises:
             InvalidPathError: If path format is invalid
             AppNotFoundError: If app has no registered config
             FieldNotFoundError: If field doesn't exist
         """
-        app_label, section, field_name = self._parse_path(path)
-        field = self._get_field(app_label, section, field_name)
+        field = self._resolve_field_ref(path)
 
-        self.set(path, field.default)
+        if field.default is None:
+            # No default to write back — clear the stored value entirely so
+            # get() falls through to the caller-supplied default instead of
+            # a persisted null "winning" as if it had been explicitly set.
+            self._clear_value(field)
+        else:
+            self.set(field, field.default)
+
+    def _clear_value(self, field: Field) -> None:
+        """Delete a field's stored value so get() falls through to defaults."""
+        with transaction.atomic():
+            old_value = None
+            if field.on_save:
+                try:
+                    existing = ConfigValue.objects.get(
+                        app_label=field._app_label, path=field.path
+                    )
+                    old_value = self._deserialize(field, existing.value)
+                except ConfigValue.DoesNotExist:
+                    old_value = field.default
+
+            ConfigValue.objects.filter(
+                app_label=field._app_label, path=field.path
+            ).delete()
+
+            path = field.full_path
+
+            def on_commit_cache_clear():
+                config_cache.invalidate(path)
+
+            def on_commit_callback():
+                if field.on_save:
+                    field.on_save(path, None, old_value)
+
+            transaction.on_commit(on_commit_cache_clear)
+            transaction.on_commit(on_commit_callback)
+
+    def _resolve_field_ref(self, path: StringOrField) -> Field:
+        """
+        Resolves a Field object from stringified field path or the field itself
+
+        Args:
+            path: Full path like 'todo.general.max_todos_per_user', or a Field instance
+
+        Returns:
+            Field: Field resolved from the path
+        """
+
+        if isinstance(path, str):
+            app_label, section, field_name = self._parse_path(path)
+            field = self._get_field(app_label, section, field_name)
+        elif isinstance(path, Field):
+            field = path
+        else:
+            raise TypeError(f"Expected str or Field, got {type(path).__name__}")
+
+        return field
 
 
 # Global config accessor instance

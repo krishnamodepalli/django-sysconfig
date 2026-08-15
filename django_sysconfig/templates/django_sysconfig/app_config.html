@@ -67,6 +67,7 @@
         text-align: right;
     }
     .config-field-label {
+        position: relative;
         display: block;
         font-weight: 600;
         font-size: 14px;
@@ -250,6 +251,9 @@
         background: rgba(121, 174, 200, 0.05);
     }
     .config-field.changed .config-field-label:after {
+        position: absolute;
+        right: -12px;
+        top: 1px;
         content: " •";
         color: var(--primary, #79aec8);
     }

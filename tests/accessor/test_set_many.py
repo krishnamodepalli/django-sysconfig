@@ -180,29 +180,11 @@ class TestSetManyOnSave:
         callback_a = MagicMock()
         callback_b = MagicMock()
 
-        from django_sysconfig.frontend_models import (
-            IntegerFrontendModel,
-            StringFrontendModel,
-        )
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-
-        field_a = Field(
-            StringFrontendModel,
-            label="Site Name",
-            default="Test Site",
-            on_save=callback_a,
-        )
-        field_a.name = "site_name"
-        section._fields["site_name"] = field_a
-
-        field_b = Field(
-            IntegerFrontendModel, label="Max Items", default=10, on_save=callback_b
-        )
-        field_b.name = "max_items"
-        section._fields["max_items"] = field_b
+        section.site_name.on_save = callback_a
+        section.max_items.on_save = callback_b
 
         with django_capture_on_commit_callbacks(execute=True):
             config.set_many(
@@ -223,19 +205,10 @@ class TestSetManyOnSave:
         # pass for the wrong reason regardless of rollback behaviour.
         callback = MagicMock()
 
-        from django_sysconfig.frontend_models import StringFrontendModel
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-        new_field = Field(
-            StringFrontendModel,
-            label="Site Name",
-            default="Test Site",
-            on_save=callback,
-        )
-        new_field.name = "site_name"
-        section._fields["site_name"] = new_field
+        section.site_name.on_save = callback
 
         with pytest.raises(ConfigValidationError):
             with django_capture_on_commit_callbacks(execute=True):
@@ -254,29 +227,11 @@ class TestSetManyOnSave:
         callback_a = MagicMock()
         callback_b = MagicMock()
 
-        from django_sysconfig.frontend_models import (
-            IntegerFrontendModel,
-            StringFrontendModel,
-        )
-        from django_sysconfig.registry import Field
         from tests.conftest import TEST_APP
 
         section = registry.get_config(TEST_APP).sections["general"]
-
-        field_a = Field(
-            StringFrontendModel,
-            label="Site Name",
-            default="Test Site",
-            on_save=callback_a,
-        )
-        field_a.name = "site_name"
-        section._fields["site_name"] = field_a
-
-        field_b = Field(
-            IntegerFrontendModel, label="Max Items", default=1098, on_save=callback_b
-        )
-        field_b.name = "max_items"
-        section._fields["max_items"] = field_b
+        section.max_items.on_save = callback_a
+        section.site_name.on_save = callback_b
 
         with django_capture_on_commit_callbacks(execute=True):
             config.set_many(

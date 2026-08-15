@@ -3,6 +3,12 @@ name: CI
 on:
   push:
     branches: ["**"]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+    branches-ignore:
+      - 'docs/*'
+      - 'pre-commit-ci*'
   pull_request:
     branches: [master, develop]
 

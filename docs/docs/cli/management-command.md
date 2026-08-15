@@ -83,7 +83,7 @@ The value is never echoed back in the success message — this is intentional so
 Reset a config value back to its [field default](/guides/defining-config#always-set-a-default).
 
 ```bash
-python manage.py config reset <path> [--force]
+python manage.py config reset <path> [--no-input]
 ```
 
 **Arguments**
@@ -96,7 +96,7 @@ python manage.py config reset <path> [--force]
 
 | Flag | Description |
 |---|---|
-| `-f`, `--force` | Skip the confirmation prompt |
+| `--no-input`, `--noinput` | Skip the confirmation prompt |
 
 **Examples**
 
@@ -104,11 +104,15 @@ python manage.py config reset <path> [--force]
 # With confirmation prompt
 python manage.py config reset myapp.general.maintenance_mode
 
-# Skip the prompt
-python manage.py config reset myapp.general.maintenance_mode --force
+# Skip the prompt (scripts, CI)
+python manage.py config reset myapp.general.maintenance_mode --no-input
 ```
 
-Without `--force`, you will be asked to confirm before the reset takes effect. This cannot be undone.
+Without `--no-input`, you will be asked to confirm before the reset takes effect. This cannot be undone.
+
+:::warning Deprecated: `-f` / `--force`
+`-f`/`--force` still works as an alias of `--no-input`, but it is deprecated and emits a `DeprecationWarning`. It will be removed in v2. Use `--no-input` instead.
+:::
 
 ---
 
@@ -175,7 +179,7 @@ The export file contains **plaintext secrets**. Treat it like a credentials file
 Import configuration values from a JSON file or stdin.
 
 ```bash
-python manage.py config import [--file <path>] [--stdin] [--dry-run] [--force] [-S]
+python manage.py config import [--file <path>] [--stdin] [--dry-run] [--no-input] [-S]
 ```
 
 **Flags**
@@ -185,10 +189,16 @@ python manage.py config import [--file <path>] [--stdin] [--dry-run] [--force] [
 | `-i`, `--file` | Path to the input `.json` file |
 | `--stdin` | Read JSON from stdin instead of a file |
 | `--dry-run` | Validate all values without writing anything to the database |
-| `-f`, `--force` | Skip the confirmation prompt |
+| `--no-input`, `--noinput` | Skip the confirmation prompt (required for non-interactive use) |
 | `-S`, `--skip-on-save-callbacks` | Suppress `on_save` callbacks for all fields in this batch |
 
 `--file` and `--stdin` are mutually exclusive. One of them must be provided.
+
+A piped stdin is non-interactive by definition, so `--stdin` never prompts for confirmation — no extra flag is needed.
+
+:::warning Deprecated: `-f` / `--force`
+`-f`/`--force` still works as an alias of `--no-input`, but it is deprecated and emits a `DeprecationWarning`. It will be removed in v2. Use `--no-input` instead.
+:::
 
 **Examples**
 
@@ -196,14 +206,14 @@ python manage.py config import [--file <path>] [--stdin] [--dry-run] [--force] [
 # Import from a file
 python manage.py config import --file config_export.json
 
-# Import from stdin
+# Import from stdin (no confirmation prompt — stdin is non-interactive)
 cat config_export.json | python manage.py config import --stdin
 
 # Validate without writing
 python manage.py config import --file config_export.json --dry-run
 
 # Skip confirmation and callbacks (useful in CI/CD pipelines)
-python manage.py config import --file config_export.json --force --skip-on-save-callbacks
+python manage.py config import --file config_export.json --no-input --skip-on-save-callbacks
 ```
 
 **Dry run**
@@ -254,7 +264,7 @@ python manage.py config export --output pre_deploy_backup.json
 ### Restore config after a failed deployment
 
 ```bash
-python manage.py config import --file pre_deploy_backup.json --force
+python manage.py config import --file pre_deploy_backup.json --no-input
 ```
 
 ### Rotate `SECRET_KEY` without losing encrypted values
@@ -268,5 +278,5 @@ See the full procedure in the [Encryption guide](/guides/encryption#key-rotation
 python manage.py config export --output seed.json
 
 # On the target environment
-python manage.py config import --file seed.json --force --skip-on-save-callbacks
+python manage.py config import --file seed.json --no-input --skip-on-save-callbacks
 ```

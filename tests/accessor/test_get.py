@@ -10,6 +10,7 @@ Covers:
 - Unknown app label
 - Unknown field name
 - Caller-supplied default for fields with no value and no field default
+- Typed Field API (config.get(Field))
 """
 
 from decimal import Decimal
@@ -135,6 +136,49 @@ class TestGetAfterSet:
 
 
 # ---------------------------------------------------------------------------
+# Null DB value (row exists, value is None)
+# ---------------------------------------------------------------------------
+
+
+class TestGetNullDbValue:
+    """Tests for ConfigValue rows that exist but carry value=None."""
+
+    def test_returns_none_not_field_default(self, config):
+        from django_sysconfig.models import ConfigValue
+
+        # The fixture seeds the row with the serialized default — overwrite to null
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.max_items"
+        ).update(value=None)
+        # field.default is 10 — stored null must win, not fall through to default
+        assert config.get("testapp.general.max_items") is None
+
+    def test_null_is_cached(self, config):
+        from django_sysconfig.cache import config_cache
+        from django_sysconfig.models import ConfigValue
+
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.max_items"
+        ).update(value=None)
+        config.get("testapp.general.max_items")
+        cached = config_cache.get("testapp.general.max_items")
+        assert cached is not config_cache.NOT_FOUND
+        assert cached is None
+
+    def test_null_served_from_cache_on_second_call(
+        self, config, django_assert_num_queries
+    ):
+        from django_sysconfig.models import ConfigValue
+
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.max_items"
+        ).update(value=None)
+        config.get("testapp.general.max_items")  # warm cache
+        with django_assert_num_queries(0):
+            assert config.get("testapp.general.max_items") is None
+
+
+# ---------------------------------------------------------------------------
 # Cache behaviour
 # ---------------------------------------------------------------------------
 
@@ -204,6 +248,27 @@ class TestGetCallerDefault:
         value = config.get("testapp.general.site_name", default="Fallback")
         assert value == "Actual"
 
+    def test_caller_default_used_when_no_field_default(self, config):
+        from django_sysconfig.models import ConfigValue
+
+        # The fixture seeds a null row for no_default — delete it to test the no-row path
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.no_default"
+        ).delete()
+        assert (
+            config.get("testapp.general.no_default", default="fallback") == "fallback"
+        )
+
+    def test_caller_default_not_cached_between_calls(self, config):
+        from django_sysconfig.models import ConfigValue
+
+        # Regression: caller's default must not be cached — each call uses its own
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.no_default"
+        ).delete()
+        assert config.get("testapp.general.no_default", default="first") == "first"
+        assert config.get("testapp.general.no_default", default="second") == "second"
+
 
 # ---------------------------------------------------------------------------
 # Error cases
@@ -239,3 +304,89 @@ class TestGetErrors:
     def test_raises_for_empty_path(self, config):
         with pytest.raises(InvalidPathError):
             config.get("")
+
+    def test_raises_type_error_for_invalid_type(self, config):
+        with pytest.raises(TypeError):
+            config.get(123)
+
+
+# ---------------------------------------------------------------------------
+# Typed Field API
+# ---------------------------------------------------------------------------
+
+
+class TestGetWithField:
+    """Tests for config.get(Field) — typed accessor API."""
+
+    def test_returns_field_default(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.get(field) == 10
+
+    def test_returns_db_value_after_set(self, config, registry):
+        config.set("testapp.general.max_items", 42)
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.get(field) == 42
+
+    def test_returns_correct_type(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert isinstance(config.get(field), int)
+
+    def test_matches_string_path(self, config, registry):
+        field = registry.get_config("testapp").sections["general"].max_items
+        assert config.get(field) == config.get("testapp.general.max_items")
+
+    def test_populates_cache(self, config, registry):
+        from django_sysconfig.cache import config_cache
+
+        field = registry.get_config("testapp").sections["general"].max_items
+        config_cache.invalidate(field.full_path)
+        config.get(field)
+        assert config_cache.get(field.full_path) is not config_cache.NOT_FOUND
+
+    def test_hits_cache_on_second_call(
+        self, config, registry, django_assert_num_queries
+    ):
+        field = registry.get_config("testapp").sections["general"].max_items
+        config.get(field)  # warm cache
+        with django_assert_num_queries(0):
+            config.get(field)
+
+    def test_shares_cache_with_string_api(
+        self, config, registry, django_assert_num_queries
+    ):
+        # Warm cache via string, then get via Field — should not hit DB
+        config.get("testapp.general.max_items")
+        field = registry.get_config("testapp").sections["general"].max_items
+        with django_assert_num_queries(0):
+            config.get(field)
+
+    def test_returns_none_for_null_db_value(self, config, registry):
+        from django_sysconfig.models import ConfigValue
+
+        field = registry.get_config("testapp").sections["general"].max_items
+        ConfigValue.objects.update_or_create(
+            app_label="testapp",
+            path="general.max_items",
+            defaults={"value": None},
+        )
+        # field.default is 10 — stored null must win
+        assert config.get(field) is None
+
+    def test_returns_caller_default_when_no_field_default(self, config, registry):
+        from django_sysconfig.models import ConfigValue
+
+        field = registry.get_config("testapp").sections["general"].no_default
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.no_default"
+        ).delete()
+        assert config.get(field, default="fallback") == "fallback"
+
+    def test_caller_default_not_cached_between_calls(self, config, registry):
+        from django_sysconfig.models import ConfigValue
+
+        field = registry.get_config("testapp").sections["general"].no_default
+        ConfigValue.objects.filter(
+            app_label="testapp", path="general.no_default"
+        ).delete()
+        assert config.get(field, default="first") == "first"
+        assert config.get(field, default="second") == "second"

@@ -6,7 +6,10 @@ The `config` accessor is the single object your application code uses to interac
 from django_sysconfig.accessor import config
 ```
 
-All paths use **dot notation** with exactly three parts: `app_label.section.field`.
+All methods accept a path in one of two forms:
+
+- **String path** — dot notation with exactly three parts: `"app_label.section.field"`
+- **Field reference** — a `Field` instance obtained directly from your config class (see [Typed Field API](#typed-field-api))
 
 ## Reading values
 
@@ -27,83 +30,43 @@ tax_rate  = config.get("billing.pricing.tax_rate")  # Decimal
 
 # Fallback for a registered field that has no saved value and no field default
 value = config.get("myapp.general.some_field", default=42)
+
+# Field reference — fully typed, IDE-navigable
+from myapp.sysconfig import MyAppConfig
+max_items = config.get(MyAppConfig.General.max_items)
 ```
 
 Values are **typed** — you get the correct Python type back without any casting. An `IntegerFrontendModel` field always returns an `int`. A `BooleanFrontendModel` field always returns a `bool`. A `DecimalFrontendModel` field always returns a `Decimal`.
 
 Reads are served from the cache when available, so repeated calls in the same request are fast.
 
-### `config.all(app_label)`
-
-This **eager loads** all the sections and fields in the specified app. Returns all configuration values for an entire app, as a nested dictionary keyed by section, then field name.
-
-:::warning
-The returned dictionary includes **plaintext (decrypted) values for all secret fields**. Avoid logging, serializing, or exposing this output — treat it with the same care as raw credentials.
-:::
-
-```python
-billing_config = config.all("billing")
-# {
-#   "general": {
-#     "live_mode": False,
-#   },
-#   "pricing": {
-#     "tax_rate": Decimal("0.20"),
-#     "free_tier_limit": 10,
-#     "trial_days": 14,
-#   }
-# }
-```
-
-### `config.section(path)`
-
-This **eager loads** all the fields in the specified section path. Returns all configuration values for a single section, as a flat dictionary keyed by field name.
-
-:::warning
-The returned dictionary includes **plaintext (decrypted) values for all secret fields**. Avoid logging, serializing, or exposing this output — treat it with the same care as raw credentials.
-:::
-
-```python
-pricing = config.section("billing.pricing")
-# {
-#   "tax_rate": Decimal("0.20"),
-#   "free_tier_limit": 10,
-#   "trial_days": 14,
-# }
-```
-
-### `config.exists(path)`
-
-Returns `True` if the path is registered in the schema (i.e., a field with that path exists in code). Does not check the database.
-
-```python
-config.exists("myapp.general.site_name")   # True
-config.exists("myapp.general.no_such_key") # False
-```
-
 ### `config.is_set(path)`
 
-Returns `True` if the field has a value other than empty string or `NULL` in the database.
+Returns `True` if the field has a value explicitly saved in the database (non-null, non-empty). Accepts a string path or a `Field` instance.
 
 ```python
-config.is_set("myapp.general.site_name")    # False if a default is not set. True if set.
+config.is_set("myapp.general.api_key")          # False — nothing saved yet
 # ... after saving a value via the admin UI or config.set(...) ...
-config.is_set("myapp.general.site_name")    # True
+config.is_set("myapp.general.api_key")          # True
+config.is_set(MyAppConfig.General.api_key)      # same, via Field reference
 ```
 
-This is useful for "onboarding" flows where you want to detect whether a required configuration step has been completed.
+This is useful for onboarding flows where you need to detect whether a required configuration step has been completed.
 
 ## Writing values
 
 ### `config.set(path, value)`
 
-Saves a single value to the database, updates the cache, and fires the `on_save` callback if one is defined.
+Saves a single value to the database, updates the cache, and fires the `on_save` callback if one is defined. Accepts a string path or a `Field` instance.
 
 ```python
 config.set("myapp.general.site_name", "Acme Corp")
 config.set("myapp.general.max_items", 500)
 config.set("billing.general.live_mode", True)
 config.set("billing.pricing.tax_rate", Decimal("0.15"))
+
+# Field reference
+config.set(MyAppConfig.General.max_items, 500)
 ```
 
 The value is validated against the field's validators before being saved. If validation fails, a `ConfigValidationError` is raised and nothing is written.
@@ -112,10 +75,18 @@ The value is validated against the field's validators before being saved. If val
 
 Saves multiple values atomically in a single database transaction. All cache invalidations happen after the transaction commits. All `on_save` callbacks fire after the write was successful, one per changed field.
 
+Keys can be string paths or `Field` instances — they can be mixed in the same call.
+
 ```python
 config.set_many({
     "myapp.general.site_name": "Acme Corp",
     "myapp.general.max_items": 500,
+    "billing.pricing.tax_rate": Decimal("0.15"),
+})
+
+# Mixed — string and Field keys together
+config.set_many({
+    MyAppConfig.General.site_name: "Acme Corp",
     "billing.pricing.tax_rate": Decimal("0.15"),
 })
 ```
@@ -126,6 +97,59 @@ If any value fails validation, the entire transaction is rolled back and no valu
 You can also read and write values directly from the terminal using the
 [`config` management command](/cli/management-command).
 :::
+
+## Typed Field API
+
+Every accessor method accepts a `Field` instance in place of a string path. This lets you reference config fields through your config class directly, giving you autocomplete, go-to-definition, and safe renames in any IDE.
+
+### Getting a Field reference
+
+Import your config class and access the field as a class attribute:
+
+```python
+from myapp.sysconfig import MyAppConfig
+
+field = MyAppConfig.General.max_items  # Field instance
+```
+
+After registration, every `Field` carries these runtime attributes set by the registry:
+
+| Attribute       | Example value                  | Description                        |
+| --------------- | ------------------------------ | ---------------------------------- |
+| `full_path`     | `"myapp.general.max_items"`    | Full three-part path               |
+| `_app_label`    | `"myapp"`                      | App label                          |
+| `_section_name` | `"general"`                    | Section key (snake_case)           |
+| `name`          | `"max_items"`                  | Field name                         |
+| `path`          | `"general.max_items"`          | Two-part path used in the database |
+
+### Using Field references
+
+```python
+from myapp.sysconfig import MyAppConfig
+
+value  = config.get(MyAppConfig.General.max_items)
+is_set = config.is_set(MyAppConfig.General.max_items)
+config.set(MyAppConfig.General.max_items, 500)
+
+# set_many accepts mixed keys
+config.set_many({
+    MyAppConfig.General.max_items: 500,
+    MyAppConfig.General.site_name: "Acme Corp",
+})
+```
+
+String paths and Field references share the same cache key, so a read via one form is immediately visible to the other with no extra DB round-trip.
+
+### String path vs Field reference
+
+| | String path | Field reference |
+|---|---|---|
+| **IDE support** | None | Autocomplete, go-to-definition, safe rename |
+| **Typo safety** | Fails at runtime | Fails at import time |
+| **Cold cache** (DB hit) | ~175 µs | ~175 µs |
+| **Warm cache** (cache hit) | ~6 µs | ~5 µs |
+
+Performance is negligible in both cases — choose Field references for the IDE and type-safety benefits, not for speed.
 
 ## Exceptions
 
@@ -138,7 +162,7 @@ All exceptions inherit from `ConfigError`, so you can catch the base class if yo
 | `AppNotFoundError` | No configuration is registered for the given app label          |
 | `FieldNotFoundError` | The section or field doesn't exist in the registered schema   |
 | `ConfigValidationError` | A value fails one or more field validators                  |
-| `ConfigValueError` | A value can't be serialized for the given field type                |
+| `ConfigValueError` | A value can't be serialized for the given field type            |
 
 ```python
 from django_sysconfig.exceptions import ConfigError, FieldNotFoundError
@@ -192,15 +216,10 @@ class Command(BaseCommand):
         # ...
 ```
 
-### Using `config.all()` or `config.section()` in a template context processor
+### Onboarding check
 
 ```python
-def sysconfig_context(request):
-    return {"site_config": config.section("myapp.general")}
-```
-
-Then in your template:
-
-```html
-<title>{{ site_config.site_name }}</title>
+def check_setup(request):
+    if not config.is_set("myapp.general.api_key"):
+        messages.warning(request, "API key is not configured.")
 ```
