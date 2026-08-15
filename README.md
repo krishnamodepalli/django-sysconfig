@@ -74,7 +74,7 @@ Full guides, API reference, and examples are in the docs.
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/krishnamodepalli/django-sysconfig/blob/develop/CONTRIBUTING.md). Issues and pull requests are welcome.
+See [CONTRIBUTING.md](https://github.com/krishnamodepalli/django-sysconfig/blob/master/CONTRIBUTING.md). Issues and pull requests are welcome.
 
 ---
 

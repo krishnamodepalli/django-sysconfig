@@ -10,7 +10,7 @@ on:
       - 'docs/*'
       - 'pre-commit-ci*'
   pull_request:
-    branches: [master, develop]
+    branches: [master]
 
 permissions:
   contents: read

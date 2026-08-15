@@ -132,7 +132,7 @@ django-sysconfig/
 
 ## Submitting a pull request
 
-1. **Fork** the repository and create a branch from `develop`:
+1. **Fork** the repository and create a branch from `master`:
    ```bash
    git checkout -b fix/your-bug-description
    ```
@@ -145,7 +145,7 @@ django-sysconfig/
    pytest
    ```
 
-4. **Open a pull request** against `develop` with a clear description of what you changed and why. Link the relevant issue if one exists.
+4. **Open a pull request** against `master` with a clear description of what you changed and why. Link the relevant issue if one exists.
 
 5. A maintainer will review your PR. Please be responsive to feedback — PRs that go quiet for more than 30 days may be closed.
 

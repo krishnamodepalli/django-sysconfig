@@ -51,15 +51,15 @@ DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
 
 ## Submitting a PR
 
-1. Cut a branch off `develop` — use the convention `feat/typed-accessor` or `fix/accessor-get-fail`
+1. Cut a branch off `master` — use the convention `feat/typed-accessor` or `fix/accessor-get-fail`
 2. Make your changes, ensure `pytest` passes and `pre-commit run --all-files` is clean
 3. Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/):
-   ```
+   ```text
    <type>(<scope>): <short description>
    ```
    Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`, `style`
    — e.g. `fix(accessor): always raise for invalid paths`, `docs: update quickstart`
-4. Open a PR against `develop` using the PR template — fill in as much as you can:
+4. Open a PR against `master` using the PR template — fill in as much as you can:
    - **Required:** Description, `closes #N`, Type of Change, Changes Made, Checklist
    - **Optional:** Django/Python Compatibility (skip if not applicable), Breaking Changes, Additional Notes
 5. Assign yourself as the **Assignee** and a maintainer as **Reviewer**
