@@ -59,6 +59,9 @@ class Field:
     stored in the ConfigValue model.
     """
 
+    _app: "AppConfigDefinition"
+    _section: "type[Section]"
+
     def __init__(
         self,
         frontend_model: "type[BaseFrontendModel]",
@@ -100,6 +103,9 @@ class Field:
         # These will be set by the registry during registration
         self.name: str = ""
         self.path: str = ""
+        self.full_path: str = ""
+        self._section_name = ""
+        self._app_label = ""
 
     @property
     def required(self) -> bool:
@@ -135,7 +141,9 @@ class SectionMeta(type):
                 value.name = key
                 fields[key] = value
 
-        namespace["_fields"] = fields
+        namespace["_fields"] = dict(
+            sorted(fields.items(), key=lambda x: (x[1].sort_order, x[0]))
+        )
         return super().__new__(mcs, name, bases, namespace)
 
 
@@ -154,11 +162,14 @@ class Section(metaclass=SectionMeta):
     label: str = ""
     sort_order: int = 0
     _fields: dict[str, Field] = {}
+    _app_label: str = ""
+    _section_name: str = ""
+    _app: "AppConfigDefinition"
 
     @classmethod
     def get_fields(cls) -> dict[str, Field]:
         """Return all fields in this section, sorted by sort_order."""
-        return dict(sorted(cls._fields.items(), key=lambda x: (x[1].sort_order, x[0])))
+        return cls._fields.copy()
 
 
 class AppConfigDefinition:
@@ -186,8 +197,19 @@ class AppConfigDefinition:
             ):
                 # Set path for each field in the section
                 section_key = to_snake_case(name)
+                attr._app_label = app_label
+                attr._section_name = section_key
+                attr._app = self
+
                 for field_name, field in attr.get_fields().items():
+                    field._section_name = section_key
+                    field._app_label = app_label
+                    field.name = field_name
+                    field.full_path = f"{app_label}.{section_key}.{field_name}"
                     field.path = f"{section_key}.{field_name}"
+                    field._app = self
+                    field._section = attr
+
                 self.sections[section_key] = attr
 
     def get_sections(self) -> list[tuple[str, type[Section]]]:
@@ -287,6 +309,17 @@ class ConfigRegistry:
     def get_config(self, app_label: str) -> AppConfigDefinition | None:
         """Get the configuration definition for an app."""
         return self._configs.get(app_label)
+
+    def get_field(self, full_path: str) -> Field | None:
+        """Get a field by its full path (e.g., 'myapp.general.site_name')."""
+        parts = full_path.split(".")
+        if len(parts) != 3:
+            return None
+        app_label, section, field_name = parts
+        config_def = self._configs.get(app_label)
+        if not config_def:
+            return None
+        return config_def.get_field(f"{section}.{field_name}")
 
     def get_all_configs(self) -> dict[str, AppConfigDefinition]:
         """Get all registered configurations."""

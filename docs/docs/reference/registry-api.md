@@ -95,6 +95,20 @@ site_name = Field(
 | `on_save`        | `Callable`                | No       | Callback fired after a successful write                     |
 | `**kwargs`       | —                         | No       | Passed through to the `frontend_model` (e.g. `choices`, `step`) |
 
+**Runtime attributes (set by the registry on registration):**
+
+After `@register_config` runs, the registry enriches every `Field` instance with these read-only attributes:
+
+| Attribute       | Type  | Example                       | Description                           |
+| --------------- | ----- | ----------------------------- | ------------------------------------- |
+| `name`          | `str` | `"max_items"`                 | Field name as declared in the section |
+| `path`          | `str` | `"general.max_items"`         | Two-part DB path (`section.field`)    |
+| `full_path`     | `str` | `"myapp.general.max_items"`   | Full three-part accessor path         |
+| `_app_label`    | `str` | `"myapp"`                     | App label                             |
+| `_section_name` | `str` | `"general"`                   | Section key (snake_cased class name)  |
+
+These attributes are what enable passing a `Field` instance directly to `config.get()`, `config.set()`, and other accessor methods instead of a string path.
+
 ---
 
 ## Registry introspection
@@ -123,6 +137,19 @@ config_def = config_registry.get_config("billing")
 # config_def.app_label → "billing"
 # config_def.get_sections() → [("general", <Section>), ("pricing", <Section>)]
 # config_def.get_field("pricing.tax_rate") → <Field: tax_rate>
+```
+
+---
+
+### `config_registry.get_field(full_path)`
+
+Returns the `Field` instance for the given full three-part path, or `None` if the path is not registered. Useful when you have a path string at runtime and need the field definition without going through `get_config()` first.
+
+```python
+field = config_registry.get_field("billing.pricing.tax_rate")
+# field.label → "Tax Rate"
+# field.default → Decimal("0.20")
+# field.full_path → "billing.pricing.tax_rate"
 ```
 
 ---
