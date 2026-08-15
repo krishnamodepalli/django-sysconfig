@@ -104,6 +104,7 @@ allowed_tags = ["feat", "fix", "perf", "docs", "refactor", "test", "build", "ci"
 minor_tags = ["feat"]
 patch_tags = ["fix", "refactor", "perf"]
 default_bump_level = 0
+parse_squash_commits = false
 
 [tool.semantic_release.publish]
 upload_to_vcs_release = true
