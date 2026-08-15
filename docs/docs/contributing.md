@@ -163,6 +163,15 @@ docs(readme): update installation steps
 
 Format: `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`. Scope is optional but encouraged.
 
+Deprecating something? Add a `NOTICE:` footer — semantic-release surfaces it in the changelog
+and release notes under "Additional Release Information":
+
+```text
+feat(accessor): add get() with raw= support
+
+NOTICE: get_raw() is deprecated, use get(..., raw=True) instead
+```
+
 ---
 
 ## Reporting a security vulnerability

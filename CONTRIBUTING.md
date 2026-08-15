@@ -59,6 +59,15 @@ DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
    ```
    Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`, `style`
    — e.g. `fix(accessor): always raise for invalid paths`, `docs: update quickstart`
+
+   Deprecating something? Add a `NOTICE:` footer describing what's deprecated and its
+   replacement — semantic-release picks it up and surfaces it in the changelog and release
+   notes under "Additional Release Information":
+   ```text
+   feat(accessor): add get() with raw= support
+
+   NOTICE: get_raw() is deprecated, use get(..., raw=True) instead
+   ```
 4. Open a PR against `master` using the PR template — fill in as much as you can:
    - **Required:** Description, `closes #N`, Type of Change, Changes Made, Checklist
    - **Optional:** Django/Python Compatibility (skip if not applicable), Breaking Changes, Additional Notes
