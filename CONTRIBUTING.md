@@ -54,7 +54,7 @@ DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
 1. Cut a branch off `master` — use the convention `feat/typed-accessor` or `fix/accessor-get-fail`
 2. Make your changes, ensure `pytest` passes and `pre-commit run --all-files` is clean
 3. Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/):
-   ```
+   ```text
    <type>(<scope>): <short description>
    ```
    Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`, `style`
