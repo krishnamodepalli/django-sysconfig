@@ -70,6 +70,18 @@ DJANGO_SETTINGS_MODULE=settings_dev django-admin runserver
 
 ---
 
+## Release process (maintainers)
+
+Releases are fully manual — merging to `master` never triggers a release.
+
+1. Bump the version in `pyproject.toml` (`project.version`) and `django_sysconfig/__init__.py` (`__version__`)
+2. Move the `## [Unreleased]` entries in `CHANGELOG.md` under a new `## [X.Y.Z] - YYYY-MM-DD` heading, grouped into `Added`/`Changed`/`Deprecated`/`Removed`/`Fixed`/`Security` per [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+3. Commit: `chore(release): X.Y.Z`
+4. Tag: `git tag vX.Y.Z` and `git push origin vX.Y.Z`
+5. The tag push triggers the `Release` workflow, which builds and publishes to PyPI
+
+---
+
 ## Reporting bugs
 
 Open an issue on [GitHub Issues](https://github.com/krishnamodepalli/django-sysconfig/issues) with:

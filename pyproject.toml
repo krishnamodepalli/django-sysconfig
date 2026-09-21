@@ -86,24 +86,3 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP"]
 ignore = ["E501", "B008", "C901"]
-
-[tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-version_variables = [
-    "django_sysconfig/__init__.py:__version__"
-]
-branch = "master"
-commit_message = "chore(release): {version}"
-tag_format = "v{version}"
-
-[tool.semantic_release.changelog]
-file = "CHANGELOG.md"
-
-[tool.semantic_release.commit_parser_options]
-allowed_tags = ["feat", "fix", "perf", "docs", "refactor", "test", "build", "ci", "chore", "revert"]
-minor_tags = ["feat"]
-patch_tags = ["fix", "refactor", "perf"]
-default_bump_level = 0
-
-[tool.semantic_release.publish]
-upload_to_vcs_release = true
