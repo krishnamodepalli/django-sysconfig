@@ -5,15 +5,19 @@ These views provide the admin interface for managing app configurations.
 They are integrated into Django's admin site and require admin permissions.
 """
 
+import logging
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.views import View
 
 from .accessor import config
-from .exceptions import ConfigValidationError
+from .exceptions import ConfigError, ConfigValidationError
 from .models import ConfigValue
 from .registry import config_registry
+
+logger = logging.getLogger(__name__)
 
 
 class BaseConfigView(View):
@@ -185,6 +189,10 @@ class ConfigAppDetailView(BaseConfigView):
                 except ConfigValidationError as e:
                     for error in e.errors:
                         messages.error(request, error)
+                    return redirect("django_sysconfig:app_detail", app_label=app_label)
+                except ConfigError as e:
+                    logger.exception("Failed to save config field '%s'", full_path)
+                    messages.error(request, str(e))
                     return redirect("django_sysconfig:app_detail", app_label=app_label)
                 saved_count += 1
 
