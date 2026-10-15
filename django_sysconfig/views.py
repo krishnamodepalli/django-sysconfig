@@ -175,8 +175,14 @@ class ConfigAppDetailView(BaseConfigView):
                 if input_name not in changed_fields:
                     continue
 
-                # Get and process value
-                processed_value = self._get_processed_value(request, field, input_name)
+                # Parse errors are user input failures; errors from save callbacks are not.
+                try:
+                    processed_value = self._get_processed_value(
+                        request, field, input_name
+                    )
+                except ValueError as e:
+                    messages.error(request, str(e))
+                    return redirect("django_sysconfig:app_detail", app_label=app_label)
 
                 # Use the accessor to set the value (dot notation)
                 full_path = f"{app_label}.{section_key}.{field_name}"

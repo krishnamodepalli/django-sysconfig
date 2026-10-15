@@ -26,7 +26,10 @@ class SetCommand(SubCommand):
         try:
             app_label, section, field_name = config._parse_path(path)
             field = config._get_field(app_label, section, field_name)
-            parsed = field.get_frontend_model_instance().get_value(raw)
+            try:
+                parsed = field.get_frontend_model_instance().get_value(raw)
+            except ValueError as e:
+                raise CommandError(f"Invalid value for {path}: {e}") from e
 
             with transaction.atomic():
                 config.set(path, parsed)
