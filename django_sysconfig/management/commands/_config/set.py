@@ -45,6 +45,9 @@ class SetCommand(SubCommand):
                     command.style.SUCCESS(f"✔ {path} updated successfully")
                 )
 
+        except ValueError as e:
+            raise CommandError(f"Invalid value for {path}: {e}") from e
+
         except ConfigValidationError as e:
             errors = "\n".join(f"  • {err}" for err in e.errors)
             raise CommandError(f"Validation failed for {path}:\n{errors}") from e

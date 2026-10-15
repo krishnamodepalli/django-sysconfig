@@ -114,7 +114,7 @@ class ImportCommand(SubCommand):
                 with transaction.atomic():
                     config.set_many(dict(paths), skip_on_save_callbacks=True)
                     transaction.set_rollback(True)
-            except (ConfigValidationError, ConfigError) as e:
+            except (ConfigValidationError, ConfigError, ValueError) as e:
                 errors.append(str(e))
 
             if errors:
@@ -133,7 +133,7 @@ class ImportCommand(SubCommand):
         # 5. Execute
         try:
             config.set_many(dict(paths), skip_on_save_callbacks=skip_callbacks)
-        except (ConfigValidationError, ConfigError) as e:
+        except (ConfigValidationError, ConfigError, ValueError) as e:
             raise CommandError(
                 f"Import aborted — all changes rolled back:\n  • {e}"
             ) from e
